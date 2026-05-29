@@ -4,8 +4,8 @@
 
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-05-30
-**활성 피처 (Active Feature)** — 없음 (v0.2 골격 완성)
-**현재 목표 (Current Objective)** — v0.2 완성(다중 파도·맵·노드 다양화). 다음은 시각 플레이 QA, 그다음 v0.3 전투 깊이(장수 스킬). 로드맵 — docs/roadmap.md.
+**활성 피처 (Active Feature)** — feat-010 병종 상성 (다음 외주)
+**현재 목표 (Current Objective)** — v0.3 전투 깊이. feat-009 장수 스킬 done, 다음 병종 상성. 로드맵 — docs/roadmap.md.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -13,13 +13,14 @@
 - [x] **feat-001~005 (v0.1)** — Godot 셋업·카드 스키마·레인 오토배틀 코어·전리 보상·검증 커버리지. 커밋 283f68a.
 - [x] **feat-006 다중 파도** (Codex) — BattleSim 파도 큐 + default_waves 3파도 + battle 자동 시각화·파도 N/M. 커밋 7eee2f6.
 - [x] **feat-007 로그라이크 맵** (Codex) — RunMap + run_map.tscn main_scene + 노드별 파도 + battle↔map 복귀. 커밋 5a787d9.
-- [x] **feat-008 맵 노드 다양화** (Codex) — NodeType 5종(보상·보급 추가) + RunState command_points + run_map 비전투 오버레이. test_map_nodes 29단언. (커밋 예정)
+- [x] **feat-008 맵 노드 다양화** (Codex) — NodeType 5종(보상·보급) + command_points + run_map 오버레이. 커밋 b5a9d30. **v0.2 완성.**
+- [x] **feat-009 장수 스킬 발동** (Codex) — SkillSystem 5스킬 + BattleUnit skill_id/cooldown + BattleSim 발동·last_skill_casts + battle 플래시. test_skills 51단언. 승리 14.2s(실발동). (커밋 예정)
 ### 진행 중 (What's In Progress)
 - [ ] 없음
 ### 다음 (What's Next)
-1. 시각 플레이 QA — 맵 노드 선택(전투/보상/보급)→전투→보상→다음 막→보스 정복/패배를 실제 화면에서. 사람 `godot --path .`.
-2. **v0.3 전투 깊이** — 장수 스킬 발동·병종 상성·상태이상. 로드맵 최우선 다음 덩어리. 스펙→Codex 외주.
-3. (이후) 계략·보패 → 메타 해금·저장 → 천계/마계 6국.
+1. **feat-010 병종 상성** (스펙 docs/specs/feat-010.md) — Codex 체인 외주. 보병>기병>궁병/노병>보병 삼각.
+2. feat-011 상태이상(도발·DoT) — 장비 호통을 진짜 도발로 교체.
+3. 시각 플레이 QA(사람) → 이후 계략·보패 → 메타·저장 → 천계/마계 6국.
 
 ## 블로커 / 리스크 (Blockers / Risks)
 - [ ] 시각 QA 부채 누적 — feat-003/004/006/007/008 화면·상호작용(클릭·씬 전환·오버레이)은 헤드리스로 미확인. 사람 플레이 필요.
@@ -32,14 +33,14 @@
 - 전투 로직/표현 분리, 적은 카드 아님, trait_id, 승=적전멸/패=기지도달·아군전멸 — 상세 CHANGELOG.
 
 ## 이번 세션 수정 파일 (Files Modified)
-- 커밋 — v0.1 283f68a / v0.2 7eee2f6·5a787d9 (+ feat-008 커밋 예정)
-- feat-008 — run_map.gd·run_state.gd·run_manager.gd·battle.gd·screens/run_map.gd·test/test_map_nodes.gd
-- 문서 — docs/roadmap.md, docs/specs/feat-008.md, 상태(feature_list·progress·CHANGELOG)
+- 커밋 — v0.1 283f68a / v0.2 7eee2f6·5a787d9·b5a9d30 (+ feat-009 커밋 예정)
+- feat-009 — skill_system.gd·battle_unit.gd·battle_sim.gd·battle.gd·test/test_skills.gd
+- 문서 — docs/roadmap.md, docs/specs/feat-009.md·feat-010.md, 상태(feature_list·progress·CHANGELOG)
 
 ## 검증 증거
-- [x] `./init.sh` (2026-05-30, feat-008) → 카드검증(10·1) / sim·reward 스모크 / run_map·battle 부팅 / 단위 7파일 **125 단언** 통과. 종료 0.
-- [x] feat-008 스코프 — git diff로 wave_factory/resources 미수정, 스펙 6파일+테스트만 변경 확인.
-- [ ] 시각 플레이(맵 노드 선택→전투→보상→보급→다음 막→보스 정복) → agy 또는 사람 확인 필요.
+- [x] `./init.sh` (2026-05-30, feat-009) → 카드검증(10·1) / sim·reward 스모크 / run_map·battle 부팅 / 단위 8파일 **176 단언** 통과(승리 14.2s — 스킬 실발동). 종료 0.
+- [x] feat-009 스코프 — git diff로 resources/wave_factory/run_*/screens 미수정, skill 파일+battle 코어+테스트만 변경 확인.
+- [ ] 시각 플레이(맵 노드→전투+스킬 플래시→보상→다음 막→보스) → agy 또는 사람 확인 필요.
 
 ## 아카이브 포인터
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`

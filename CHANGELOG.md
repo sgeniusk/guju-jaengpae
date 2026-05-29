@@ -57,6 +57,13 @@
 - **메인 씬 변경** — `run_map.tscn`이 main_scene. 맵 화면은 현재 막만 클릭 가능하고 덱 크기·현재 막을 표시한다. `battle.tscn`은 노드 없이 standalone 부팅 시 기본 파도를 사용한다.
 - **검증** — TDD RED 확인 후 `test/test_run_map.gd` 20단언 추가. `./init.sh` 전체 green: 카드/군주·sim·reward 스모크, run_map/battle 각각 30프레임 부팅, 6파일 96단언 통과.
 
+## 2026-05-30 — feat-009 장수 스킬 발동 (done · Codex 구현, v0.3 시작)
+- **SkillSystem** — 코드 레지스트리(class_name). 5장수 결정적 스킬 — 관우 일섬(가까운 2적 80)·황충 백보천양(먼 적 110)·제갈량 팔진도(레인 전체 45)·조운 단기필마(220 돌진+경로 60)·장비 호통(전체 25+자가회복 80), 쿨다운 표대로.
+- **BattleUnit** — skill_id·skill_cooldown 보유, from_card가 .tres skill_id 운반. 데이터 스키마·카드 .tres 불변(skill_id를 코드에서 해석).
+- **BattleSim** — add_unit 첫 쿨다운, step 발동, `last_skill_casts` 기록(순수 유지 — EventBus·렌더 호출 없음). battle.gd가 기록 읽어 시전자 0.15s 플래시.
+- **검증** — Codex TDD. test_skills 51단언. ./init.sh 176단언(125+51) green, 회귀 0. 승리 스모크 19.2→14.2s(스킬 실발동 신호). 편집장 독립 재검증 + git diff 스코프.
+- 임시 — 장비 호통은 데미지+자가회복 placeholder, 진짜 도발은 feat-011 상태 시스템에서 교체.
+
 ## 2026-05-30 — feat-008 맵 노드 다양화 (done · Codex 구현, v0.2 완성)
 - **RunMap NodeType 5종** — BATTLE/ELITE/REWARD/SUPPLY/BOSS, 가중 생성(전투 우세), `is_battle()` 헬퍼. 전투 노드만 battle.tscn으로.
 - **런 지휘력** — `RunState.command_points`(기본 12) + `RunManager` 위임. `battle.gd`가 const 대신 런 지휘력을 배치 한도로 사용(standalone 12 안전).

@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.2 — 로그라이크 골격: 한 전투에 다중 파도, 노드 맵으로 런 진행 (v0.1 오토배틀 루프 done)",
+  "milestone": "v0.3 — 전투 깊이: 장수 스킬 발동·병종 상성·상태이상 (v0.2 로그라이크 골격 done)",
   "features": [
     {
       "id": "feat-001",
@@ -73,6 +73,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "RunMap NodeType 5종(+REWARD/SUPPLY)·is_battle·가중 생성, RunState command_points + battle.gd가 런 지휘력 사용, run_map 비전투 오버레이(보상 선택/보급 확인)→막 진행. test_map_nodes 29단언. ./init.sh 125단언 green, 회귀·스코프 준수."
+    },
+    {
+      "id": "feat-009",
+      "name": "장수 스킬 발동",
+      "description": "장수 skill_id를 실제 전투 효과로 발동 — SkillSystem(코드 레지스트리) + BattleUnit skill_id/cooldown + BattleSim 발동. 5장수 데미지/회복 스킬(관우 일섬·황충 백보천양·제갈량 팔진도·조운 단기필마·장비 호통). 상태이상·병종 상성은 후속. 스펙 docs/specs/feat-009.md.",
+      "dependencies": ["feat-003"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "SkillSystem(5스킬 표대로) + BattleUnit skill_id/skill_cooldown(from_card 운반, .tres 불변) + BattleSim 발동·last_skill_casts + battle.gd 시전자 플래시. test_skills 51단언. ./init.sh 176단언 green(승리 스모크 19.2→14.2s, 스킬 실발동), 회귀·스코프 준수. 장비 호통은 placeholder(진짜 도발은 feat-011)."
     }
   ]
 }

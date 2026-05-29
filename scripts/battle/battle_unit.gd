@@ -16,8 +16,10 @@ var attack_interval: float = 1.0
 var attack_range: String = "melee"
 var move_speed: float = 40.0
 var cooldown: float = 0.0     # 다음 공격까지 남은 시간(초)
+var skill_id: StringName = &""
+var skill_cooldown: float = 0.0
 
-static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int, p_atk: int, p_interval: float, p_range: String, p_speed: float, p_card_id: StringName = &"") -> BattleUnit:
+static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int, p_atk: int, p_interval: float, p_range: String, p_speed: float, p_card_id: StringName = &"", p_skill_id: StringName = &"") -> BattleUnit:
 	var u := BattleUnit.new()
 	u.team = p_team
 	u.lane = p_lane
@@ -30,10 +32,11 @@ static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int
 	u.attack_range = p_range
 	u.move_speed = maxf(0.0, p_speed)
 	u.card_id = p_card_id
+	u.skill_id = p_skill_id
 	return u
 
 static func from_card(card: UnitCardData, p_team: int, p_lane: int, p_x: float, hp_mult: float = 1.0) -> BattleUnit:
-	return make(p_team, p_lane, p_x, card.display_name, int(round(card.max_hp * hp_mult)), card.attack, card.attack_interval, card.attack_range, card.move_speed, card.id)
+	return make(p_team, p_lane, p_x, card.display_name, int(round(card.max_hp * hp_mult)), card.attack, card.attack_interval, card.attack_range, card.move_speed, card.id, card.skill_id)
 
 func is_alive() -> bool:
 	return hp > 0

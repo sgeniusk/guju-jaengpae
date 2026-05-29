@@ -45,6 +45,7 @@ func _process(delta: float) -> void:
 		return
 	_sim.step(delta)
 	_sync_visuals()
+	_flash_skill_casts()
 	if _sim.is_over():
 		_end_battle()
 
@@ -213,7 +214,7 @@ func _spawn_visual(u: BattleUnit) -> void:
 	name_label.add_theme_font_size_override("font_size", 14)
 	root.add_child(name_label)
 	_units_layer.add_child(root)
-	_vis[u] = { "root": root, "hp": hp }
+	_vis[u] = { "root": root, "body": body, "base_color": body.color, "hp": hp }
 	_position_visual(u)
 
 func _sync_visuals() -> void:
@@ -239,6 +240,19 @@ func _position_visual(u: BattleUnit) -> void:
 	var sx := _map_x(u.x) - UNIT_W * 0.5
 	var sy := float(LANE_Y[u.lane]) - UNIT_H * 0.5
 	_vis[u]["root"].position = Vector2(sx, sy)
+
+func _flash_skill_casts() -> void:
+	for cast in _sim.last_skill_casts:
+		var caster: BattleUnit = cast.get("caster", null)
+		if caster == null or not _vis.has(caster):
+			continue
+		var body: ColorRect = _vis[caster].get("body", null)
+		if body == null or not is_instance_valid(body):
+			continue
+		var base_color: Color = _vis[caster].get("base_color", body.color)
+		body.color = Color(1.0, 1.0, 1.0)
+		var tween := create_tween()
+		tween.tween_property(body, "color", base_color, 0.15)
 
 func _sim_units() -> Array[BattleUnit]:
 	var units: Array[BattleUnit] = []

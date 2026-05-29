@@ -8,6 +8,7 @@ const LANE_COUNT := 3
 const LANE_LENGTH := 1000.0
 const MELEE_REACH := 36.0
 const RANGED_REACH := 280.0
+const _SkillSystem := preload("res://scripts/battle/skill_system.gd")
 
 var player_units: Array[BattleUnit] = []
 var enemy_units: Array[BattleUnit] = []
@@ -16,10 +17,13 @@ var wave_index := 0
 var wave_total := 0
 var result: int = Result.ONGOING
 var elapsed: float = 0.0
+var last_skill_casts: Array = []
 
 func add_unit(u: BattleUnit) -> void:
 	if u == null:
 		return
+	if _SkillSystem.has_skill(u.skill_id):
+		u.skill_cooldown = _SkillSystem.cooldown_for(u.skill_id)
 	if u.team == BattleUnit.Team.PLAYER:
 		player_units.append(u)
 	else:
@@ -37,6 +41,7 @@ func is_over() -> bool:
 	return result != Result.ONGOING
 
 func step(delta: float) -> void:
+	last_skill_casts.clear()
 	if is_over():
 		return
 	elapsed += delta
@@ -44,6 +49,7 @@ func step(delta: float) -> void:
 	for u in player_units + enemy_units:
 		if not u.is_alive():
 			continue
+		_process_skill(u, delta)
 		if u.cooldown > 0.0:
 			u.cooldown -= delta
 		var target := _nearest_enemy(u)
@@ -90,6 +96,19 @@ func _nearest_enemy(u: BattleUnit) -> BattleUnit:
 func _advance(u: BattleUnit, delta: float) -> void:
 	var dir := 1.0 if u.team == BattleUnit.Team.PLAYER else -1.0
 	u.x = clampf(u.x + dir * u.move_speed * delta, 0.0, LANE_LENGTH)
+
+func _process_skill(u: BattleUnit, delta: float) -> void:
+	if not _SkillSystem.has_skill(u.skill_id):
+		return
+	u.skill_cooldown -= delta
+	if u.skill_cooldown <= 0.0 and _SkillSystem.has_target(u, self):
+		_SkillSystem.cast(u, self)
+		u.skill_cooldown = _SkillSystem.cooldown_for(u.skill_id)
+		last_skill_casts.append({
+			"caster": u,
+			"skill_id": u.skill_id,
+			"lane": u.lane,
+		})
 
 func _cleanup_dead() -> void:
 	player_units = player_units.filter(func(u: BattleUnit) -> bool: return u.is_alive())
