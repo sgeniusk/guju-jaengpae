@@ -2,7 +2,7 @@
 class_name RunMap
 extends RefCounted
 
-enum NodeType { BATTLE, ELITE, BOSS }
+enum NodeType { BATTLE, ELITE, REWARD, SUPPLY, BOSS }
 
 var layers: Array = []
 var layer_idx: int = 0
@@ -17,7 +17,7 @@ func generate(seed_value: int, normal_layers: int = 3) -> void:
 	for layer in maxi(0, normal_layers):
 		var nodes: Array[Dictionary] = []
 		for node_idx in 2:
-			var node_type := NodeType.ELITE if rng.randf() < 0.3 else NodeType.BATTLE
+			var node_type := _roll_node_type(rng)
 			nodes.append({
 				"type": node_type,
 				"id": "L%dN%d" % [layer, node_idx],
@@ -57,3 +57,16 @@ func active_type() -> int:
 
 func total_layers() -> int:
 	return layers.size()
+
+static func is_battle(node_type: int) -> bool:
+	return node_type == NodeType.BATTLE or node_type == NodeType.ELITE or node_type == NodeType.BOSS
+
+static func _roll_node_type(rng: RandomNumberGenerator) -> int:
+	var roll := rng.randf()
+	if roll < 0.5:
+		return NodeType.BATTLE
+	if roll < 0.7:
+		return NodeType.ELITE
+	if roll < 0.9:
+		return NodeType.REWARD
+	return NodeType.SUPPLY

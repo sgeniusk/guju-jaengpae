@@ -57,6 +57,13 @@
 - **메인 씬 변경** — `run_map.tscn`이 main_scene. 맵 화면은 현재 막만 클릭 가능하고 덱 크기·현재 막을 표시한다. `battle.tscn`은 노드 없이 standalone 부팅 시 기본 파도를 사용한다.
 - **검증** — TDD RED 확인 후 `test/test_run_map.gd` 20단언 추가. `./init.sh` 전체 green: 카드/군주·sim·reward 스모크, run_map/battle 각각 30프레임 부팅, 6파일 96단언 통과.
 
+## 2026-05-30 — feat-008 맵 노드 다양화 (done · Codex 구현, v0.2 완성)
+- **RunMap NodeType 5종** — BATTLE/ELITE/REWARD/SUPPLY/BOSS, 가중 생성(전투 우세), `is_battle()` 헬퍼. 전투 노드만 battle.tscn으로.
+- **런 지휘력** — `RunState.command_points`(기본 12) + `RunManager` 위임. `battle.gd`가 const 대신 런 지휘력을 배치 한도로 사용(standalone 12 안전).
+- **비전투 노드** — REWARD(전투 없이 카드 +1, RewardPool 재사용)·SUPPLY(지휘력 영구 +3)를 맵 화면 오버레이로 해결 후 막 진행. 덱 압축은 배치 모델상 효과가 약해 제외.
+- **검증** — Codex TDD. `test/test_map_nodes.gd` 29단언. `./init.sh` 125단언(96+29) green, 회귀 0. 편집장 독립 재검증 + git diff 스코프 확인.
+- v0.2(다중 파도 + 로그라이크 맵 + 노드 다양화) 골격 완성. 로드맵 정본화 — `docs/roadmap.md`.
+
 ## 2026-05-29 — v0.1 코드 완성
 - v0.1 5피처(셋업·카드 스키마·오토배틀 코어·전리 보상·검증 커버리지) 전부 done. `./init.sh` 한 방으로 import + 데이터/전투/보상 스모크 + 씬 부팅 + 60 단언 단위 테스트가 모두 통과.
 - 잔여 — 시각 플레이 QA(클릭 배치→전투→보상→다음 전투)는 화면 실행으로 사람/agy 확인 필요. 아직 커밋 0(체크포인트 권장).

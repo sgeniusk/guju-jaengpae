@@ -5,6 +5,7 @@ const LORD_ID := &"lord_liubei"
 const BATTLE_SCENE := "res://scenes/battle/battle.tscn"
 
 var _root: VBoxContainer
+var _overlay: Control
 
 func _ready() -> void:
 	RunManager.ensure_started(LORD_ID)
@@ -39,10 +40,11 @@ func _build_root() -> void:
 	_root.add_child(title)
 
 	var summary := Label.new()
-	summary.text = "현재 막 %d / %d · 덱 %d장" % [
+	summary.text = "현재 막 %d / %d · 덱 %d장 · 지휘력 %d" % [
 		min(RunManager.state.map.layer_idx + 1, RunManager.state.map.total_layers()),
 		RunManager.state.map.total_layers(),
 		RunManager.get_deck().size(),
+		RunManager.get_command_points(),
 	]
 	summary.add_theme_font_size_override("font_size", 24)
 	_root.add_child(summary)
@@ -114,7 +116,15 @@ func _build_conquest() -> void:
 
 func _on_node_pressed(node_idx: int) -> void:
 	RunManager.choose_node(node_idx)
-	GameManager.change_scene(BATTLE_SCENE)
+	var node_type := RunManager.active_node_type()
+	if RunMap.is_battle(node_type):
+		GameManager.change_scene(BATTLE_SCENE)
+	elif node_type == RunMap.NodeType.REWARD:
+		_show_reward_overlay()
+	elif node_type == RunMap.NodeType.SUPPLY:
+		_show_supply_overlay()
+	else:
+		GameManager.change_scene(BATTLE_SCENE)
 
 func _on_new_run_pressed() -> void:
 	RunManager.reset_run()
@@ -122,12 +132,80 @@ func _on_new_run_pressed() -> void:
 	_render()
 
 func _node_label(node_type: int) -> String:
-	match node_type:
-		RunMap.NodeType.BATTLE:
-			return "전투"
-		RunMap.NodeType.ELITE:
-			return "정예"
-		RunMap.NodeType.BOSS:
-			return "보스"
-		_:
-			return "전투"
+	return RunManager.node_label(node_type)
+
+func _show_reward_overlay() -> void:
+	var box := _new_overlay_box()
+	var head := Label.new()
+	head.text = "보상 — 한 장을 골라 덱에 넣으세요"
+	head.add_theme_font_size_override("font_size", 30)
+	box.add_child(head)
+
+	var candidates := RunManager.reward_candidates(3)
+	if candidates.is_empty():
+		var none := Label.new()
+		none.text = "획득 가능한 보상이 없습니다."
+		box.add_child(none)
+		box.add_child(_make_overlay_button("계속", _complete_non_battle_and_render))
+		return
+	for id in candidates:
+		var card := CardLibrary.get_card(id)
+		var label := String(id)
+		if card != null:
+			label = "%s (%d) — %s" % [card.display_name, card.cost, _card_brief(card)]
+		box.add_child(_make_overlay_button(label, _pick_reward.bind(id)))
+
+func _show_supply_overlay() -> void:
+	var box := _new_overlay_box()
+	var head := Label.new()
+	head.text = "보급 — 이 런의 지휘력 +3"
+	head.add_theme_font_size_override("font_size", 30)
+	box.add_child(head)
+
+	var now := Label.new()
+	now.text = "현재 지휘력 %d → %d" % [RunManager.get_command_points(), RunManager.get_command_points() + 3]
+	now.add_theme_font_size_override("font_size", 22)
+	box.add_child(now)
+	box.add_child(_make_overlay_button("보급 받기", _take_supply))
+
+func _pick_reward(id: StringName) -> void:
+	RunManager.add_card(id)
+	EventBus.card_rewarded.emit(id)
+	_complete_non_battle_and_render()
+
+func _take_supply() -> void:
+	RunManager.add_command_points(3)
+	_complete_non_battle_and_render()
+
+func _complete_non_battle_and_render() -> void:
+	RunManager.complete_node()
+	_render()
+
+func _new_overlay_box() -> VBoxContainer:
+	if _overlay != null and is_instance_valid(_overlay):
+		_overlay.queue_free()
+	var shade := ColorRect.new()
+	shade.color = Color(0.0, 0.0, 0.0, 0.72)
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(shade)
+	_overlay = shade
+
+	var box := VBoxContainer.new()
+	box.position = Vector2(520.0, 220.0)
+	box.custom_minimum_size = Vector2(880.0, 0.0)
+	box.add_theme_constant_override("separation", 14)
+	shade.add_child(box)
+	return box
+
+func _make_overlay_button(text: String, cb: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(0.0, 52.0)
+	b.add_theme_font_size_override("font_size", 22)
+	b.pressed.connect(cb)
+	return b
+
+func _card_brief(card: CardData) -> String:
+	if card is UnitCardData:
+		return "%s/%s" % [card.troop_type, card.attack_range]
+	return card.card_type

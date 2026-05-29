@@ -64,6 +64,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "RunMap + run_map.tscn main_scene + 노드별 WaveFactory + battle→map 복귀. test_run_map 20단언 추가, ./init.sh 96단언 green, run_map/battle 부팅 스모크 OK."
+    },
+    {
+      "id": "feat-008",
+      "name": "맵 노드 다양화",
+      "description": "비전투 노드 추가 — REWARD(전투 없이 카드 +1)·SUPPLY(런 지휘력 영구 +3). RunMap NodeType 5종 + is_battle, RunState command_points, run_map 오버레이로 해결. 스펙 docs/specs/feat-008.md.",
+      "dependencies": ["feat-007"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "RunMap NodeType 5종(+REWARD/SUPPLY)·is_battle·가중 생성, RunState command_points + battle.gd가 런 지휘력 사용, run_map 비전투 오버레이(보상 선택/보급 확인)→막 진행. test_map_nodes 29단언. ./init.sh 125단언 green, 회귀·스코프 준수."
     }
   ]
 }

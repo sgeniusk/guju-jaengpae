@@ -7,11 +7,13 @@ var deck: Array[StringName] = []
 var wave_index: int = 0
 var started: bool = false
 var map := RunMap.new()
+var command_points: int = 12
 
 func start_run(lord: LordData, catalog: CardCatalog) -> void:
 	lord_id = lord.id if lord != null else &""
 	deck = catalog.get_lord_deck(lord)
 	wave_index = 0
+	command_points = 12
 	started = true
 
 func has_card(id: StringName) -> bool:
@@ -19,3 +21,6 @@ func has_card(id: StringName) -> bool:
 
 func add_card(id: StringName) -> void:
 	deck.append(id)
+
+func add_command_points(n: int) -> void:
+	command_points += n

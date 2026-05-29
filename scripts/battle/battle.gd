@@ -17,6 +17,7 @@ var _phase: int = Phase.DEPLOY
 var _sim := BattleSim.new()
 var _lord: LordData
 var _points: int = START_POINTS
+var _max_points: int = START_POINTS
 var _vis: Dictionary = {}            # BattleUnit -> { root: Control, hp: ColorRect }
 var _lane_count := [0, 0, 0]         # 레인별 아군 배치 수(겹침 방지 오프셋)
 var _node_completed := false
@@ -32,6 +33,8 @@ var _overlay: Control            # 승리 보상 / 패배 재시도 패널
 func _ready() -> void:
 	_lord = CardLibrary.get_lord(LORD_ID)
 	RunManager.ensure_started(LORD_ID)
+	_max_points = RunManager.get_command_points()
+	_points = _max_points
 	_build_field()
 	_build_panel()
 	if _lord == null:
@@ -361,4 +364,4 @@ func _card_brief(card: CardData) -> String:
 	return card.card_type
 
 func _update_points() -> void:
-	_points_label.text = "지휘력 — %d / %d" % [_points, START_POINTS]
+	_points_label.text = "지휘력 — %d / %d" % [_points, _max_points]
