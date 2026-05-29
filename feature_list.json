@@ -82,6 +82,24 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "SkillSystem(5스킬 표대로) + BattleUnit skill_id/skill_cooldown(from_card 운반, .tres 불변) + BattleSim 발동·last_skill_casts + battle.gd 시전자 플래시. test_skills 51단언. ./init.sh 176단언 green(승리 스모크 19.2→14.2s, 스킬 실발동), 회귀·스코프 준수. 장비 호통은 placeholder(진짜 도발은 feat-011)."
+    },
+    {
+      "id": "feat-010",
+      "name": "병종 상성",
+      "description": "병종 간 상성 배수를 일반 공격 피해에 적용 — TypeChart(보병>기병>궁병/노병>보병 삼각) + BattleUnit troop_type + wave 적 troop_type. 스킬 피해는 v0.3 평면 유지. 스펙 docs/specs/feat-010.md.",
+      "dependencies": ["feat-009"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "TypeChart(삼각 1.5/0.75/1.0) + BattleUnit troop_type(from_card 운반) + wave 적 병종 지정 + BattleSim 일반공격 배수(스킬 평면 유지). test_type_chart 60단언. ./init.sh 236단언 green(승리 14.2→13.1s), 회귀·스코프 준수."
+    },
+    {
+      "id": "feat-011",
+      "name": "상태이상: 도발·약화",
+      "description": "상태 프레임워크 + TAUNT(도발)·WEAKEN(약화). 장비 호통을 placeholder(피해+회복)에서 진짜 도발+약화로 교체. DOT·SLOW는 후속. 스펙 docs/specs/feat-011.md.",
+      "dependencies": ["feat-009", "feat-010"],
+      "status": "ready",
+      "owner": "Codex",
+      "evidence": ""
     }
   ]
 }

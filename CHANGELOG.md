@@ -57,6 +57,13 @@
 - **메인 씬 변경** — `run_map.tscn`이 main_scene. 맵 화면은 현재 막만 클릭 가능하고 덱 크기·현재 막을 표시한다. `battle.tscn`은 노드 없이 standalone 부팅 시 기본 파도를 사용한다.
 - **검증** — TDD RED 확인 후 `test/test_run_map.gd` 20단언 추가. `./init.sh` 전체 green: 카드/군주·sim·reward 스모크, run_map/battle 각각 30프레임 부팅, 6파일 96단언 통과.
 
+## 2026-05-30 — feat-010 병종 상성 + 九州 6국 캔온 (done · Codex 구현)
+- **TypeChart** — 상성 삼각(보병>기병>궁병/노병>보병), STRONG 1.5 / WEAK 0.75 / NEUTRAL 1.0. 수군·판타지 중립.
+- **BattleUnit.troop_type** + from_card 운반, WaveFactory 적 병종 지정(사령병 infantry·요사 궁수 archer·마군 정예 cavalry), BattleSim 일반공격에만 배수 적용(스킬 피해 평면 유지).
+- **WaveFactory 확장** — waves_for_node(BATTLE/ELITE/BOSS), elite_waves(스케일링), boss_waves(마왕 동탁 2300hp + 호위). (feat-007 이후 노드별 파도 정착.)
+- **검증** — Codex TDD. test_type_chart 60단언. ./init.sh 236단언(176+60) green, 회귀 0. 승리 스모크 14.2→13.1s. 편집장 독립 재검증 + git diff 스코프.
+- **세계관 캔온(편집장)** — `docs/worldview.md`에 九州 6국 제안 정본화. 천계(곤륜선맹·봉래방사·자미성궁/남화노선·우길·좌자)·마계(황천교·낙양마궁·만요동천/장각·동탁·구려요왕). 현재 적 사령병=황천교. nation id는 v0.6에서 CardVocab 추가. (사용자 승인 대기.)
+
 ## 2026-05-30 — feat-009 장수 스킬 발동 (done · Codex 구현, v0.3 시작)
 - **SkillSystem** — 코드 레지스트리(class_name). 5장수 결정적 스킬 — 관우 일섬(가까운 2적 80)·황충 백보천양(먼 적 110)·제갈량 팔진도(레인 전체 45)·조운 단기필마(220 돌진+경로 60)·장비 호통(전체 25+자가회복 80), 쿨다운 표대로.
 - **BattleUnit** — skill_id·skill_cooldown 보유, from_card가 .tres skill_id 운반. 데이터 스키마·카드 .tres 불변(skill_id를 코드에서 해석).

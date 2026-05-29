@@ -55,7 +55,8 @@ func step(delta: float) -> void:
 		var target := _nearest_enemy(u)
 		if target != null and absf(target.x - u.x) <= _reach_of(u):
 			if u.cooldown <= 0.0:
-				target.take_damage(u.attack)
+				var dmg := int(round(u.attack * TypeChart.multiplier(u.troop_type, target.troop_type)))
+				target.take_damage(dmg)
 				u.cooldown = u.attack_interval
 		else:
 			_advance(u, delta)
