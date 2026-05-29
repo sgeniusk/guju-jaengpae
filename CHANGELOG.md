@@ -43,6 +43,13 @@
 - **편집장 독립 검증** — `./init.sh` 전체 green 재현, 프로덕션 코드(scripts/resources/scenes/project.godot) 미수정 확인(mtime 검사).
 - 외주 — Codex `gpt-5.5` xhigh, 샌드박스 `workspace-write`. 네트워크·서드파티 0.
 
+## 2026-05-30 — feat-006 다중 파도 (done · Codex 구현, v0.2 시작)
+- **BattleSim 파도 큐** — `pending_waves`·`wave_index`·`wave_total`·`set_waves()`·`_spawn_next_wave()`. 현재 파도 전멸 시 대기 파도 즉시 스폰, **마지막 파도 이후에만 PLAYER_WIN**. 단일 파도(add_unit) 경로 보존.
+- **wave_factory** — `default_waves()` 3파도(증원·요사 궁수·정예 "마군 정예"로 점증). `wave_one()` 유지.
+- **battle.gd** — `set_waves(default_waves())`, 새 파도 유닛 자동 시각화(`_sync_visuals` active-set 방식), `파도 N / M` 표시. 생존 유닛 HP 이어짐(회복 없음).
+- **검증** — Codex TDD(RED→GREEN). `test/test_multiwave.gd` 16단언. `./init.sh` 76단언(60+16) green, 회귀 0. 편집장 독립 재검증 + git diff 스코프 확인(battle 3파일+테스트만).
+- 외주 — Codex `gpt-5.5` xhigh 샌드박스. 밸런스는 임시.
+
 ## 2026-05-29 — v0.1 코드 완성
 - v0.1 5피처(셋업·카드 스키마·오토배틀 코어·전리 보상·검증 커버리지) 전부 done. `./init.sh` 한 방으로 import + 데이터/전투/보상 스모크 + 씬 부팅 + 60 단언 단위 테스트가 모두 통과.
 - 잔여 — 시각 플레이 QA(클릭 배치→전투→보상→다음 전투)는 화면 실행으로 사람/agy 확인 필요. 아직 커밋 0(체크포인트 권장).

@@ -22,6 +22,7 @@ var _lane_count := [0, 0, 0]         # 레인별 아군 배치 수(겹침 방지
 
 var _units_layer: Control
 var _points_label: Label
+var _wave_label: Label
 var _hint_label: Label
 var _start_button: Button
 var _result_label: Label
@@ -103,6 +104,12 @@ func _build_panel() -> void:
 	panel.add_child(_points_label)
 	_update_points()
 
+	_wave_label = Label.new()
+	_wave_label.add_theme_font_size_override("font_size", 22)
+	_wave_label.visible = false
+	panel.add_child(_wave_label)
+	_update_wave_label()
+
 	var guide := Label.new()
 	guide.text = "카드 오른쪽 1·2·3 버튼으로 레인에 배치하세요."
 	guide.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -168,10 +175,9 @@ func _on_start_pressed() -> void:
 	if _sim.player_units.is_empty():
 		_hint_label.text = "최소 한 유닛을 배치해야 합니다."
 		return
-	for e in WaveFactory.wave_one():
-		_sim.add_unit(e)
-		_spawn_visual(e)
+	_sim.set_waves(WaveFactory.default_waves())
 	_phase = Phase.BATTLE
+	_sync_visuals()
 	_start_button.disabled = true
 	_hint_label.text = "전투 중…"
 
@@ -207,21 +213,47 @@ func _spawn_visual(u: BattleUnit) -> void:
 	_position_visual(u)
 
 func _sync_visuals() -> void:
+	var active_units := _sim_units()
+	var active := {}
+	for u in active_units:
+		if u == null or not u.is_alive():
+			continue
+		active[u] = true
+		if not _vis.has(u):
+			_spawn_visual(u)
 	for u in _vis.keys():
-		if not u.is_alive():
+		if not active.has(u) or not u.is_alive():
 			_vis[u]["root"].queue_free()
 			_vis.erase(u)
-		else:
+	for u in active_units:
+		if _vis.has(u):
 			_position_visual(u)
 			_vis[u]["hp"].size.x = (UNIT_W - 6.0) * u.hp_ratio()
+	_update_wave_label()
 
 func _position_visual(u: BattleUnit) -> void:
 	var sx := _map_x(u.x) - UNIT_W * 0.5
 	var sy := float(LANE_Y[u.lane]) - UNIT_H * 0.5
 	_vis[u]["root"].position = Vector2(sx, sy)
 
+func _sim_units() -> Array[BattleUnit]:
+	var units: Array[BattleUnit] = []
+	units.append_array(_sim.player_units)
+	units.append_array(_sim.enemy_units)
+	return units
+
 func _map_x(sim_x: float) -> float:
 	return FIELD_LEFT + (sim_x / BattleSim.LANE_LENGTH) * (FIELD_RIGHT - FIELD_LEFT)
+
+func _update_wave_label() -> void:
+	if _wave_label == null:
+		return
+	if _sim.wave_total <= 0:
+		_wave_label.text = "파도 - / -"
+		_wave_label.visible = false
+		return
+	_wave_label.text = "파도 %d / %d" % [_sim.wave_index, _sim.wave_total]
+	_wave_label.visible = _phase != Phase.DEPLOY
 
 # ── 종료 · 전리(보상) ───────────────────────────────────────
 func _end_battle() -> void:

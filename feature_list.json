@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.1 — Godot에서 오토배틀러 한 판이 돈다 (군주1·장수3·병종3 → 적 파도1 자동 교전 → 승리 시 카드1 보상)",
+  "milestone": "v0.2 — 로그라이크 골격: 한 전투에 다중 파도, 노드 맵으로 런 진행 (v0.1 오토배틀 루프 done)",
   "features": [
     {
       "id": "feat-001",
@@ -46,6 +46,24 @@
       "status": "done",
       "owner": "Codex→agy",
       "evidence": "리포 내장 TestCase/runner + 4개 단위 테스트(60 assertions). 임시 실패 테스트로 init.sh 비-0 전파 확인(INIT_STATUS=1), 제거 후 ./init.sh 전체 통과."
+    },
+    {
+      "id": "feat-006",
+      "name": "다중 파도 (multi-wave)",
+      "description": "한 전투가 여러 파도를 순차로 치른다. BattleSim에 파도 큐, 마지막 파도까지 막아야 승리. 생존 유닛 이어짐(회복 없음). battle.gd 새 파도 자동 시각화 + 파도 N/M 표시. 스펙 docs/specs/feat-006.md.",
+      "dependencies": ["feat-003"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "BattleSim 파도 큐(set_waves/_spawn_next_wave) + wave_factory default_waves 3파도(정예 마군 포함) + battle.gd 자동 시각화·파도 N/M. test_multiwave 16단언(다음파도 스폰·전체파도 승리·단일파도 호환·후속파도 패배). ./init.sh 76단언 green, 회귀 없음, 스코프 준수."
+    },
+    {
+      "id": "feat-007",
+      "name": "로그라이크 맵",
+      "description": "노드 맵으로 런 진행 — 전투/정예/보상/이벤트 노드, 분기 경로. RunState가 맵 위치 추적, 전투→맵 복귀→다음 노드. 새 맵 씬. 스펙은 feat-006 검증 후 작성.",
+      "dependencies": ["feat-006"],
+      "status": "not-started",
+      "owner": "Codex",
+      "evidence": ""
     }
   ]
 }

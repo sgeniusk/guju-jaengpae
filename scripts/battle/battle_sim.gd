@@ -11,6 +11,9 @@ const RANGED_REACH := 280.0
 
 var player_units: Array[BattleUnit] = []
 var enemy_units: Array[BattleUnit] = []
+var pending_waves: Array = []
+var wave_index := 0
+var wave_total := 0
 var result: int = Result.ONGOING
 var elapsed: float = 0.0
 
@@ -21,6 +24,14 @@ func add_unit(u: BattleUnit) -> void:
 		player_units.append(u)
 	else:
 		enemy_units.append(u)
+
+func set_waves(waves: Array) -> void:
+	pending_waves = waves.duplicate()
+	wave_total = pending_waves.size()
+	wave_index = 0
+	result = Result.ONGOING
+	if not pending_waves.is_empty():
+		_spawn_next_wave()
 
 func is_over() -> bool:
 	return result != Result.ONGOING
@@ -51,6 +62,14 @@ func run_to_completion(dt: float = 0.1, max_time: float = 120.0) -> int:
 		step(dt)
 		t += dt
 	return result
+
+func _spawn_next_wave() -> void:
+	if pending_waves.is_empty():
+		return
+	var next_wave: Array = pending_waves.pop_front()
+	for u in next_wave:
+		add_unit(u)
+	wave_index += 1
 
 func _reach_of(u: BattleUnit) -> float:
 	return RANGED_REACH if u.attack_range == "ranged" else MELEE_REACH
@@ -84,6 +103,9 @@ func _update_result() -> void:
 			return
 	# 승리 — 적 전멸
 	if enemy_units.is_empty():
+		if not pending_waves.is_empty():
+			_spawn_next_wave()
+			return
 		result = Result.PLAYER_WIN
 		return
 	# 패배 — 아군 전멸(적 잔존)

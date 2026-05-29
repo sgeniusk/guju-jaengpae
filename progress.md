@@ -3,9 +3,9 @@
 이 파일은 재시작 상태용이다. 전체 이력이 아니다. 오래된 증거는 CHANGELOG·reports·docs로 옮긴다. (≤120줄)
 
 ## 현재 상태 (Current State)
-**마지막 갱신 (Last Updated)** — 2026-05-29
-**활성 피처 (Active Feature)** — 없음 (feat-005 완료)
-**현재 목표 (Current Objective)** — 리포 내장 단위 테스트 하네스까지 v0.1 검증 경로 완성.
+**마지막 갱신 (Last Updated)** — 2026-05-30
+**활성 피처 (Active Feature)** — feat-007 로그라이크 맵 (다음 외주 예정)
+**현재 목표 (Current Objective)** — v0.2 로그라이크 골격. feat-006 다중 파도 done, 다음은 노드 맵.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -14,12 +14,14 @@
 - [x] **feat-002 카드 스키마** — CardData/UnitCardData/LordData/CardVocab + 촉 샘플. validate_cards 통과.
 - [x] **feat-003 레인 오토배틀 코어** — BattleSim(순수·결정적) + battle.tscn. sim_smoke + 부팅 스모크 통과.
 - [x] **feat-004 전리 보상** — RunState/RewardPool + RunManager. 승리→보상 선택→덱 편입→다음 전투(reload, 덱 영속). 신규 카드 4종. reward_smoke 통과. **v0.1 루프 완성.**
-- [x] **feat-005 검증 커버리지** — test/TestCase + runner + BattleUnit/BattleSim/CardCatalog/RunState/RewardPool 단위 테스트 60 assertions. init.sh 내장 러너 통합.
+- [x] **feat-005 검증 커버리지** — test/TestCase + runner + 단위 테스트 60 assertions. init.sh 내장 러너 통합.
+- [x] **feat-006 다중 파도** (Codex) — BattleSim 파도 큐(set_waves/_spawn_next_wave) + wave_factory default_waves 3파도(정예 포함) + battle.gd 자동 시각화·파도 N/M. test_multiwave 16 assertions. ./init.sh 76 단언 green, 회귀 없음.
 ### 진행 중 (What's In Progress)
-- [ ] 없음
+- [ ] 없음 (feat-007 착수 대기)
 ### 다음 (What's Next)
-1. agy 플레이 QA — 클릭 배치→전투→보상 선택→다음 전투 반영을 실제 화면에서 교차검증.
-2. (v0.2+) 로그라이크 맵·메타 해금·천계/마계 6국·계략/보패 시스템.
+1. **[맵] feat-007 로그라이크 맵** — 노드 맵 런 진행. 스펙 작성 → Codex 외주.
+2. agy/사람 플레이 QA — 클릭 배치→다중 파도→보상→다음 전투를 실제 화면에서.
+3. (v0.2+) 메타 해금·천계/마계 6국·계략/보패.
 
 ## 블로커 / 리스크 (Blockers / Risks)
 - [ ] 시각 플레이 미확인 — 클릭 배치~보상~다음전투는 사람이 `godot --path .`로 확인 필요. 로직은 자동 검증됨.
@@ -31,14 +33,14 @@
 - **전투 로직/표현 분리, 적은 카드 아님, trait_id, 승=적전멸/패=기지도달·아군전멸** — 상세 CHANGELOG.
 
 ## 이번 세션 수정 파일 (Files Modified)
-- 테스트 — test/test_case.gd, test/runner.gd, test/test_battle_unit.gd, test/test_battle_sim.gd, test/test_card_catalog.gd, test/test_run_reward.gd
-- 도구 — init.sh(내장 단위 테스트 러너 호출, Godot 로그/HOME 경로를 .godot 아래로 고정)
-- 상태 — feature_list.json, progress.md
+- v0.1 — 전체 하네스·게임 코드 (커밋 283f68a)
+- feat-006 — scripts/battle/{battle_sim,wave_factory,battle}.gd, test/test_multiwave.gd, docs/specs/feat-006.md
+- 상태 — feature_list.json, progress.md, CHANGELOG.md
 
 ## 검증 증거
-- [x] 임시 실패 테스트 `test/test_tmp_failure.gd` 추가 상태에서 `./init.sh` → 단위 테스트 실패 1건, `INIT_STATUS=1` 확인. 임시 파일 제거 완료.
-- [x] `./init.sh` → import OK / 카드검증(cards 10, lords 1) / sim_smoke 승(19.2s 아군잔존 6)·패(0.1s) / reward_smoke OK / 씬 부팅 스모크 무에러 / 단위 테스트 4파일 60 assertions 통과.
-- [ ] 시각 플레이(클릭 배치→전투→보상 선택→다음 전투) → agy 또는 사람 확인 필요.
+- [x] `./init.sh` (2026-05-30) → import / 카드검증(10·1) / sim·reward 스모크 / 씬 부팅 무에러 / 단위 테스트 5파일 76 단언 통과. 종료 0.
+- [x] feat-006 회귀·스코프 — 기존 60 + multi-wave 16 = 76, 단일 파도 경로 호환. git diff로 resources/scenes/project.godot 미수정 확인.
+- [ ] 시각 플레이(클릭 배치→다중 파도→보상→다음 전투) → agy 또는 사람 확인 필요.
 
 ## 아카이브 포인터
 - 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
