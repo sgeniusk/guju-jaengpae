@@ -59,11 +59,11 @@
     {
       "id": "feat-007",
       "name": "로그라이크 맵",
-      "description": "노드 맵으로 런 진행 — 전투/정예/보상/이벤트 노드, 분기 경로. RunState가 맵 위치 추적, 전투→맵 복귀→다음 노드. 새 맵 씬. 스펙은 feat-006 검증 후 작성.",
+      "description": "노드 맵으로 런 진행 — 전투/정예/보스 노드, 막별 분기 선택. RunMap(순수) + RunState/RunManager, 노드별 파도(waves_for_node), 전투→맵 복귀→다음 막, 보스 정복/패배. run_map.tscn = main_scene. 스펙 docs/specs/feat-007.md.",
       "dependencies": ["feat-006"],
-      "status": "not-started",
+      "status": "done",
       "owner": "Codex",
-      "evidence": ""
+      "evidence": "RunMap + run_map.tscn main_scene + 노드별 WaveFactory + battle→map 복귀. test_run_map 20단언 추가, ./init.sh 96단언 green, run_map/battle 부팅 스모크 OK."
     }
   ]
 }

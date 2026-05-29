@@ -50,6 +50,13 @@
 - **검증** — Codex TDD(RED→GREEN). `test/test_multiwave.gd` 16단언. `./init.sh` 76단언(60+16) green, 회귀 0. 편집장 독립 재검증 + git diff 스코프 확인(battle 3파일+테스트만).
 - 외주 — Codex `gpt-5.5` xhigh 샌드박스. 밸런스는 임시.
 
+## 2026-05-30 — feat-007 로그라이크 맵 (done · Codex 구현)
+- **RunMap 도입** — `scripts/run/run_map.gd`(RefCounted)로 BATTLE/ELITE/BOSS 노드, 결정적 seed 생성, choose/complete/finished API를 구현. 3개 선택 막(각 2노드) + 보스 막(1노드).
+- **런 통합** — `RunState.map`과 `RunManager` 위임 API(`available_nodes`, `choose_node`, `complete_node`, `active_node_type`, `map_finished`, `reset_run`) 추가. 이미 시작한 런은 맵을 재생성하지 않는다.
+- **전투 흐름 변경** — `WaveFactory.waves_for_node()`로 일반/정예/보스 파도를 선택. battle 승리 후 보상 선택 → 노드 완료 → 지도 복귀 또는 "구주 정복!", 패배는 런 리셋 후 지도 복귀.
+- **메인 씬 변경** — `run_map.tscn`이 main_scene. 맵 화면은 현재 막만 클릭 가능하고 덱 크기·현재 막을 표시한다. `battle.tscn`은 노드 없이 standalone 부팅 시 기본 파도를 사용한다.
+- **검증** — TDD RED 확인 후 `test/test_run_map.gd` 20단언 추가. `./init.sh` 전체 green: 카드/군주·sim·reward 스모크, run_map/battle 각각 30프레임 부팅, 6파일 96단언 통과.
+
 ## 2026-05-29 — v0.1 코드 완성
 - v0.1 5피처(셋업·카드 스키마·오토배틀 코어·전리 보상·검증 커버리지) 전부 done. `./init.sh` 한 방으로 import + 데이터/전투/보상 스모크 + 씬 부팅 + 60 단언 단위 테스트가 모두 통과.
 - 잔여 — 시각 플레이 QA(클릭 배치→전투→보상→다음 전투)는 화면 실행으로 사람/agy 확인 필요. 아직 커밋 0(체크포인트 권장).

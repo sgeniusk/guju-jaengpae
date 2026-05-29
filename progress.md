@@ -4,8 +4,8 @@
 
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-05-30
-**활성 피처 (Active Feature)** — feat-007 로그라이크 맵 (다음 외주 예정)
-**현재 목표 (Current Objective)** — v0.2 로그라이크 골격. feat-006 다중 파도 done, 다음은 노드 맵.
+**활성 피처 (Active Feature)** — 없음
+**현재 목표 (Current Objective)** — v0.2 로그라이크 골격. feat-007 로그라이크 맵 구현 완료, 다음은 시각 플레이 QA와 후속 v0.2 설계.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -16,15 +16,16 @@
 - [x] **feat-004 전리 보상** — RunState/RewardPool + RunManager. 승리→보상 선택→덱 편입→다음 전투(reload, 덱 영속). 신규 카드 4종. reward_smoke 통과. **v0.1 루프 완성.**
 - [x] **feat-005 검증 커버리지** — test/TestCase + runner + 단위 테스트 60 assertions. init.sh 내장 러너 통합.
 - [x] **feat-006 다중 파도** (Codex) — BattleSim 파도 큐(set_waves/_spawn_next_wave) + wave_factory default_waves 3파도(정예 포함) + battle.gd 자동 시각화·파도 N/M. test_multiwave 16 assertions. ./init.sh 76 단언 green, 회귀 없음.
+- [x] **feat-007 로그라이크 맵** (Codex) — RunMap(결정적 노드 생성/진행) + RunState/RunManager 맵 위임 + BATTLE/ELITE/BOSS 파도 + run_map.tscn main_scene + battle 승패 후 맵 복귀. test_run_map 20 assertions. ./init.sh 96 단언 green, run_map/battle 부팅 스모크 OK.
 ### 진행 중 (What's In Progress)
-- [ ] 없음 (feat-007 착수 대기)
+- [ ] 없음
 ### 다음 (What's Next)
-1. **[맵] feat-007 로그라이크 맵** — 노드 맵 런 진행. 스펙 작성 → Codex 외주.
-2. agy/사람 플레이 QA — 클릭 배치→다중 파도→보상→다음 전투를 실제 화면에서.
+1. agy/사람 플레이 QA — 맵 노드 선택→전투→보상→지도 복귀→보스 정복/패배를 실제 화면에서.
+2. 후속 v0.2 설계 — 맵 노드 다양화(REWARD/EVENT), 보스 밸런스, 선택 경로 기록.
 3. (v0.2+) 메타 해금·천계/마계 6국·계략/보패.
 
 ## 블로커 / 리스크 (Blockers / Risks)
-- [ ] 시각 플레이 미확인 — 클릭 배치~보상~다음전투는 사람이 `godot --path .`로 확인 필요. 로직은 자동 검증됨.
+- [ ] 시각 플레이 미확인 — 맵 노드 선택~전투~보상~지도 복귀~보스 정복은 사람이 `godot --path .`로 확인 필요. 로직은 자동 검증됨.
 - [ ] Godot 4.6.3 macOS headless가 CA 인증서 조회 경고(`get_system_ca_certificates`)를 출력함. 종료 코드는 0이고 테스트에는 영향 없음.
 
 ## 내린 결정
@@ -35,15 +36,17 @@
 ## 이번 세션 수정 파일 (Files Modified)
 - v0.1 — 전체 하네스·게임 코드 (커밋 283f68a)
 - feat-006 — scripts/battle/{battle_sim,wave_factory,battle}.gd, test/test_multiwave.gd, docs/specs/feat-006.md
+- feat-007 — scripts/run/run_map.gd, scripts/screens/run_map.gd, scenes/screens/run_map.tscn, test/test_run_map.gd, scripts/run/run_state.gd, scripts/autoloads/run_manager.gd, scripts/battle/{wave_factory,battle}.gd, project.godot, init.sh
 - 상태 — feature_list.json, progress.md, CHANGELOG.md
 
 ## 검증 증거
 - [x] `./init.sh` (2026-05-30) → import / 카드검증(10·1) / sim·reward 스모크 / 씬 부팅 무에러 / 단위 테스트 5파일 76 단언 통과. 종료 0.
 - [x] feat-006 회귀·스코프 — 기존 60 + multi-wave 16 = 76, 단일 파도 경로 호환. git diff로 resources/scenes/project.godot 미수정 확인.
-- [ ] 시각 플레이(클릭 배치→다중 파도→보상→다음 전투) → agy 또는 사람 확인 필요.
+- [x] `./init.sh` (2026-05-30, feat-007) → import / 카드검증(10·1) / sim·reward 스모크 / main run_map 30프레임 / battle 30프레임 / 단위 테스트 6파일 96 단언 통과. 종료 0.
+- [ ] 시각 플레이(맵 선택→다중 파도→보상→지도 복귀→보스 정복) → agy 또는 사람 확인 필요.
 
 ## 아카이브 포인터
 - 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh`로 베이스라인 확인 후 agy 플레이 QA 또는 v0.2 기획 피처를 선택한다. 단위 테스트는 외부 프레임워크 없이 `res://test/runner.gd`가 `test/test_*.gd`를 수집한다.
+`./init.sh`로 베이스라인 확인 후 agy 플레이 QA 또는 v0.2 기획 피처를 선택한다. 단위 테스트는 외부 프레임워크 없이 `res://test/runner.gd`가 `test/test_*.gd`를 수집한다. 메인 씬은 `run_map.tscn`이다.

@@ -48,16 +48,30 @@ if [ -f tools/reward_smoke.gd ]; then
   "$GODOT_BIN" --headless --path . --log-file "$PWD/.godot/init-reward-smoke.log" --script res://tools/reward_smoke.gd
 fi
 
-# 메인 씬 부팅 스모크 — battle.tscn이 헤드리스로 스크립트 에러 없이 30프레임 도는지
-if [ -f scenes/battle/battle.tscn ]; then
-  echo "=== 메인 씬 부팅 스모크 (30 프레임) ==="
-  BOOT_OUT="$("$GODOT_BIN" --headless --quit-after 30 --path . --log-file "$PWD/.godot/init-boot-smoke.log" 2>&1 || true)"
-  if echo "$BOOT_OUT" | grep -qiE "SCRIPT ERROR|Parse Error|Nonexistent function|Invalid (call|access|get)|Cannot call"; then
-    echo "$BOOT_OUT" | grep -iE "SCRIPT ERROR|Parse Error|Nonexistent|Invalid|Cannot call" | head
-    echo "❌ 씬 부팅 중 스크립트 에러"
+# 씬 부팅 스모크 — 메인 맵과 독립 전투 씬이 헤드리스로 30프레임 도는지
+run_boot_smoke() {
+  local label="$1"
+  local log_file="$2"
+  local scene_path="${3:-}"
+  local boot_out
+  echo "=== ${label} 부팅 스모크 (30 프레임) ==="
+  if [ -n "$scene_path" ]; then
+    boot_out="$("$GODOT_BIN" --headless --quit-after 30 --path . --log-file "$log_file" "$scene_path" 2>&1 || true)"
+  else
+    boot_out="$("$GODOT_BIN" --headless --quit-after 30 --path . --log-file "$log_file" 2>&1 || true)"
+  fi
+  if echo "$boot_out" | grep -qiE "SCRIPT ERROR|Parse Error|Nonexistent function|Invalid (call|access|get)|Cannot call"; then
+    echo "$boot_out" | grep -iE "SCRIPT ERROR|Parse Error|Nonexistent|Invalid|Cannot call" | head
+    echo "❌ ${label} 부팅 중 스크립트 에러"
     exit 1
   fi
-  echo "씬 부팅 OK (스크립트 에러 없음)"
+  echo "${label} OK (스크립트 에러 없음)"
+}
+
+run_boot_smoke "메인 씬(run_map.tscn)" "$PWD/.godot/init-boot-main.log"
+
+if [ -f scenes/battle/battle.tscn ]; then
+  run_boot_smoke "전투 씬(battle.tscn)" "$PWD/.godot/init-boot-battle.log" "res://scenes/battle/battle.tscn"
 fi
 
 # 단위 테스트 — 리포 내장 러너

@@ -19,6 +19,7 @@ var _lord: LordData
 var _points: int = START_POINTS
 var _vis: Dictionary = {}            # BattleUnit -> { root: Control, hp: ColorRect }
 var _lane_count := [0, 0, 0]         # 레인별 아군 배치 수(겹침 방지 오프셋)
+var _node_completed := false
 
 var _units_layer: Control
 var _points_label: Label
@@ -175,7 +176,7 @@ func _on_start_pressed() -> void:
 	if _sim.player_units.is_empty():
 		_hint_label.text = "최소 한 유닛을 배치해야 합니다."
 		return
-	_sim.set_waves(WaveFactory.default_waves())
+	_sim.set_waves(WaveFactory.waves_for_node(RunManager.active_node_type()))
 	_phase = Phase.BATTLE
 	_sync_visuals()
 	_start_button.disabled = true
@@ -266,7 +267,7 @@ func _end_battle() -> void:
 		_hint_label.text = "전리품을 고르세요."
 		EventBus.battle_won.emit()
 	else:
-		_result_label.text = "패배…"
+		_result_label.text = "런 실패"
 		_result_label.modulate = Color(1.0, 0.5, 0.5)
 		_hint_label.text = "전투 종료."
 		EventBus.battle_lost.emit()
@@ -275,14 +276,19 @@ func _end_battle() -> void:
 func _build_outcome_ui(win: bool) -> void:
 	var box := _new_overlay_box()
 	if not win:
-		box.add_child(_make_button("다시 시도", _restart_run))
+		var fail := Label.new()
+		fail.text = "런 실패"
+		fail.add_theme_font_size_override("font_size", 24)
+		box.add_child(fail)
+		box.add_child(_make_button("새 런", _restart_run))
 		return
 	var candidates := RunManager.reward_candidates(3)
 	if candidates.is_empty():
 		var none := Label.new()
 		none.text = "획득 가능한 보상이 없습니다."
 		box.add_child(none)
-		box.add_child(_make_button("다음 전투", _next_battle))
+		_complete_node_once()
+		_add_map_or_conquest_button(box)
 		return
 	var head := Label.new()
 	head.text = "전리품 — 한 장을 골라 덱에 넣으세요"
@@ -298,19 +304,37 @@ func _pick_reward(id: StringName) -> void:
 	var got_name := card.display_name if card != null else String(id)
 	EventBus.card_rewarded.emit(id)
 	_hint_label.text = "획득 — %s! 덱에 편입되었습니다." % got_name
+	_complete_node_once()
 	var box := _new_overlay_box()
 	var got := Label.new()
 	got.text = "획득 — %s" % got_name
 	got.add_theme_font_size_override("font_size", 24)
 	box.add_child(got)
-	box.add_child(_make_button("다음 전투 (덱 %d장)" % RunManager.get_deck().size(), _next_battle))
+	_add_map_or_conquest_button(box)
 
-func _next_battle() -> void:
-	get_tree().reload_current_scene()   # RunManager(오토로드)가 덱을 유지 → 보상이 반영됨
+func _add_map_or_conquest_button(box: VBoxContainer) -> void:
+	if RunManager.map_finished():
+		_result_label.text = "구주 정복!"
+		var done := Label.new()
+		done.text = "구주 정복!"
+		done.add_theme_font_size_override("font_size", 30)
+		box.add_child(done)
+		box.add_child(_make_button("새 런", _restart_run))
+	else:
+		box.add_child(_make_button("지도로 (덱 %d장)" % RunManager.get_deck().size(), _go_to_run_map))
+
+func _complete_node_once() -> void:
+	if _node_completed:
+		return
+	RunManager.complete_node()
+	_node_completed = true
+
+func _go_to_run_map() -> void:
+	GameManager.change_scene("res://scenes/screens/run_map.tscn")
 
 func _restart_run() -> void:
-	RunManager.reset()
-	get_tree().reload_current_scene()
+	RunManager.reset_run()
+	GameManager.change_scene("res://scenes/screens/run_map.tscn")
 
 # ── 헬퍼 ────────────────────────────────────────────────────
 func _new_overlay_box() -> VBoxContainer:
