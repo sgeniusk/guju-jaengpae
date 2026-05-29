@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+# Node / web
+node_modules/
+dist/
+.env
+# Godot
+.godot/
+*.tmp
+export_presets.cfg
+# Unity
+Library/
+Temp/
+Obj/
+Build/
+Logs/
+# 산출물·로그
+*.log
+build/
+out/
+# 에이전트 도구 로컬 상태
+.omc/
+.claude/settings.local.json

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="UnitCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/unit_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"troop_infantry"
+display_name = "보병"
+realm = "mortal"
+nation = &"shu"
+card_type = "troop"
+cost = 1
+fantasy_tier = "historical"
+description = "전열을 지키는 기본 보병. 값싸고 균형 잡힌 근접 병종."
+troop_type = "infantry"
+max_hp = 140
+attack = 16
+attack_interval = 1.2
+attack_range = "melee"
+move_speed = 40.0
+skill_id = &""
+skill_text = ""

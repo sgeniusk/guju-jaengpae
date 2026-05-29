@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="LordData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/lord_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lord_liubei"
+display_name = "유비"
+realm = "mortal"
+nation = &"shu"
+trait_id = &"trait_rende"
+trait_name = "인덕(仁德)"
+trait_text = "아군 병종의 시작 체력 +15%. 덕으로 사람을 모은다."
+starting_general_ids = PackedStringArray("general_guanyu", "general_zhangfei", "general_zhugeliang")
+starting_troop_ids = PackedStringArray("troop_infantry", "troop_archer", "troop_cavalry")

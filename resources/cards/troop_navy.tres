@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="UnitCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/unit_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"troop_navy"
+display_name = "수군"
+realm = "mortal"
+nation = &"shu"
+card_type = "troop"
+cost = 2
+fantasy_tier = "romance"
+description = "강을 누비는 수전(水戰) 병종. 단단하고 끈질기게 전열을 버틴다."
+troop_type = "navy"
+max_hp = 150
+attack = 20
+attack_interval = 1.2
+attack_range = "melee"
+move_speed = 36.0
+skill_id = &""
+skill_text = ""

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="UnitCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/unit_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"general_huangzhong"
+display_name = "황충"
+realm = "mortal"
+nation = &"shu"
+card_type = "general"
+cost = 3
+fantasy_tier = "romance"
+description = "촉의 노장(老將) 명궁. 정군산에서 하후연을 벤 백발백중의 사수."
+troop_type = "archer"
+max_hp = 160
+attack = 50
+attack_interval = 1.5
+attack_range = "ranged"
+move_speed = 30.0
+skill_id = &"skill_baibu_chuanyang"
+skill_text = "백보천양 — 가장 먼 적을 정확히 노려 큰 피해를 준다."

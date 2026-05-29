@@ -1,0 +1,57 @@
+# 카드·군주 Resource를 id로 조회하는 카탈로그. 오토로드(CardLibrary)와 헤드리스 도구가 공유하는 순수 로직.
+class_name CardCatalog
+extends RefCounted
+
+const CARDS_DIR := "res://resources/cards"
+const LORDS_DIR := "res://resources/lords"
+
+var cards: Dictionary = {}   # StringName -> CardData
+var lords: Dictionary = {}   # StringName -> LordData
+
+func load_all() -> void:
+	cards.clear()
+	lords.clear()
+	_load_dir(CARDS_DIR, cards)
+	_load_dir(LORDS_DIR, lords)
+
+func _load_dir(dir_path: String, target: Dictionary) -> void:
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		push_error("카탈로그 디렉토리 열기 실패: %s" % dir_path)
+		return
+	dir.list_dir_begin()
+	var f := dir.get_next()
+	while f != "":
+		if not dir.current_is_dir() and f.ends_with(".tres"):
+			var res = ResourceLoader.load(dir_path + "/" + f)
+			if res != null and String(res.get("id")) != "":
+				target[StringName(res.get("id"))] = res
+		f = dir.get_next()
+	dir.list_dir_end()
+
+func get_card(id: StringName) -> CardData:
+	return cards.get(id, null)
+
+func get_lord(id: StringName) -> LordData:
+	return lords.get(id, null)
+
+# 군주의 시작 덱을 카드 id 배열로 (장수 먼저, 병종 다음)
+func get_lord_deck(lord: LordData) -> Array[StringName]:
+	var deck: Array[StringName] = []
+	if lord == null:
+		return deck
+	for g in lord.starting_general_ids:
+		deck.append(StringName(g))
+	for t in lord.starting_troop_ids:
+		deck.append(StringName(t))
+	return deck
+
+# 군주 특성을 반영해 아군 유닛을 생성한다. (인덕 = 병종 시작 체력 +15%)
+func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData) -> BattleUnit:
+	var card := get_card(card_id)
+	if card == null or not (card is UnitCardData):
+		return null
+	var hp_mult := 1.0
+	if lord != null and lord.trait_id == &"trait_rende" and card.card_type == "troop":
+		hp_mult = 1.15
+	return BattleUnit.from_card(card, BattleUnit.Team.PLAYER, lane, x, hp_mult)

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="UnitCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/unit_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"general_zhugeliang"
+display_name = "제갈량"
+realm = "mortal"
+nation = &"shu"
+card_type = "general"
+cost = 4
+fantasy_tier = "mythic"
+description = "촉의 군사(軍師). 선술·기문둔갑을 다루는 도사 계열의 책사."
+troop_type = "fantasy"
+max_hp = 180
+attack = 44
+attack_interval = 1.6
+attack_range = "ranged"
+move_speed = 30.0
+skill_id = &"skill_qimen_bagua"
+skill_text = "기문둔갑 팔진도 — 진법을 펼쳐 범위 내 적을 가두고 지속 피해를 준다."

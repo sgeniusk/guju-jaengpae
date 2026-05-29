@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="UnitCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/unit_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"general_zhaoyun"
+display_name = "조운"
+realm = "mortal"
+nation = &"shu"
+card_type = "general"
+cost = 4
+fantasy_tier = "mythic"
+description = "촉의 오호대장군. 장판파에서 단기필마로 아두를 구한 상산의 호장."
+troop_type = "cavalry"
+max_hp = 240
+attack = 48
+attack_interval = 1.0
+attack_range = "melee"
+move_speed = 60.0
+skill_id = &"skill_changban_charge"
+skill_text = "단기필마 — 적진 깊숙이 돌격해 경로의 적을 밀어내며 벤다."

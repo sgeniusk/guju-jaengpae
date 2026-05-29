@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="UnitCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/unit_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"troop_crossbow"
+display_name = "노병"
+realm = "mortal"
+nation = &"shu"
+card_type = "troop"
+cost = 2
+fantasy_tier = "historical"
+description = "쇠뇌로 무장한 원거리 병종. 연사는 느리지만 한 발의 위력이 크다."
+troop_type = "crossbow"
+max_hp = 100
+attack = 34
+attack_interval = 1.6
+attack_range = "ranged"
+move_speed = 30.0
+skill_id = &""
+skill_text = ""
