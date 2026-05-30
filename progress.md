@@ -4,8 +4,8 @@
 
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-05-30
-**활성 피처 (Active Feature)** — feat-011 상태이상(도발·약화) (다음 외주)
-**현재 목표 (Current Objective)** — v0.3 전투 깊이 마무리. 스킬·상성 done, 다음 상태이상(장비 호통→진짜 도발). 로드맵 — docs/roadmap.md.
+**활성 피처 (Active Feature)** — feat-012 그리드 전장 전환 (Codex 진행 중)
+**현재 목표 (Current Objective)** — 🔀 레인→그리드 전환(Nine Kings 정합). v0.3 전투깊이(스킬·상성·상태) done. 롤백 5b61aa1. 로드맵 — docs/roadmap.md.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -14,14 +14,15 @@
 - [x] **feat-006 다중 파도** (Codex) — BattleSim 파도 큐 + default_waves 3파도 + battle 자동 시각화·파도 N/M. 커밋 7eee2f6.
 - [x] **feat-007 로그라이크 맵** (Codex) — RunMap + run_map.tscn main_scene + 노드별 파도 + battle↔map 복귀. 커밋 5a787d9.
 - [x] **feat-008 맵 노드 다양화** (Codex) — NodeType 5종(보상·보급) + command_points + run_map 오버레이. 커밋 b5a9d30. **v0.2 완성.**
-- [x] **feat-009 장수 스킬 발동** (Codex) — SkillSystem 5스킬 + BattleUnit skill_id/cooldown + BattleSim 발동·플래시. test_skills 51단언. 커밋 77b7474.
-- [x] **feat-010 병종 상성** (Codex) — TypeChart 삼각 + BattleUnit/wave troop_type + BattleSim 일반공격 배수. test_type_chart 60단언. 승리 13.1s. (커밋 예정)
+- [x] **feat-009 장수 스킬** (Codex) — SkillSystem 5스킬. 커밋 77b7474.
+- [x] **feat-010 병종 상성** (Codex) — TypeChart 삼각 + troop_type. 커밋 dd7abd8.
+- [x] **feat-011 상태이상** (Codex) — 상태 프레임워크 + 도발·약화, 장비 호통 진짜 도발화. test_status 16단언. 커밋 5b61aa1. **v0.3 전투깊이 done.**
 ### 진행 중 (What's In Progress)
-- [ ] 없음
+- [ ] **feat-012 그리드 전장 전환** (Codex) — 레인→3×3 그리드 배치 방어(NK 정합). 스펙 docs/specs/feat-012.md. task bxqkaexsa.
 ### 다음 (What's Next)
-1. **feat-011 상태이상(도발·약화)** (스펙 docs/specs/feat-011.md) — Codex 체인. 장비 호통→진짜 도발+약화. v0.3 마무리.
-2. 시각 플레이 QA(사람) — 스킬·상성·도발 체감.
-3. (이후) feat-012 DOT·SLOW → 계략·보패(v0.4) → 메타·저장(v0.5) → 6국(v0.6).
+1. feat-012 검증·커밋 → 시각 플레이 QA(사람, `godot --path .`)로 그리드 체감.
+2. feat-013 건물(building) 카드 — NK 핵심 요소.
+3. (이후) 계략·보패(v0.4) → 메타·저장(v0.5) → 천계/마계 6국(v0.6).
 
 ## 블로커 / 리스크 (Blockers / Risks)
 - [ ] 시각 QA 부채 누적 — feat-003/004/006/007/008 화면·상호작용(클릭·씬 전환·오버레이)은 헤드리스로 미확인. 사람 플레이 필요.

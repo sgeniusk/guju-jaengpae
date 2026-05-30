@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.3 — 전투 깊이: 장수 스킬 발동·병종 상성·상태이상 (v0.2 로그라이크 골격 done)",
+  "milestone": "v0.3.5 — 전장 모델 전환: 레인 → Nine Kings식 그리드 배치 (v0.3 전투깊이 done: 스킬·상성·상태)",
   "features": [
     {
       "id": "feat-001",
@@ -97,7 +97,16 @@
       "name": "상태이상: 도발·약화",
       "description": "상태 프레임워크 + TAUNT(도발)·WEAKEN(약화). 장비 호통을 placeholder(피해+회복)에서 진짜 도발+약화로 교체. DOT·SLOW는 후속. 스펙 docs/specs/feat-011.md.",
       "dependencies": ["feat-009", "feat-010"],
-      "status": "ready",
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "상태 프레임워크(add_status/tick/effective_attack/taunt_source) + 장비 호통 진짜 도발+약화(placeholder 회복 제거). test_status 16단언. ./init.sh 259단언 green. 커밋 5b61aa1. 레인 모델 마지막 피처."
+    },
+    {
+      "id": "feat-012",
+      "name": "그리드 전장 전환 (Nine Kings 정합)",
+      "description": "레인 tug-of-war → 3×3 그리드 배치 방어. 플레이어 유닛 타일 고정, 적만 컬럼 전진, 돌파 패배. BattleSim 재설계 + battle.gd 그리드 UI + 테스트 그리드화. 메타·카드·스킬·상성·상태 재사용. 스펙 docs/specs/feat-012.md. 롤백 5b61aa1.",
+      "dependencies": ["feat-011"],
+      "status": "in-progress",
       "owner": "Codex",
       "evidence": ""
     }
