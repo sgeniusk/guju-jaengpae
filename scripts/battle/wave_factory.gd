@@ -2,9 +2,9 @@
 class_name WaveFactory
 extends RefCounted
 
-# 파도 1 — 각 컬럼에 사령병(근접) 2기, 가운데 컬럼에 요사 궁수(원거리) 1기.
+# 파도 1 — 적 진영 x=FIELD_W에서 y를 3개 측면으로 나눠 등장한다.
 static func wave_one() -> Array[BattleUnit]:
-	var spawn_x := BattleSim.LANE_LENGTH
+	var spawn_x := BattleSim.FIELD_W
 	var units: Array[BattleUnit] = []
 	for lane in BattleSim.LANE_COUNT:
 		units.append(_enemy_unit(lane, spawn_x, "사령병", 90, 14, 1.2, "melee", 34.0, "infantry"))
@@ -38,7 +38,7 @@ static func elite_waves() -> Array:
 	]
 
 static func boss_waves() -> Array:
-	var spawn_x := BattleSim.LANE_LENGTH
+	var spawn_x := BattleSim.FIELD_W
 	return [[
 		_enemy_unit(1, spawn_x, "마왕 동탁", 2300, 48, 0.9, "melee", 28.0, "infantry"),
 		_enemy_unit(0, spawn_x, "마군 호위", 170, 24, 1.0, "melee", 36.0, "infantry"),
@@ -49,7 +49,7 @@ static func boss_waves() -> Array:
 	]]
 
 static func _wave_two() -> Array[BattleUnit]:
-	var spawn_x := BattleSim.LANE_LENGTH
+	var spawn_x := BattleSim.FIELD_W
 	var units: Array[BattleUnit] = []
 	for lane in BattleSim.LANE_COUNT:
 		units.append(_enemy_unit(lane, spawn_x, "사령병", 105, 16, 1.2, "melee", 36.0, "infantry"))
@@ -59,7 +59,7 @@ static func _wave_two() -> Array[BattleUnit]:
 	return units
 
 static func _wave_three() -> Array[BattleUnit]:
-	var spawn_x := BattleSim.LANE_LENGTH
+	var spawn_x := BattleSim.FIELD_W
 	var units: Array[BattleUnit] = []
 	for lane in BattleSim.LANE_COUNT:
 		units.append(_enemy_unit(lane, spawn_x, "사령병", 115, 18, 1.15, "melee", 38.0, "infantry"))
@@ -84,9 +84,10 @@ static func _scaled_wave(wave: Array, hp_mult: float, attack_mult: float) -> Arr
 			unit.card_id,
 			unit.skill_id,
 			unit.troop_type,
-			unit.row
+			unit.row,
+			unit.py
 		))
 	return out
 
 static func _enemy_unit(lane: int, x: float, display_name: String, hp: int, attack: int, interval: float, attack_range: String, speed: float, troop_type: String) -> BattleUnit:
-	return BattleUnit.make(BattleUnit.Team.ENEMY, lane, x, display_name, hp, attack, interval, attack_range, speed, &"", &"", troop_type)
+	return BattleUnit.make(BattleUnit.Team.ENEMY, lane, x, display_name, hp, attack, interval, attack_range, speed, &"", &"", troop_type, -1, BattleSim.start_y_for_col(lane))

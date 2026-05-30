@@ -1,53 +1,31 @@
-# 그리드 전장 배치, 돌파, 컬럼 방어 규칙을 검증한다.
+# 3×3 배치가 오픈필드 시작 진형 좌표로 해석되는지 검증한다.
 extends TestCase
 
-func test_player_unit_stays_on_deployed_tile_depth() -> void:
-	var sim := BattleSim.new()
-	var player := BattleUnit.make(BattleUnit.Team.PLAYER, 0, _grid_depth(1), "고정 수비병", 100, 10, 1.0, "melee", 120.0)
-	var other_column_enemy := BattleUnit.make(BattleUnit.Team.ENEMY, 1, BattleSim.LANE_LENGTH, "다른 컬럼 적", 100, 0, 1.0, "melee", 0.0)
-	sim.add_unit(player)
-	sim.add_unit(other_column_enemy)
+func test_position_for_tile_matches_spec_constants() -> void:
+	var front_left := BattleSim.position_for_tile(0, 0)
+	almost(front_left.x, 360.0, 0.001, "전열 row 0 x")
+	almost(front_left.y, 150.0, 0.001, "좌측 col 0 y")
+	var back_right := BattleSim.position_for_tile(2, 2)
+	almost(back_right.x, 120.0, 0.001, "후열 row 2 x")
+	almost(back_right.y, 450.0, 0.001, "우측 col 2 y")
 
-	sim.step(0.5)
+func test_depth_for_row_keeps_legacy_start_x_alias() -> void:
+	almost(BattleSim.depth_for_row(0), BattleSim.ROW_X[0], 0.001, "row 0 호환")
+	almost(BattleSim.depth_for_row(2), BattleSim.ROW_X[2], 0.001, "row 2 호환")
 
-	almost(player.x, _grid_depth(1), 0.001, "아군은 표적이 없어도 행군하지 않음")
-	eq(sim.result, BattleSim.Result.ONGOING, "다른 컬럼 적이 남아 있으면 전투 진행")
+func test_battle_unit_can_store_start_tile_position() -> void:
+	var start := BattleSim.position_for_tile(1, 1)
+	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 1, start.x, "중앙", 100, 0, 1.0, "melee", 0.0, &"", &"", "infantry", 1, start.y)
+	almost(unit.px, 240.0, 0.001, "중앙 row x")
+	almost(unit.py, 300.0, 0.001, "중앙 col y")
+	eq(unit.lane, 1, "lane은 시작 col 호환 필드")
+	eq(unit.row, 1, "row는 시작 행 호환 필드")
 
-func test_enemy_advances_down_column_toward_base() -> void:
-	var sim := BattleSim.new()
-	var player := BattleUnit.make(BattleUnit.Team.PLAYER, 0, _grid_depth(2), "후방 수비병", 100, 0, 999.0, "melee", 0.0)
-	var enemy := BattleUnit.make(BattleUnit.Team.ENEMY, 0, BattleSim.LANE_LENGTH, "전진 적", 100, 0, 1.0, "melee", 80.0)
-	sim.add_unit(player)
-	sim.add_unit(enemy)
-
-	sim.step(0.5)
-
-	truthy(enemy.x < BattleSim.LANE_LENGTH, "적 depth는 기지 방향으로 감소")
-	almost(player.x, _grid_depth(2), 0.001, "아군 depth는 불변")
-
-func test_empty_column_breakthrough_causes_player_loss() -> void:
-	var sim := BattleSim.new()
-	sim.add_unit(BattleUnit.make(BattleUnit.Team.PLAYER, 0, _grid_depth(0), "왼쪽 수비병", 100, 0, 999.0, "melee", 0.0))
-	sim.add_unit(BattleUnit.make(BattleUnit.Team.ENEMY, 2, BattleSim.LANE_LENGTH, "빈 컬럼 침입자", 100, 0, 1.0, "melee", 250.0))
-
-	var result := sim.run_to_completion(0.1, 10.0)
-
-	eq(result, BattleSim.Result.PLAYER_LOSE, "수비 없는 컬럼은 돌파 패배")
-
-func test_defended_column_clears_wave_without_breakthrough() -> void:
-	var sim := BattleSim.new()
-	sim.add_unit(BattleUnit.make(BattleUnit.Team.PLAYER, 1, _grid_depth(0), "강한 수비병", 300, 100, 0.2, "ranged", 0.0))
-	sim.set_waves([
-		[
-			BattleUnit.make(BattleUnit.Team.ENEMY, 1, _grid_depth(0) + 120.0, "공격대", 80, 0, 1.0, "melee", 0.0),
-		]
-	])
-
-	var result := sim.run_to_completion(0.1, 5.0)
-
-	eq(result, BattleSim.Result.PLAYER_WIN, "막힌 컬럼은 적 전멸로 파도 클리어")
-	truthy(sim.enemy_units.is_empty(), "승리 후 적 없음")
-
-func _grid_depth(row: int) -> float:
-	var depths := [360.0, 240.0, 120.0]
-	return depths[row]
+func test_wave_factory_spawns_enemies_on_enemy_side_with_distributed_y() -> void:
+	var seen_y := {}
+	for enemy in WaveFactory.wave_one():
+		almost(enemy.px, BattleSim.FIELD_W, 0.001, "적은 적 진영 x에서 등장")
+		seen_y[int(enemy.py)] = true
+	truthy(seen_y.has(150), "상단 측면 등장")
+	truthy(seen_y.has(300), "중앙 측면 등장")
+	truthy(seen_y.has(450), "하단 측면 등장")

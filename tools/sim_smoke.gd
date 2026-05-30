@@ -23,16 +23,18 @@ func _fail(msg: String) -> int:
 	printerr("  ", msg)
 	return 1
 
-# 시작 덱 전체(장수3·병종3)를 그리드 전방 2행에 배치하면 파도1을 막아낸다(승리).
+# 시작 덱 전체(장수3·병종3)를 3×3 시작 진형에 배치하면 기본 파도를 막아낸다(승리).
 func _case_player_wins(cat: CardCatalog, lord: LordData) -> int:
 	var sim := BattleSim.new()
 	var deck := cat.get_lord_deck(lord)
 	var tile := 0
 	for card_id in deck:
 		var col := tile % BattleSim.LANE_COUNT
-		var row := tile / BattleSim.LANE_COUNT
-		var unit := cat.build_player_unit(card_id, col, BattleSim.depth_for_row(row), lord)
+		var row := int(tile / BattleSim.LANE_COUNT)
+		var start := BattleSim.position_for_tile(col, row)
+		var unit := cat.build_player_unit(card_id, col, start.x, lord)
 		unit.row = row
+		unit.set_position(start.x, start.y)
 		sim.add_unit(unit)
 		tile += 1
 	sim.set_waves(WaveFactory.default_waves())
@@ -42,7 +44,7 @@ func _case_player_wins(cat: CardCatalog, lord: LordData) -> int:
 	print("  승리 시나리오 OK (%.1fs, 아군잔존 %d)" % [sim.elapsed, sim.player_units.size()])
 	return 0
 
-# 아무도 배치하지 않으면 파도1에 돌파당한다.
+# 아무도 배치하지 않으면 아군 군세 전멸 상태로 패배한다.
 func _case_player_loses(_cat: CardCatalog, _lord: LordData) -> int:
 	var sim := BattleSim.new()
 	sim.set_waves([WaveFactory.wave_one()])

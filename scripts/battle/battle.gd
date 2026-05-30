@@ -1,4 +1,4 @@
-# 전투 화면 — 군주의 덱을 3×3 그리드 타일에 배치하고 "전투 시작"을 누르면 오토배틀이 진행된다.
+# 전투 화면 — 군주의 덱을 3×3 시작 진형에 배치하고 "전투 시작"을 누르면 2D 오픈필드 오토배틀이 진행된다.
 # 순수 전투 로직은 BattleSim에 있다. 이 스크립트는 입력·배치 UI·유닛 시각화만 담당한다.
 extends Control
 
@@ -60,23 +60,26 @@ func _build_field() -> void:
 	bg.color = Color(0.09, 0.08, 0.11)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
-	# 컬럼 띠 + 기지/진입선 표시
+	var field := ColorRect.new()
+	field.color = Color(0.12, 0.15, 0.10)
+	field.position = Vector2(FIELD_LEFT, FIELD_TOP)
+	field.size = Vector2(FIELD_RIGHT - FIELD_LEFT, FIELD_BOTTOM - FIELD_TOP)
+	add_child(field)
 	for col in BattleSim.COL_COUNT:
-		var band := ColorRect.new()
-		band.color = Color(0.16, 0.15, 0.19) if col % 2 == 0 else Color(0.13, 0.12, 0.16)
-		var col_left := FIELD_LEFT + float(col) * _column_width()
-		band.position = Vector2(col_left + 8.0, FIELD_TOP)
-		band.size = Vector2(_column_width() - 16.0, FIELD_BOTTOM - FIELD_TOP)
-		add_child(band)
+		var guide := ColorRect.new()
+		guide.color = Color(0.20, 0.24, 0.16, 0.45)
+		guide.position = Vector2(FIELD_LEFT, _map_py(BattleSim.start_y_for_col(col)) - 2.0)
+		guide.size = Vector2(FIELD_RIGHT - FIELD_LEFT, 4.0)
+		add_child(guide)
 	var p_base := ColorRect.new()
 	p_base.color = Color(0.25, 0.4, 0.75)
-	p_base.position = Vector2(FIELD_LEFT, FIELD_BOTTOM + 18.0)
-	p_base.size = Vector2(FIELD_RIGHT - FIELD_LEFT, 8.0)
+	p_base.position = Vector2(FIELD_LEFT - 16.0, FIELD_TOP)
+	p_base.size = Vector2(8.0, FIELD_BOTTOM - FIELD_TOP)
 	add_child(p_base)
 	var e_base := ColorRect.new()
 	e_base.color = Color(0.75, 0.25, 0.25)
-	e_base.position = Vector2(FIELD_LEFT, FIELD_TOP - 24.0)
-	e_base.size = Vector2(FIELD_RIGHT - FIELD_LEFT, 8.0)
+	e_base.position = Vector2(FIELD_RIGHT + 8.0, FIELD_TOP)
+	e_base.size = Vector2(8.0, FIELD_BOTTOM - FIELD_TOP)
 	add_child(e_base)
 	for col in BattleSim.COL_COUNT:
 		for row in BattleSim.ROW_COUNT:
@@ -195,18 +198,19 @@ func _on_tile_pressed(col: int, row: int) -> void:
 	if _points < card.cost:
 		_hint_label.text = "지휘력이 부족합니다 (필요 %d)." % card.cost
 		return
-	var depth := BattleSim.depth_for_row(row)
-	var u := CardLibrary.build_player_unit(card_id, col, depth, _lord)
+	var start := BattleSim.position_for_tile(col, row)
+	var u := CardLibrary.build_player_unit(card_id, col, start.x, _lord)
 	if u == null:
 		return
 	u.row = row
+	u.set_position(start.x, start.y)
 	_sim.add_unit(u)
 	_spawn_visual(u)
 	_occupied_tiles[key] = u
 	_update_tile_label(col, row, u.display_name)
 	_points -= card.cost
 	_update_points()
-	_hint_label.text = "%s → %d컬럼 %d행 배치" % [card.display_name, col + 1, row + 1]
+	_hint_label.text = "%s → 시작 진형 %d열 %d행 배치" % [card.display_name, col + 1, row + 1]
 
 func _on_start_pressed() -> void:
 	if _phase != Phase.DEPLOY:
@@ -272,8 +276,8 @@ func _sync_visuals() -> void:
 
 func _position_visual(u: BattleUnit) -> void:
 	var offset := _unit_visual_offset(u)
-	var sx := _map_col(u.lane) - UNIT_W * 0.5 + offset.x
-	var sy := _map_depth(u.x) - UNIT_H * 0.5 + offset.y
+	var sx := _map_px(u.px) - UNIT_W * 0.5 + offset.x
+	var sy := _map_py(u.py) - UNIT_H * 0.5 + offset.y
 	_vis[u]["root"].position = Vector2(sx, sy)
 
 func _flash_skill_casts() -> void:
@@ -295,18 +299,17 @@ func _sim_units() -> Array[BattleUnit]:
 	units.append_array(_sim.enemy_units)
 	return units
 
-func _column_width() -> float:
-	return (FIELD_RIGHT - FIELD_LEFT) / float(BattleSim.COL_COUNT)
+func _map_px(px: float) -> float:
+	var t := clampf(px / BattleSim.FIELD_W, 0.0, 1.0)
+	return FIELD_LEFT + t * (FIELD_RIGHT - FIELD_LEFT)
 
-func _map_col(col: int) -> float:
-	return FIELD_LEFT + (float(col) + 0.5) * _column_width()
-
-func _map_depth(depth: float) -> float:
-	var t := clampf(depth / BattleSim.LANE_LENGTH, 0.0, 1.0)
-	return FIELD_BOTTOM - t * (FIELD_BOTTOM - FIELD_TOP)
+func _map_py(py: float) -> float:
+	var t := clampf(py / BattleSim.FIELD_H, 0.0, 1.0)
+	return FIELD_TOP + t * (FIELD_BOTTOM - FIELD_TOP)
 
 func _tile_position(col: int, row: int) -> Vector2:
-	return Vector2(_map_col(col) - TILE_W * 0.5, _map_depth(BattleSim.depth_for_row(row)) - TILE_H * 0.5)
+	var p := BattleSim.position_for_tile(col, row)
+	return Vector2(_map_px(p.x) - TILE_W * 0.5, _map_py(p.y) - TILE_H * 0.5)
 
 func _tile_key(col: int, row: int) -> String:
 	return "%d:%d" % [col, row]
@@ -318,13 +321,11 @@ func _update_tile_label(col: int, row: int, text: String) -> void:
 		tile.disabled = true
 
 func _unit_visual_offset(u: BattleUnit) -> Vector2:
-	if u.team == BattleUnit.Team.PLAYER:
-		return Vector2.ZERO
 	var index := 0
-	for other in _sim.enemy_units:
+	for other in _sim_units():
 		if other == u:
 			break
-		if other.lane == u.lane and absf(other.x - u.x) < 4.0:
+		if other.team == u.team and other.position().distance_to(u.position()) < 4.0:
 			index += 1
 	return Vector2(float((index % 3) - 1) * 18.0, float(index / 3) * 14.0)
 

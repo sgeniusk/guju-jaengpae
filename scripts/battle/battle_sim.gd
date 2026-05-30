@@ -1,4 +1,4 @@
-# 그리드 오토배틀의 순수 시뮬레이션. 렌더링 없이 step(delta)로 진행되며 결정적이다 — 헤드리스 테스트 가능.
+# 오픈필드 2D 오토배틀의 순수 시뮬레이션. 렌더링 없이 step(delta)로 진행되며 결정적이다.
 class_name BattleSim
 extends RefCounted
 
@@ -7,8 +7,11 @@ enum Result { ONGOING, PLAYER_WIN, PLAYER_LOSE }
 const COL_COUNT := 3
 const ROW_COUNT := 3
 const LANE_COUNT := COL_COUNT
-const LANE_LENGTH := 1000.0
-const ROW_DEPTHS := [360.0, 240.0, 120.0]
+const FIELD_W := 1000.0
+const FIELD_H := 600.0
+const LANE_LENGTH := FIELD_W
+const ROW_X := [360.0, 240.0, 120.0]
+const COL_Y := [150.0, 300.0, 450.0]
 const MELEE_REACH := 36.0
 const RANGED_REACH := 280.0
 const _SkillSystem := preload("res://scripts/battle/skill_system.gd")
@@ -23,11 +26,21 @@ var elapsed: float = 0.0
 var last_skill_casts: Array = []
 
 static func depth_for_row(row: int) -> float:
-	return ROW_DEPTHS[clampi(row, 0, ROW_COUNT - 1)]
+	return start_x_for_row(row)
+
+static func start_x_for_row(row: int) -> float:
+	return ROW_X[clampi(row, 0, ROW_COUNT - 1)]
+
+static func start_y_for_col(col: int) -> float:
+	return COL_Y[clampi(col, 0, COL_COUNT - 1)]
+
+static func position_for_tile(col: int, row: int) -> Vector2:
+	return Vector2(start_x_for_row(row), start_y_for_col(col))
 
 func add_unit(u: BattleUnit) -> void:
 	if u == null:
 		return
+	u.set_position(clampf(u.px, 0.0, FIELD_W), clampf(u.py, 0.0, FIELD_H))
 	if _SkillSystem.has_skill(u.skill_id):
 		u.skill_cooldown = _SkillSystem.cooldown_for(u.skill_id)
 	if u.team == BattleUnit.Team.PLAYER:
@@ -62,13 +75,13 @@ func step(delta: float) -> void:
 		if u.cooldown > 0.0:
 			u.cooldown -= delta
 		var target := _nearest_enemy(u)
-		if target != null and absf(target.x - u.x) <= _reach_of(u):
+		if target != null and u.distance_to(target) <= _reach_of(u):
 			if u.cooldown <= 0.0:
 				var dmg := int(round(u.effective_attack() * TypeChart.multiplier(u.troop_type, target.troop_type)))
 				target.take_damage(dmg)
 				u.cooldown = u.attack_interval
 		else:
-			_advance(u, delta)
+			_move_toward(u, target, delta)
 	_cleanup_dead()
 	_update_result()
 
@@ -93,36 +106,31 @@ func _reach_of(u: BattleUnit) -> float:
 func _nearest_enemy(u: BattleUnit) -> BattleUnit:
 	var foes := enemy_units if u.team == BattleUnit.Team.PLAYER else player_units
 	var taunt := u.taunt_source()
-	if taunt != null and taunt.is_alive() and taunt.lane == u.lane and foes.has(taunt):
+	if taunt != null and taunt.is_alive() and foes.has(taunt):
 		return taunt
-	if u.team == BattleUnit.Team.ENEMY:
-		return _frontmost_player_in_column(u.lane)
 	var best: BattleUnit = null
 	var best_d := INF
 	for f in foes:
-		if not f.is_alive() or f.lane != u.lane:
+		if not f.is_alive():
 			continue
-		var d := absf(f.x - u.x)
+		var d := u.distance_to(f)
 		if d < best_d:
 			best_d = d
 			best = f
 	return best
 
-func _frontmost_player_in_column(col: int) -> BattleUnit:
-	var best: BattleUnit = null
-	var best_depth := -INF
-	for f in player_units:
-		if not f.is_alive() or f.lane != col:
-			continue
-		if f.x > best_depth:
-			best_depth = f.x
-			best = f
-	return best
-
-func _advance(u: BattleUnit, delta: float) -> void:
-	if u.team == BattleUnit.Team.PLAYER:
+func _move_toward(u: BattleUnit, target: BattleUnit, delta: float) -> void:
+	if target == null or u.move_speed <= 0.0:
 		return
-	u.x = clampf(u.x - u.move_speed * delta, 0.0, LANE_LENGTH)
+	var delta_pos := target.position() - u.position()
+	var distance := delta_pos.length()
+	if distance <= 0.000001:
+		return
+	var travel := minf(u.move_speed * delta, maxf(0.0, distance - _reach_of(u)))
+	if travel <= 0.0:
+		return
+	var next := u.position() + delta_pos.normalized() * travel
+	u.set_position(clampf(next.x, 0.0, FIELD_W), clampf(next.y, 0.0, FIELD_H))
 
 func _process_skill(u: BattleUnit, delta: float) -> void:
 	if not _SkillSystem.has_skill(u.skill_id):
@@ -137,6 +145,8 @@ func _process_skill(u: BattleUnit, delta: float) -> void:
 			"lane": u.lane,
 			"col": u.lane,
 			"row": u.row,
+			"px": u.px,
+			"py": u.py,
 		})
 
 func _cleanup_dead() -> void:
@@ -144,12 +154,11 @@ func _cleanup_dead() -> void:
 	enemy_units = enemy_units.filter(func(u: BattleUnit) -> bool: return u.is_alive())
 
 func _update_result() -> void:
-	# 패배 — 적이 플레이어 기지(x<=0)에 도달
-	for e in enemy_units:
-		if e.x <= 0.0:
-			result = Result.PLAYER_LOSE
-			return
-	# 승리 — 적 전멸
+	# 패배 — 아군 군세 전멸
+	if player_units.is_empty():
+		result = Result.PLAYER_LOSE
+		return
+	# 승리 — 적 군세 전멸과 대기 파도 없음
 	if enemy_units.is_empty():
 		if not pending_waves.is_empty():
 			_spawn_next_wave()

@@ -1,4 +1,4 @@
-# 병종 상성표와 그리드 일반공격 적용을 검증한다.
+# 병종 상성표와 오픈필드 일반공격 적용을 검증한다.
 extends TestCase
 
 func test_type_chart_triangle_and_neutral_pairs() -> void:
@@ -15,8 +15,8 @@ func test_type_chart_triangle_and_neutral_pairs() -> void:
 
 func test_battle_sim_applies_strong_multiplier_to_basic_attack() -> void:
 	var sim := BattleSim.new()
-	var attacker := _unit(BattleUnit.Team.PLAYER, "cavalry", 40)
-	var target := _unit(BattleUnit.Team.ENEMY, "archer", 0)
+	var attacker := _unit(BattleUnit.Team.PLAYER, "cavalry", 40, 300.0, 300.0)
+	var target := _unit(BattleUnit.Team.ENEMY, "archer", 0, 324.0, 300.0)
 	sim.add_unit(attacker)
 	sim.add_unit(target)
 	sim.step(0.1)
@@ -24,8 +24,8 @@ func test_battle_sim_applies_strong_multiplier_to_basic_attack() -> void:
 
 func test_battle_sim_applies_weak_multiplier_to_basic_attack() -> void:
 	var sim := BattleSim.new()
-	var attacker := _unit(BattleUnit.Team.PLAYER, "archer", 40)
-	var target := _unit(BattleUnit.Team.ENEMY, "cavalry", 0)
+	var attacker := _unit(BattleUnit.Team.PLAYER, "archer", 40, 300.0, 300.0)
+	var target := _unit(BattleUnit.Team.ENEMY, "cavalry", 0, 324.0, 300.0)
 	sim.add_unit(attacker)
 	sim.add_unit(target)
 	sim.step(0.1)
@@ -35,20 +35,20 @@ func test_from_card_carries_troop_type() -> void:
 	var cat := CardCatalog.new()
 	cat.load_all()
 	var card := cat.get_card(&"general_zhaoyun")
-	var unit := BattleUnit.from_card(card, BattleUnit.Team.PLAYER, 0, _grid_depth(1))
+	var unit := BattleUnit.from_card(card, BattleUnit.Team.PLAYER, 0, 300.0)
 	eq(unit.troop_type, "cavalry", "조운 카드 병종 운반")
 
 func test_skill_damage_ignores_type_chart() -> void:
 	var sim := BattleSim.new()
-	var caster := BattleUnit.make(BattleUnit.Team.PLAYER, 0, _grid_depth(1), "조운", 1000, 0, 999.0, "melee", 0.0, &"caster", &"skill_changban_charge", "cavalry")
-	var target := BattleUnit.make(BattleUnit.Team.ENEMY, 0, _grid_depth(1) + 140.0, "요사 궁수", 1000, 0, 999.0, "melee", 0.0, &"", &"", "archer")
+	var caster := BattleUnit.make(BattleUnit.Team.PLAYER, 0, 300.0, "조운", 1000, 0, 999.0, "melee", 0.0, &"caster", &"skill_changban_charge", "cavalry", -1, 300.0)
+	var target := BattleUnit.make(BattleUnit.Team.ENEMY, 2, 420.0, "요사 궁수", 1000, 0, 999.0, "melee", 0.0, &"", &"", "archer", -1, 330.0)
 	sim.add_unit(caster)
 	sim.add_unit(target)
 	caster.skill_cooldown = 0.0
 	sim.step(0.1)
 	eq(target.hp, 940, "조운 스킬 피해 60은 상성 1.5배를 받지 않음")
 
-func test_wave_factory_assigns_enemy_troop_types() -> void:
+func test_wave_factory_assigns_enemy_troop_types_and_positions() -> void:
 	var found := {
 		"사령병": false,
 		"사령 증원병": false,
@@ -58,6 +58,8 @@ func test_wave_factory_assigns_enemy_troop_types() -> void:
 	for wave in WaveFactory.default_waves():
 		for unit: BattleUnit in wave:
 			truthy(not unit.troop_type.is_empty(), "%s 병종 비어있지 않음" % unit.display_name)
+			almost(unit.px, BattleSim.FIELD_W, 0.001, "%s 적 진영 x" % unit.display_name)
+			truthy(unit.py >= 0.0 and unit.py <= BattleSim.FIELD_H, "%s 필드 y 범위" % unit.display_name)
 			match unit.display_name:
 				"사령병":
 					eq(unit.troop_type, "infantry", "사령병 병종")
@@ -74,10 +76,5 @@ func test_wave_factory_assigns_enemy_troop_types() -> void:
 	for key in found.keys():
 		truthy(found[key], "%s 등장 확인" % key)
 
-func _unit(team: int, troop_type: String, attack: int) -> BattleUnit:
-	var x := _grid_depth(1) if team == BattleUnit.Team.PLAYER else _grid_depth(1) + 24.0
-	return BattleUnit.make(team, 0, x, "검증 유닛", 1000, attack, 999.0, "melee", 0.0, &"", &"", troop_type)
-
-func _grid_depth(row: int) -> float:
-	var depths := [360.0, 240.0, 120.0]
-	return depths[row]
+func _unit(team: int, troop_type: String, attack: int, px: float, py: float) -> BattleUnit:
+	return BattleUnit.make(team, 0, px, "검증 유닛", 1000, attack, 999.0, "melee", 0.0, &"", &"", troop_type, -1, py)

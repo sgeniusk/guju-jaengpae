@@ -23,7 +23,7 @@ static func cooldown_for(skill_id: StringName) -> float:
 	return float(COOLDOWNS.get(skill_id, 0.0))
 
 static func has_target(caster: BattleUnit, sim: BattleSim) -> bool:
-	return not _same_column_enemies(caster, sim).is_empty()
+	return not _alive_enemies(caster, sim).is_empty()
 
 static func cast(caster: BattleUnit, sim: BattleSim) -> void:
 	if caster == null or sim == null or not caster.is_alive():
@@ -41,48 +41,56 @@ static func cast(caster: BattleUnit, sim: BattleSim) -> void:
 			_cast_changban_roar(caster, sim)
 
 static func _cast_qinglong_strike(caster: BattleUnit, sim: BattleSim) -> void:
-	var targets := _same_column_enemies(caster, sim)
+	var targets := _alive_enemies(caster, sim)
 	targets.sort_custom(func(a: BattleUnit, b: BattleUnit) -> bool:
-		return absf(a.x - caster.x) < absf(b.x - caster.x)
+		return caster.distance_to(a) < caster.distance_to(b)
 	)
 	for i in mini(2, targets.size()):
 		targets[i].take_damage(80)
 
 static func _cast_baibu_chuanyang(caster: BattleUnit, sim: BattleSim) -> void:
-	var targets := _same_column_enemies(caster, sim)
+	var targets := _alive_enemies(caster, sim)
 	if targets.is_empty():
 		return
 	targets.sort_custom(func(a: BattleUnit, b: BattleUnit) -> bool:
-		return absf(a.x - caster.x) > absf(b.x - caster.x)
+		return caster.distance_to(a) > caster.distance_to(b)
 	)
 	targets[0].take_damage(110)
 
 static func _cast_qimen_bagua(caster: BattleUnit, sim: BattleSim) -> void:
-	for target in _same_column_enemies(caster, sim):
-		target.take_damage(45)
+	var targets := _alive_enemies(caster, sim)
+	if targets.is_empty():
+		return
+	targets.sort_custom(func(a: BattleUnit, b: BattleUnit) -> bool:
+		return caster.distance_to(a) < caster.distance_to(b)
+	)
+	var center := targets[0].position()
+	for target in targets:
+		if target.position().distance_to(center) <= 180.0:
+			target.take_damage(45)
 
 static func _cast_changban_charge(caster: BattleUnit, sim: BattleSim) -> void:
-	var from_x := caster.x
-	var dir := 1.0 if caster.team == BattleUnit.Team.PLAYER else -1.0
-	var to_x := clampf(caster.x + dir * 220.0, 0.0, BattleSim.LANE_LENGTH)
-	var lo := minf(from_x, to_x)
-	var hi := maxf(from_x, to_x)
-	for target in _same_column_enemies(caster, sim):
-		if target.x >= lo and target.x <= hi:
+	var forward := Vector2.RIGHT if caster.team == BattleUnit.Team.PLAYER else Vector2.LEFT
+	for target in _alive_enemies(caster, sim):
+		var offset := target.position() - caster.position()
+		var forward_distance := offset.dot(forward)
+		var side_distance := absf(offset.y)
+		if forward_distance >= 0.0 and forward_distance <= 220.0 and side_distance <= 70.0:
 			target.take_damage(60)
 
 static func _cast_changban_roar(caster: BattleUnit, sim: BattleSim) -> void:
-	for target in _same_column_enemies(caster, sim):
-		target.take_damage(25)
-		target.add_status("taunt", 2.5, 0.0, caster)
-		target.add_status("weaken", 2.5, 0.3, caster)
+	for target in _alive_enemies(caster, sim):
+		if caster.distance_to(target) <= 220.0:
+			target.take_damage(25)
+			target.add_status("taunt", 2.5, 0.0, caster)
+			target.add_status("weaken", 2.5, 0.3, caster)
 
-static func _same_column_enemies(caster: BattleUnit, sim: BattleSim) -> Array[BattleUnit]:
+static func _alive_enemies(caster: BattleUnit, sim: BattleSim) -> Array[BattleUnit]:
 	var targets: Array[BattleUnit] = []
 	if caster == null or sim == null:
 		return targets
 	var foes := sim.enemy_units if caster.team == BattleUnit.Team.PLAYER else sim.player_units
 	for foe in foes:
-		if foe.is_alive() and foe.lane == caster.lane:
+		if foe.is_alive():
 			targets.append(foe)
 	return targets

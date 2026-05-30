@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.3.5 — 전장 모델 전환: 레인 → Nine Kings식 그리드 배치 (v0.3 전투깊이 done: 스킬·상성·상태)",
+  "milestone": "v0.3.5 — Nine Kings 정합: 3×3 배치 + 오픈필드 난전 + 군주 대 군주 (스샷 실측 반영, 레인·컬럼 모델 폐기)",
   "features": [
     {
       "id": "feat-001",
@@ -108,7 +108,34 @@
       "dependencies": ["feat-011"],
       "status": "done",
       "owner": "Codex",
-      "evidence": "BattleSim/BattleUnit/battle.gd 그리드 전환 + test_grid 신설, 기존 전투 테스트 갱신. ./init.sh 전체 green(275단언)."
+      "evidence": "BattleSim/BattleUnit/battle.gd 그리드 전환 + test_grid 신설, 기존 전투 테스트 갱신. ./init.sh 전체 green(275단언). NOTE — 컬럼 정적 방어는 NK 실측과 달라 feat-013 오픈필드로 대체됨."
+    },
+    {
+      "id": "feat-013",
+      "name": "오픈필드 난전 (open-field 2D)",
+      "description": "NK 스샷 실측 반영 — 컬럼 정적 방어 폐기. 양쪽 군세가 2D 들판으로 나와 이동·수렴해 난전, 2D 최근접 타겟, 전멸로 승패. 배치 3×3은 시작 진형. 스킬/상성/상태 2D화. 스펙 docs/specs/feat-013.md.",
+      "dependencies": ["feat-012"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "BattleSim/BattleUnit/battle.gd 오픈필드 2D 전환(px/py·양쪽 이동·2D 최근접·전멸 승패) + SkillSystem 2D화 + test_openfield 신설. ./init.sh 전체 green(356단언, run_map/battle 부팅 OK)."
+    },
+    {
+      "id": "feat-014",
+      "name": "군주 대 군주 + King HP",
+      "description": "전투 프레이밍을 King vs King으로 — 양쪽 군주 유닛 + HP바, 적 왕 격파 승리. 적 = 다른 세력 군세. 九州 8세력 = 적 왕들. (feat-013 위, 스펙 후속.)",
+      "dependencies": ["feat-013"],
+      "status": "not-started",
+      "owner": "Codex",
+      "evidence": ""
+    },
+    {
+      "id": "feat-015",
+      "name": "건물 카드 + 오라",
+      "description": "card_type building — 타일에 건물 배치(궁전·소환·오라). 예: 주변 유닛 공격력 주기적 +10%. NK 핵심 요소. (feat-013 위, 스펙 후속.)",
+      "dependencies": ["feat-013"],
+      "status": "not-started",
+      "owner": "Codex",
+      "evidence": ""
     }
   ]
 }

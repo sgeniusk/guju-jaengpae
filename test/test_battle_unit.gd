@@ -1,16 +1,19 @@
-# BattleUnit의 그리드 런타임 상태와 카드 변환을 검증한다.
+# BattleUnit의 오픈필드 런타임 상태와 카드 변환을 검증한다.
 extends TestCase
 
-func test_from_card_rounds_hp_multiplier() -> void:
+func test_from_card_rounds_hp_multiplier_and_maps_position() -> void:
 	var cat := CardCatalog.new()
 	cat.load_all()
 	var card := cat.get_card(&"troop_infantry")
-	var unit := BattleUnit.from_card(card, BattleUnit.Team.PLAYER, 2, 120.0, 1.15, 2)
+	var unit := BattleUnit.from_card(card, BattleUnit.Team.PLAYER, 2, 120.0, 1.15, 2, 450.0)
 	eq(unit.max_hp, 161, "140 체력 병종에 15% 보정")
 	eq(unit.hp, 161, "생성 시 현재 체력은 최대 체력")
 	eq(unit.card_id, &"troop_infantry", "카드 id 보존")
-	eq(unit.lane, 2, "컬럼 보존")
+	eq(unit.lane, 2, "시작 col 보존")
 	eq(unit.row, 2, "행 보존")
+	almost(unit.px, 120.0, 0.001, "2D x 보존")
+	almost(unit.py, 450.0, 0.001, "2D y 보존")
+	almost(unit.x, unit.px, 0.001, "호환 x는 px")
 
 func test_hp_ratio_reports_full_and_half() -> void:
 	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 0, 0.0, "비율", 100, 1, 1.0, "melee", 0.0)
@@ -18,12 +21,14 @@ func test_hp_ratio_reports_full_and_half() -> void:
 	unit.take_damage(50)
 	almost(unit.hp_ratio(), 0.5, 0.001, "반피 비율")
 
-func test_make_maps_runtime_stats() -> void:
+func test_make_maps_runtime_stats_and_default_y() -> void:
 	var unit := BattleUnit.make(BattleUnit.Team.ENEMY, 1, 900.0, "사령병", 90, 14, 1.2, "melee", 34.0, &"enemy_dead", &"", "infantry", 0)
 	eq(unit.team, BattleUnit.Team.ENEMY, "팀 매핑")
-	eq(unit.lane, 1, "컬럼 매핑")
+	eq(unit.lane, 1, "시작 col 매핑")
 	eq(unit.row, 0, "행 매핑")
-	almost(unit.x, 900.0, 0.001, "depth 매핑")
+	almost(unit.x, 900.0, 0.001, "호환 x 매핑")
+	almost(unit.px, 900.0, 0.001, "2D x 매핑")
+	almost(unit.py, 300.0, 0.001, "lane 기본 y 매핑")
 	eq(unit.display_name, "사령병", "표시명 매핑")
 	eq(unit.max_hp, 90, "최대 체력 매핑")
 	eq(unit.attack, 14, "공격력 매핑")
@@ -31,6 +36,15 @@ func test_make_maps_runtime_stats() -> void:
 	eq(unit.attack_range, "melee", "공격 사거리 타입 매핑")
 	almost(unit.move_speed, 34.0, 0.001, "이동 속도 매핑")
 	eq(unit.card_id, &"enemy_dead", "card_id 매핑")
+
+func test_position_setter_and_distance_are_2d() -> void:
+	var a := BattleUnit.make(BattleUnit.Team.PLAYER, 0, 0.0, "A", 30, 1, 1.0, "melee", 0.0, &"", &"", "infantry", -1, 0.0)
+	var b := BattleUnit.make(BattleUnit.Team.ENEMY, 2, 3.0, "B", 30, 1, 1.0, "melee", 0.0, &"", &"", "infantry", -1, 4.0)
+	almost(a.distance_to(b), 5.0, 0.001, "거리 계산은 2D")
+	a.set_position(10.0, 20.0)
+	almost(a.px, 10.0, 0.001, "set_position x")
+	almost(a.py, 20.0, 0.001, "set_position y")
+	almost(a.x, 10.0, 0.001, "호환 x 갱신")
 
 func test_take_damage_clamps_and_alive_boundary() -> void:
 	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 0, 0.0, "방패", 30, 1, 1.0, "melee", 0.0)
