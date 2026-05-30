@@ -5,7 +5,7 @@
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-05-30
 **활성 피처 (Active Feature)** — 없음
-**현재 목표 (Current Objective)** — feat-014 성(城) 방어 목표 구현 완료. 다음은 시각 플레이 QA와 feat-015 골드 경제 + 상점 스펙/구현. 로드맵 — docs/roadmap.md.
+**현재 목표 (Current Objective)** — feat-017 영웅 조작 구현 완료. 다음은 시각 플레이 QA와 feat-015 골드 경제 + 상점 스펙/구현. 로드맵 — docs/roadmap.md.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -20,15 +20,16 @@
 - [x] **feat-012 그리드 전장 전환** (Codex) — BattleSim 3×3 컬럼/depth 모델, 아군 타일 고정·적 전진·돌파 패배, battle.gd 타일 클릭 배치 UI, test_grid 신설. ./init.sh 275단언 green.
 - [x] **feat-013 오픈필드 난전** (Codex) — 컬럼 정적 방어 폐기. BattleSim 2D px/py, 양쪽 이동·수렴, 2D 최근접 타겟, 전멸 승패. 3×3은 시작 진형. 스킬/상태/상성 2D화. `test_openfield.gd` 신설. ./init.sh 356단언 green.
 - [x] **feat-014 성(城) 방어 목표** (Codex) — BattleSim 성 자동 추가 API, 성 기준 승패(적 전멸=승·성 파괴=패), battle.gd 성 시각화, `test_castle.gd` 신설. ./init.sh 383단언 green.
+- [x] **feat-017 영웅 조작** (Codex) — 장수 카드만 controllable, 클릭/홀드로 아군 장수 전원이 같은 적을 commanded_target으로 지정, 지정>도발>최근접 우선순위와 표적 해제/하이라이트. `test_hero_command.gd` 신설. ./init.sh 395단언 green.
 ### 진행 중 (What's In Progress)
 - [ ] 없음
 ### 다음 (What's Next)
-1. 시각 플레이 QA(사람, `godot --path .`) — 시작 진형 배치·양쪽 이동 수렴·스킬 플래시·승리 보상·지도 복귀 체감 확인.
+1. 시각 플레이 QA(사람, `godot --path .`) — 시작 진형 배치·양쪽 이동 수렴·전투 중 장수 표적 지정·스킬 플래시·승리 보상·지도 복귀 체감 확인.
 2. feat-015 골드 경제 + 상점 — 전투 중 골드 획득과 다음 턴 상점 구매.
 3. feat-016 건물(building) 카드 + 오라 — NK 핵심 요소.
 
 ## 블로커 / 리스크 (Blockers / Risks)
-- [ ] 시각 QA 부채 누적 — feat-003/004/006/007/008 화면·상호작용(클릭·씬 전환·오버레이)은 헤드리스로 미확인. 사람 플레이 필요.
+- [ ] 시각 QA 부채 누적 — feat-003/004/006/007/008 화면·상호작용과 feat-017 전투 중 표적 지정 체감은 헤드리스로 미확인. 사람 플레이 필요.
 - [ ] Godot 4.6.3 macOS headless `get_system_ca_certificates` 경고 — 무해(종료 0).
 
 ## 내린 결정
@@ -38,19 +39,21 @@
 - 전투 로직/표현 분리, 적은 카드 아님, trait_id, 오픈필드 이후 승=모든 파도 적전멸/패=아군 전멸 — 상세 CHANGELOG.
 
 ## 이번 세션 수정 파일 (Files Modified)
-- feat-014 — scripts/battle/battle_sim.gd·battle_unit.gd·battle.gd, tools/sim_smoke.gd
-- 테스트 — test/test_castle.gd 신설
-- 상태 — feature_list.json·progress.md·CHANGELOG.md·session-handoff.md
+- feat-017 — scripts/battle/battle_unit.gd·battle_sim.gd·battle.gd
+- 테스트 — test/test_hero_command.gd 신설
+- 상태 — feature_list.json·progress.md
 
 ## 검증 증거
 - [x] `./init.sh` (2026-05-30, feat-013) → 카드검증(10·1) / sim default_waves 승리 28.7s·무배치 패배 0.1s / reward / run_map·battle 부팅 / 단위 12파일 **356 단언** 통과. 종료 0.
 - [x] `./init.sh` (2026-05-30, feat-014) → 카드검증(10·1) / sim 성 방어 승리 28.7s(성HP 1200)·성 노출 패배 29.0s / reward / run_map·battle 부팅 / 단위 13파일 **383 단언** 통과. 종료 0.
+- [x] `./init.sh` (2026-05-30, feat-017) → 카드검증(10·1) / sim 성 방어 승리 28.7s·성 노출 패배 29.0s / reward / run_map·battle 부팅 / 단위 14파일 **395 단언** 통과. 종료 0.
 - [x] feat-013 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙) 미수정.
 - [x] feat-014 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙) 미수정.
-- [ ] 시각 플레이(타일 선택→전투+스킬 플래시+전멸 승패→보상→지도 복귀) → 사람 또는 agy 확인 필요.
+- [x] feat-017 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙, WaveFactory) 미수정.
+- [ ] 시각 플레이(타일 선택→전투+장수 표적 지정+스킬 플래시+전멸 승패→보상→지도 복귀) → 사람 또는 agy 확인 필요.
 
 ## 아카이브 포인터
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh`로 베이스라인(383단언) 확인. 메인 씬은 `run_map.tscn`, 전투 씬은 3×3 시작 진형 + 맨 안쪽 성을 생성하고 유닛은 2D 필드에서 이동한다. 다음 큰 덩어리는 feat-015 골드 경제 + 상점이며, 단위 테스트는 `res://test/runner.gd`가 `test/test_*.gd` 수집.
+`./init.sh`로 베이스라인(395단언) 확인. 메인 씬은 `run_map.tscn`, 전투 씬은 3×3 시작 진형 + 맨 안쪽 성을 생성하고 유닛은 2D 필드에서 이동한다. 전투 중 좌클릭/홀드는 장수 전원의 표적만 바꾸며 공격 쿨다운은 유지된다. 다음 큰 덩어리는 feat-015 골드 경제 + 상점이며, 단위 테스트는 `res://test/runner.gd`가 `test/test_*.gd` 수집.

@@ -145,6 +145,15 @@
       "status": "not-started",
       "owner": "Codex",
       "evidence": ""
+    },
+    {
+      "id": "feat-017",
+      "name": "영웅 조작 (hero command)",
+      "description": "관전형 오토배틀 위 미세 컨트롤 — 전투 중 클릭/홀드로 영웅(장수) 표적 지정. commanded_target 우선(지정>도발>최근접), 공격은 기존 쿨다운대로. 병종은 자동. 사용자 요청으로 feat-015/016보다 우선. 스펙 docs/specs/feat-017.md.",
+      "dependencies": ["feat-013"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "BattleUnit commanded_target/controllable + BattleSim 지정>도발>최근접 + battle.gd 클릭/홀드 전원 장수 표적 지정·하이라이트. test_hero_command 12단언, ./init.sh 전체 green(395단언, run_map/battle 부팅 OK)."
     }
   ]
 }

@@ -126,6 +126,10 @@ func _reach_of(u: BattleUnit) -> float:
 
 func _nearest_enemy(u: BattleUnit) -> BattleUnit:
 	var foes := enemy_units if u.team == BattleUnit.Team.PLAYER else player_units
+	if u.controllable:
+		var commanded := u.commanded_target
+		if commanded != null and commanded.is_alive() and foes.has(commanded):
+			return commanded
 	var taunt := u.taunt_source()
 	if taunt != null and taunt.is_alive() and foes.has(taunt):
 		return taunt

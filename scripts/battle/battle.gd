@@ -15,6 +15,7 @@ const TILE_W := 150.0
 const TILE_H := 82.0
 const UNIT_W := 70.0
 const UNIT_H := 52.0
+const COMMAND_PICK_RADIUS := 70.0
 
 var _phase: int = Phase.DEPLOY
 var _sim := BattleSim.new()
@@ -26,6 +27,8 @@ var _tile_buttons: Dictionary = {}   # "col:row" -> Button
 var _occupied_tiles: Dictionary = {} # "col:row" -> BattleUnit
 var _selected_card_id: StringName = &""
 var _node_completed := false
+var _command_hold_active := false
+var _commanded_target: BattleUnit = null
 
 var _units_layer: Control
 var _points_label: Label
@@ -49,11 +52,30 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _phase != Phase.BATTLE:
 		return
+	if _command_hold_active:
+		_apply_hero_command_at(get_global_mouse_position())
 	_sim.step(delta)
+	_prune_command_target()
 	_sync_visuals()
 	_flash_skill_casts()
 	if _sim.is_over():
 		_end_battle()
+
+func _input(event: InputEvent) -> void:
+	if _phase != Phase.BATTLE:
+		return
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+			return
+		_command_hold_active = mouse_button.pressed
+		if mouse_button.pressed:
+			_apply_hero_command_at(mouse_button.position)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseMotion and _command_hold_active:
+		var motion := event as InputEventMouseMotion
+		_apply_hero_command_at(motion.position)
+		get_viewport().set_input_as_handled()
 
 # ── 화면 구성 ───────────────────────────────────────────────
 func _build_field() -> void:
@@ -222,6 +244,7 @@ func _on_start_pressed() -> void:
 		return
 	_sim.set_waves(WaveFactory.waves_for_node(RunManager.active_node_type()))
 	_phase = Phase.BATTLE
+	_clear_hero_command(false)
 	_sync_visuals()
 	_start_button.disabled = true
 	_hint_label.text = "전투 중…"
@@ -236,6 +259,12 @@ func _spawn_visual(u: BattleUnit) -> void:
 		body.color = Color(0.62, 0.56, 0.40)
 	else:
 		body.color = Color(0.32, 0.52, 0.9) if u.team == BattleUnit.Team.PLAYER else Color(0.85, 0.32, 0.32)
+	var command_marker := ColorRect.new()
+	command_marker.color = Color(1.0, 0.85, 0.1, 0.55)
+	command_marker.position = Vector2(-5.0, -5.0)
+	command_marker.size = Vector2(UNIT_W + 10.0, UNIT_H + 10.0)
+	command_marker.visible = false
+	root.add_child(command_marker)
 	body.size = Vector2(UNIT_W, UNIT_H)
 	body.position = Vector2.ZERO
 	root.add_child(body)
@@ -257,7 +286,7 @@ func _spawn_visual(u: BattleUnit) -> void:
 	name_label.add_theme_font_size_override("font_size", 14)
 	root.add_child(name_label)
 	_units_layer.add_child(root)
-	_vis[u] = { "root": root, "body": body, "base_color": body.color, "hp": hp }
+	_vis[u] = { "root": root, "body": body, "base_color": body.color, "hp": hp, "command_marker": command_marker }
 	_position_visual(u)
 
 func _sync_visuals() -> void:
@@ -277,6 +306,9 @@ func _sync_visuals() -> void:
 		if _vis.has(u):
 			_position_visual(u)
 			_vis[u]["hp"].size.x = (UNIT_W - 6.0) * u.hp_ratio()
+			var marker: ColorRect = _vis[u].get("command_marker", null)
+			if marker != null:
+				marker.visible = u == _commanded_target
 	_update_wave_label()
 
 func _position_visual(u: BattleUnit) -> void:
@@ -308,6 +340,61 @@ func _ensure_castle() -> void:
 	var castle := _sim.add_castle()
 	if not _vis.has(castle):
 		_spawn_visual(castle)
+
+func _apply_hero_command_at(screen_pos: Vector2) -> void:
+	var target := _enemy_near_screen_pos(screen_pos)
+	if target == null:
+		_clear_hero_command(true)
+		return
+	var heroes := _controllable_heroes()
+	if heroes.is_empty():
+		_clear_hero_command(false)
+		return
+	for hero in heroes:
+		hero.commanded_target = target
+	_commanded_target = target
+	_hint_label.text = "집중 표적 — %s" % target.display_name
+
+func _clear_hero_command(update_hint: bool = true) -> void:
+	for hero in _controllable_heroes():
+		hero.commanded_target = null
+	_commanded_target = null
+	if update_hint and _phase == Phase.BATTLE:
+		_hint_label.text = "자동 표적"
+
+func _prune_command_target() -> void:
+	if _commanded_target == null:
+		return
+	if _commanded_target.is_alive() and _sim.enemy_units.has(_commanded_target):
+		return
+	_clear_hero_command(false)
+
+func _controllable_heroes() -> Array[BattleUnit]:
+	var heroes: Array[BattleUnit] = []
+	for u in _sim.player_units:
+		if u != null and u.is_alive() and u.controllable:
+			heroes.append(u)
+	return heroes
+
+func _enemy_near_screen_pos(screen_pos: Vector2) -> BattleUnit:
+	if screen_pos.x < FIELD_LEFT or screen_pos.x > FIELD_RIGHT or screen_pos.y < FIELD_TOP or screen_pos.y > FIELD_BOTTOM:
+		return null
+	var field_pos := _screen_to_field(screen_pos)
+	var best: BattleUnit = null
+	var best_d := COMMAND_PICK_RADIUS
+	for enemy in _sim.enemy_units:
+		if enemy == null or not enemy.is_alive():
+			continue
+		var d := enemy.position().distance_to(field_pos)
+		if d <= best_d:
+			best_d = d
+			best = enemy
+	return best
+
+func _screen_to_field(screen_pos: Vector2) -> Vector2:
+	var tx := clampf((screen_pos.x - FIELD_LEFT) / (FIELD_RIGHT - FIELD_LEFT), 0.0, 1.0)
+	var ty := clampf((screen_pos.y - FIELD_TOP) / (FIELD_BOTTOM - FIELD_TOP), 0.0, 1.0)
+	return Vector2(tx * BattleSim.FIELD_W, ty * BattleSim.FIELD_H)
 
 func _map_px(px: float) -> float:
 	var t := clampf(px / BattleSim.FIELD_W, 0.0, 1.0)
