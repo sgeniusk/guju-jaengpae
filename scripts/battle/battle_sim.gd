@@ -45,6 +45,9 @@ func step(delta: float) -> void:
 	if is_over():
 		return
 	elapsed += delta
+	for u in player_units + enemy_units:
+		if u.is_alive():
+			u.tick_statuses(delta)
 	# player + enemy를 한 번에 순회(안정적 순서 → 결정적)
 	for u in player_units + enemy_units:
 		if not u.is_alive():
@@ -55,7 +58,7 @@ func step(delta: float) -> void:
 		var target := _nearest_enemy(u)
 		if target != null and absf(target.x - u.x) <= _reach_of(u):
 			if u.cooldown <= 0.0:
-				var dmg := int(round(u.attack * TypeChart.multiplier(u.troop_type, target.troop_type)))
+				var dmg := int(round(u.effective_attack() * TypeChart.multiplier(u.troop_type, target.troop_type)))
 				target.take_damage(dmg)
 				u.cooldown = u.attack_interval
 		else:
@@ -83,6 +86,9 @@ func _reach_of(u: BattleUnit) -> float:
 
 func _nearest_enemy(u: BattleUnit) -> BattleUnit:
 	var foes := enemy_units if u.team == BattleUnit.Team.PLAYER else player_units
+	var taunt := u.taunt_source()
+	if taunt != null and taunt.is_alive() and taunt.lane == u.lane and foes.has(taunt):
+		return taunt
 	var best: BattleUnit = null
 	var best_d := INF
 	for f in foes:

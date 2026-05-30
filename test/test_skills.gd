@@ -88,7 +88,7 @@ func test_zhaoyun_charge_clamps_at_lane_end() -> void:
 	almost(caster.x, BattleSim.LANE_LENGTH, 0.001, "레인 끝에서 clamp")
 	eq(on_path.hp, 9939, "clamp된 경로 내 적 피해")
 
-func test_zhangfei_hits_all_same_lane_enemies_and_heals_self() -> void:
+func test_zhangfei_hits_all_same_lane_enemies_and_applies_taunt_weaken() -> void:
 	var sim := BattleSim.new()
 	var caster := _caster(ZHANGFEI, 100.0, 300)
 	caster.take_damage(120)
@@ -100,10 +100,15 @@ func test_zhangfei_hits_all_same_lane_enemies_and_heals_self() -> void:
 	eq(same_a.hp, 9974, "같은 레인 적 A 피해")
 	eq(same_b.hp, 9974, "같은 레인 적 B 피해")
 	eq(other_lane.hp, 9999, "다른 레인 적 불변")
-	eq(caster.hp, 260, "자가 회복")
-	caster.skill_cooldown = 0.0
-	sim.step(0.05)
-	eq(caster.hp, 300, "회복은 max_hp 한도")
+	truthy(same_a.has_status("taunt"), "같은 레인 적 A 도발")
+	truthy(same_a.has_status("weaken"), "같은 레인 적 A 약화")
+	eq(same_a.taunt_source(), caster, "도발 source는 장비")
+	almost(float(same_a.get_status("weaken")["magnitude"]), 0.3, 0.001, "약화 배율")
+	truthy(same_b.has_status("taunt"), "같은 레인 적 B 도발")
+	truthy(same_b.has_status("weaken"), "같은 레인 적 B 약화")
+	falsy(other_lane.has_status("taunt"), "다른 레인 적 도발 없음")
+	falsy(other_lane.has_status("weaken"), "다른 레인 적 약화 없음")
+	eq(caster.hp, 180, "자가 회복 없음")
 
 func test_cooldown_resets_and_blocks_recast_before_interval() -> void:
 	var sim := BattleSim.new()

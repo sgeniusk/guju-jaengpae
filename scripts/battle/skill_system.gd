@@ -74,7 +74,8 @@ static func _cast_changban_charge(caster: BattleUnit, sim: BattleSim) -> void:
 static func _cast_changban_roar(caster: BattleUnit, sim: BattleSim) -> void:
 	for target in _same_lane_enemies(caster, sim):
 		target.take_damage(25)
-	caster.hp = mini(caster.max_hp, caster.hp + 80)
+		target.add_status("taunt", 2.5, 0.0, caster)
+		target.add_status("weaken", 2.5, 0.3, caster)
 
 static func _same_lane_enemies(caster: BattleUnit, sim: BattleSim) -> Array[BattleUnit]:
 	var targets: Array[BattleUnit] = []

@@ -19,6 +19,7 @@ var move_speed: float = 40.0
 var cooldown: float = 0.0     # 다음 공격까지 남은 시간(초)
 var skill_id: StringName = &""
 var skill_cooldown: float = 0.0
+var statuses: Array = []
 
 static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int, p_atk: int, p_interval: float, p_range: String, p_speed: float, p_card_id: StringName = &"", p_skill_id: StringName = &"", p_troop_type: String = "infantry") -> BattleUnit:
 	var u := BattleUnit.new()
@@ -48,3 +49,54 @@ func take_damage(amount: int) -> void:
 
 func hp_ratio() -> float:
 	return float(hp) / float(max_hp) if max_hp > 0 else 0.0
+
+func add_status(type: String, duration: float, magnitude: float, source: BattleUnit = null) -> void:
+	if type.is_empty() or duration <= 0.0:
+		return
+	for i in statuses.size():
+		var status: Dictionary = statuses[i]
+		if String(status.get("type", "")) != type:
+			continue
+		status["remaining"] = maxf(float(status.get("remaining", 0.0)), duration)
+		status["magnitude"] = magnitude
+		status["source"] = source
+		statuses[i] = status
+		return
+	statuses.append({
+		"type": type,
+		"remaining": duration,
+		"magnitude": magnitude,
+		"source": source,
+	})
+
+func tick_statuses(delta: float) -> void:
+	var next_statuses: Array = []
+	for status: Dictionary in statuses:
+		var remaining := float(status.get("remaining", 0.0)) - delta
+		if remaining <= 0.000001:
+			continue
+		status["remaining"] = remaining
+		next_statuses.append(status)
+	statuses = next_statuses
+
+func has_status(type: String) -> bool:
+	return not get_status(type).is_empty()
+
+func get_status(type: String) -> Dictionary:
+	for status: Dictionary in statuses:
+		if String(status.get("type", "")) == type and float(status.get("remaining", 0.0)) > 0.0:
+			return status.duplicate()
+	return {}
+
+func effective_attack() -> int:
+	var weaken := get_status("weaken")
+	if weaken.is_empty():
+		return attack
+	var weaken_mag := clampf(float(weaken.get("magnitude", 0.0)), 0.0, 0.9)
+	return maxi(0, int(round(attack * (1.0 - weaken_mag))))
+
+func taunt_source() -> BattleUnit:
+	var taunt := get_status("taunt")
+	if taunt.is_empty():
+		return null
+	return taunt.get("source", null)
