@@ -25,8 +25,9 @@ var cooldown: float = 0.0     # 다음 공격까지 남은 시간(초)
 var skill_id: StringName = &""
 var skill_cooldown: float = 0.0
 var statuses: Array = []
+var is_castle: bool = false
 
-static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int, p_atk: int, p_interval: float, p_range: String, p_speed: float, p_card_id: StringName = &"", p_skill_id: StringName = &"", p_troop_type: String = "infantry", p_row: int = -1, p_py: float = -1.0) -> BattleUnit:
+static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int, p_atk: int, p_interval: float, p_range: String, p_speed: float, p_card_id: StringName = &"", p_skill_id: StringName = &"", p_troop_type: String = "infantry", p_row: int = -1, p_py: float = -1.0, p_is_castle: bool = false) -> BattleUnit:
 	var u := BattleUnit.new()
 	u.team = p_team
 	u.lane = p_lane
@@ -42,10 +43,14 @@ static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int
 	u.move_speed = maxf(0.0, p_speed)
 	u.card_id = p_card_id
 	u.skill_id = p_skill_id
+	u.is_castle = p_is_castle
 	return u
 
 static func from_card(card: UnitCardData, p_team: int, p_lane: int, p_x: float, hp_mult: float = 1.0, p_row: int = -1, p_py: float = -1.0) -> BattleUnit:
 	return make(p_team, p_lane, p_x, card.display_name, int(round(card.max_hp * hp_mult)), card.attack, card.attack_interval, card.attack_range, card.move_speed, card.id, card.skill_id, card.troop_type, p_row, p_py)
+
+static func make_castle(p_x: float, p_y: float, p_hp: int = 1200, p_name: String = "성") -> BattleUnit:
+	return make(Team.PLAYER, 1, p_x, p_name, p_hp, 0, 999.0, "melee", 0.0, &"castle_objective", &"", "infantry", -1, p_y, true)
 
 static func _default_y_for_lane(p_lane: int) -> float:
 	return DEFAULT_COL_Y[clampi(p_lane, 0, DEFAULT_COL_Y.size() - 1)]

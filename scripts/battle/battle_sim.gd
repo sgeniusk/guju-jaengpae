@@ -10,6 +10,8 @@ const LANE_COUNT := COL_COUNT
 const FIELD_W := 1000.0
 const FIELD_H := 600.0
 const LANE_LENGTH := FIELD_W
+const CASTLE_X := 40.0
+const CASTLE_HP := 1200
 const ROW_X := [360.0, 240.0, 120.0]
 const COL_Y := [150.0, 300.0, 450.0]
 const MELEE_REACH := 36.0
@@ -24,6 +26,7 @@ var wave_total := 0
 var result: int = Result.ONGOING
 var elapsed: float = 0.0
 var last_skill_casts: Array = []
+var castle: BattleUnit = null
 
 static func depth_for_row(row: int) -> float:
 	return start_x_for_row(row)
@@ -37,9 +40,25 @@ static func start_y_for_col(col: int) -> float:
 static func position_for_tile(col: int, row: int) -> Vector2:
 	return Vector2(start_x_for_row(row), start_y_for_col(col))
 
+static func castle_position() -> Vector2:
+	return Vector2(CASTLE_X, FIELD_H * 0.5)
+
+func add_castle(hp: int = CASTLE_HP, display_name: String = "성") -> BattleUnit:
+	if castle != null and castle.is_alive():
+		return castle
+	var p := castle_position()
+	var u := BattleUnit.make_castle(p.x, p.y, hp, display_name)
+	add_unit(u)
+	return u
+
 func add_unit(u: BattleUnit) -> void:
 	if u == null:
 		return
+	if u.is_castle:
+		if castle != null and castle != u:
+			player_units.erase(castle)
+		u.team = BattleUnit.Team.PLAYER
+		castle = u
 	u.set_position(clampf(u.px, 0.0, FIELD_W), clampf(u.py, 0.0, FIELD_H))
 	if _SkillSystem.has_skill(u.skill_id):
 		u.skill_cooldown = _SkillSystem.cooldown_for(u.skill_id)
@@ -70,6 +89,8 @@ func step(delta: float) -> void:
 	# player + enemy를 한 번에 순회(안정적 순서 → 결정적)
 	for u in player_units + enemy_units:
 		if not u.is_alive():
+			continue
+		if u.is_castle:
 			continue
 		_process_skill(u, delta)
 		if u.cooldown > 0.0:
@@ -154,6 +175,16 @@ func _cleanup_dead() -> void:
 	enemy_units = enemy_units.filter(func(u: BattleUnit) -> bool: return u.is_alive())
 
 func _update_result() -> void:
+	if castle != null:
+		if not castle.is_alive():
+			result = Result.PLAYER_LOSE
+			return
+		if enemy_units.is_empty():
+			if not pending_waves.is_empty():
+				_spawn_next_wave()
+				return
+			result = Result.PLAYER_WIN
+		return
 	# 패배 — 아군 군세 전멸
 	if player_units.is_empty():
 		result = Result.PLAYER_LOSE

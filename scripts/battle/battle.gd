@@ -41,6 +41,7 @@ func _ready() -> void:
 	_max_points = RunManager.get_command_points()
 	_points = _max_points
 	_build_field()
+	_ensure_castle()
 	_build_panel()
 	if _lord == null:
 		_hint_label.text = "오류 — 군주(%s)를 불러오지 못했습니다." % LORD_ID
@@ -215,6 +216,7 @@ func _on_tile_pressed(col: int, row: int) -> void:
 func _on_start_pressed() -> void:
 	if _phase != Phase.DEPLOY:
 		return
+	_ensure_castle()
 	if _sim.player_units.is_empty():
 		_hint_label.text = "최소 한 유닛을 배치해야 합니다."
 		return
@@ -230,7 +232,10 @@ func _spawn_visual(u: BattleUnit) -> void:
 	root.size = Vector2(UNIT_W, UNIT_H)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var body := ColorRect.new()
-	body.color = Color(0.32, 0.52, 0.9) if u.team == BattleUnit.Team.PLAYER else Color(0.85, 0.32, 0.32)
+	if u.is_castle:
+		body.color = Color(0.62, 0.56, 0.40)
+	else:
+		body.color = Color(0.32, 0.52, 0.9) if u.team == BattleUnit.Team.PLAYER else Color(0.85, 0.32, 0.32)
 	body.size = Vector2(UNIT_W, UNIT_H)
 	body.position = Vector2.ZERO
 	root.add_child(body)
@@ -298,6 +303,11 @@ func _sim_units() -> Array[BattleUnit]:
 	units.append_array(_sim.player_units)
 	units.append_array(_sim.enemy_units)
 	return units
+
+func _ensure_castle() -> void:
+	var castle := _sim.add_castle()
+	if not _vis.has(castle):
+		_spawn_visual(castle)
 
 func _map_px(px: float) -> float:
 	var t := clampf(px / BattleSim.FIELD_W, 0.0, 1.0)

@@ -26,6 +26,7 @@ func _fail(msg: String) -> int:
 # 시작 덱 전체(장수3·병종3)를 3×3 시작 진형에 배치하면 기본 파도를 막아낸다(승리).
 func _case_player_wins(cat: CardCatalog, lord: LordData) -> int:
 	var sim := BattleSim.new()
+	var castle := sim.add_castle()
 	var deck := cat.get_lord_deck(lord)
 	var tile := 0
 	for card_id in deck:
@@ -40,16 +41,21 @@ func _case_player_wins(cat: CardCatalog, lord: LordData) -> int:
 	sim.set_waves(WaveFactory.default_waves())
 	var res := sim.run_to_completion(0.1, 120.0)
 	if res != BattleSim.Result.PLAYER_WIN:
-		return _fail("승리 시나리오인데 결과=%d (%.1fs, 적잔존=%d)" % [res, sim.elapsed, sim.enemy_units.size()])
-	print("  승리 시나리오 OK (%.1fs, 아군잔존 %d)" % [sim.elapsed, sim.player_units.size()])
+		return _fail("승리 시나리오인데 결과=%d (%.1fs, 적잔존=%d, 성HP=%d)" % [res, sim.elapsed, sim.enemy_units.size(), castle.hp])
+	if not castle.is_alive():
+		return _fail("승리 시나리오에서 성이 파괴됨")
+	print("  승리 시나리오 OK (%.1fs, 성HP %d, 아군잔존 %d)" % [sim.elapsed, castle.hp, sim.player_units.size()])
 	return 0
 
-# 아무도 배치하지 않으면 아군 군세 전멸 상태로 패배한다.
+# 아무도 배치하지 않으면 성이 노출되어 파괴되고 패배한다.
 func _case_player_loses(_cat: CardCatalog, _lord: LordData) -> int:
 	var sim := BattleSim.new()
+	var castle := sim.add_castle(300)
 	sim.set_waves([WaveFactory.wave_one()])
 	var res := sim.run_to_completion(0.1, 120.0)
 	if res != BattleSim.Result.PLAYER_LOSE:
-		return _fail("패배 시나리오인데 결과=%d" % res)
-	print("  패배 시나리오 OK (%.1fs)" % sim.elapsed)
+		return _fail("패배 시나리오인데 결과=%d (성HP=%d)" % [res, castle.hp])
+	if castle.is_alive():
+		return _fail("패배 시나리오에서 성이 살아있음 (성HP=%d)" % castle.hp)
+	print("  패배 시나리오 OK (%.1fs, 성 파괴)" % sim.elapsed)
 	return 0

@@ -2,6 +2,14 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-05-30 — feat-014 성(城) 방어 목표 (done · Codex 구현)
+- **성 모델** — `BattleSim.add_castle()`가 플레이어 진영 맨 안쪽 `CASTLE_X=40`, 중앙 `FIELD_H/2`에 `BattleUnit` 성을 생성한다. 성은 `is_castle=true`, HP 1200, 공격 0, 이동속도 0, 병종 infantry로 둔다.
+- **승패** — 성이 있는 전투는 성 파괴=PLAYER_LOSE, 적 군세 전멸(+대기 파도 없음)=PLAYER_WIN으로 판정한다. 성이 없는 시뮬레이션은 기존 아군 전멸 패배 동작을 유지한다.
+- **타겟팅/행동** — 성은 `player_units`에 포함되어 적의 2D 최근접 표적이 된다. 성 자신은 step에서 이동·공격·스킬 처리를 하지 않는다.
+- **전투 UI** — `battle.gd`가 standalone 부팅 시에도 성을 자동 배치하고 성 HP바를 표시한다. 기존 3×3 유닛 배치와 오픈필드 유닛 이동은 유지한다.
+- **검증** — `test/test_castle.gd` 신설(27단언). `tools/sim_smoke.gd`를 성 방어 승리/성 노출 패배로 갱신. `./init.sh` 전체 green: 카드검증(10·1), sim 성 방어 승리 28.7s·성 노출 패배 29.0s, reward, run_map/battle 부팅, 단위 13파일 383단언.
+- **스코프** — 전투 외 시스템(`scripts/run/*`, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙) 미수정.
+
 ## 2026-05-30 — feat-013 오픈필드 난전 (done · Codex 구현)
 - **방향 보정** — Nine Kings 실측 반영으로 feat-012의 컬럼 정적 방어를 폐기. 3×3은 전투 보드가 아니라 시작 진형으로 재해석한다.
 - **BattleSim** — `FIELD_W=1000`, `FIELD_H=600`, `ROW_X=[360,240,120]`, `COL_Y=[150,300,450]`. `BattleUnit`에 `px/py`를 추가하고 호환 `x`는 `px`를 따른다. 양쪽 군세가 2D 최근접 적에게 이동·수렴하고, 사거리 안에서 교전한다.

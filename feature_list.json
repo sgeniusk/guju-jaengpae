@@ -121,18 +121,27 @@
     },
     {
       "id": "feat-014",
-      "name": "군주 대 군주 + King HP",
-      "description": "전투 프레이밍을 King vs King으로 — 양쪽 군주 유닛 + HP바, 적 왕 격파 승리. 적 = 다른 세력 군세. 九州 8세력 = 적 왕들. (feat-013 위, 스펙 후속.)",
+      "name": "성(城) 방어 목표",
+      "description": "오픈필드에 성 추가 — 맨 안쪽 고정 1칸(10칸 개념). 적 군세 전멸=승, 성 파괴=패(유닛 전멸 아님). 적은 군세만(비대칭 방어). BattleSim 성 + 승패 전환, battle.gd 성 시각화. 스펙 docs/specs/feat-014.md. 설계 docs/design-loop.md.",
       "dependencies": ["feat-013"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "BattleSim 성(add_castle, castle) + 성 기준 승패, battle.gd 성 자동 시각화, test_castle 27단언, sim_smoke 성 반영. ./init.sh 전체 green(383단언, run_map/battle 부팅 OK)."
+    },
+    {
+      "id": "feat-015",
+      "name": "골드 경제 + 상점",
+      "description": "전투 중 골드 획득 → 다음 턴 골드로 상점에서 카드 구매. 첫 턴 성+유닛 배치(2장 규모). 현 '3장 중 1장 공짜 보상'을 골드 상점으로 교체. RunState 골드, 상점 화면.",
+      "dependencies": ["feat-014"],
       "status": "not-started",
       "owner": "Codex",
       "evidence": ""
     },
     {
-      "id": "feat-015",
+      "id": "feat-016",
       "name": "건물 카드 + 오라",
-      "description": "card_type building — 타일에 건물 배치(궁전·소환·오라). 예: 주변 유닛 공격력 주기적 +10%. NK 핵심 요소. (feat-013 위, 스펙 후속.)",
-      "dependencies": ["feat-013"],
+      "description": "card_type building — 타일에 건물 배치(궁전·소환·오라). 예: 주변 유닛 공격력 주기적 +10%. NK 핵심 요소.",
+      "dependencies": ["feat-014"],
       "status": "not-started",
       "owner": "Codex",
       "evidence": ""
