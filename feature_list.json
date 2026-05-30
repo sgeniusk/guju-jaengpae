@@ -106,9 +106,9 @@
       "name": "그리드 전장 전환 (Nine Kings 정합)",
       "description": "레인 tug-of-war → 3×3 그리드 배치 방어. 플레이어 유닛 타일 고정, 적만 컬럼 전진, 돌파 패배. BattleSim 재설계 + battle.gd 그리드 UI + 테스트 그리드화. 메타·카드·스킬·상성·상태 재사용. 스펙 docs/specs/feat-012.md. 롤백 5b61aa1.",
       "dependencies": ["feat-011"],
-      "status": "in-progress",
+      "status": "done",
       "owner": "Codex",
-      "evidence": ""
+      "evidence": "BattleSim/BattleUnit/battle.gd 그리드 전환 + test_grid 신설, 기존 전투 테스트 갱신. ./init.sh 전체 green(275단언)."
     }
   ]
 }

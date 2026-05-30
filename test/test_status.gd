@@ -1,9 +1,9 @@
-# 상태이상 모델과 전투 적용을 검증한다.
+# 그리드 전투의 상태이상 모델과 적용을 검증한다.
 extends TestCase
 
 func test_add_status_get_status_and_tick_expiry() -> void:
-	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 0, 100.0, "장수", 100, 10, 1.0, "melee", 0.0)
-	var source := BattleUnit.make(BattleUnit.Team.PLAYER, 0, 120.0, "시전자", 100, 10, 1.0, "melee", 0.0)
+	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 0, _grid_depth(1), "장수", 100, 10, 1.0, "melee", 0.0)
+	var source := BattleUnit.make(BattleUnit.Team.PLAYER, 0, _grid_depth(1), "시전자", 100, 10, 1.0, "melee", 0.0)
 	unit.add_status("taunt", 2.5, 0.0, source)
 	truthy(unit.has_status("taunt"), "도발 보유")
 	var taunt: Dictionary = unit.get_status("taunt")
@@ -20,7 +20,7 @@ func test_add_status_get_status_and_tick_expiry() -> void:
 	eq(unit.get_status("taunt"), {}, "없는 상태는 빈 Dictionary")
 
 func test_effective_attack_applies_weaken_and_cap() -> void:
-	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 0, 100.0, "검병", 100, 100, 1.0, "melee", 0.0)
+	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 0, _grid_depth(1), "검병", 100, 100, 1.0, "melee", 0.0)
 	eq(unit.effective_attack(), 100, "약화 없으면 원 공격력")
 	unit.add_status("weaken", 2.5, 0.3)
 	eq(unit.effective_attack(), 70, "30% 약화 적용")
@@ -29,9 +29,9 @@ func test_effective_attack_applies_weaken_and_cap() -> void:
 
 func test_taunt_forces_target_over_nearer_enemy() -> void:
 	var sim := BattleSim.new()
-	var taunter := _player_at(100.0, "장비")
-	var nearer := _player_at(120.0, "가까운 아군")
-	var enemy := _enemy_at(130.0)
+	var taunter := _player_at(_grid_depth(0), "장비")
+	var nearer := _player_at(_grid_depth(0) + 24.0, "더 가까운 아군")
+	var enemy := _enemy_at(_grid_depth(0) + 30.0)
 	enemy.add_status("taunt", 2.5, 0.0, taunter)
 	sim.add_unit(taunter)
 	sim.add_unit(nearer)
@@ -42,9 +42,9 @@ func test_taunt_forces_target_over_nearer_enemy() -> void:
 
 func test_taunt_ignored_when_source_is_dead() -> void:
 	var sim := BattleSim.new()
-	var taunter := _player_at(100.0, "쓰러진 장비")
-	var nearer := _player_at(120.0, "가까운 아군")
-	var enemy := _enemy_at(130.0)
+	var taunter := _player_at(_grid_depth(0), "쓰러진 장비")
+	var nearer := _player_at(_grid_depth(0) + 24.0, "더 가까운 아군")
+	var enemy := _enemy_at(_grid_depth(0) + 30.0)
 	taunter.take_damage(100)
 	enemy.add_status("taunt", 2.5, 0.0, taunter)
 	sim.add_unit(taunter)
@@ -59,3 +59,7 @@ func _player_at(x: float, name: String) -> BattleUnit:
 
 func _enemy_at(x: float) -> BattleUnit:
 	return BattleUnit.make(BattleUnit.Team.ENEMY, 0, x, "적", 100, 20, 999.0, "melee", 0.0)
+
+func _grid_depth(row: int) -> float:
+	var depths := [360.0, 240.0, 120.0]
+	return depths[row]

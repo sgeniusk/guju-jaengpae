@@ -4,8 +4,8 @@
 
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-05-30
-**활성 피처 (Active Feature)** — feat-012 그리드 전장 전환 (Codex 진행 중)
-**현재 목표 (Current Objective)** — 🔀 레인→그리드 전환(Nine Kings 정합). v0.3 전투깊이(스킬·상성·상태) done. 롤백 5b61aa1. 로드맵 — docs/roadmap.md.
+**활성 피처 (Active Feature)** — 없음
+**현재 목표 (Current Objective)** — feat-012 그리드 전장 전환 구현 완료. 다음은 시각 플레이 QA와 feat-013 건물 카드 스펙. 로드맵 — docs/roadmap.md.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -17,10 +17,11 @@
 - [x] **feat-009 장수 스킬** (Codex) — SkillSystem 5스킬. 커밋 77b7474.
 - [x] **feat-010 병종 상성** (Codex) — TypeChart 삼각 + troop_type. 커밋 dd7abd8.
 - [x] **feat-011 상태이상** (Codex) — 상태 프레임워크 + 도발·약화, 장비 호통 진짜 도발화. test_status 16단언. 커밋 5b61aa1. **v0.3 전투깊이 done.**
+- [x] **feat-012 그리드 전장 전환** (Codex) — BattleSim 3×3 컬럼/depth 모델, 아군 타일 고정·적 전진·돌파 패배, battle.gd 타일 클릭 배치 UI, test_grid 신설. ./init.sh 275단언 green.
 ### 진행 중 (What's In Progress)
-- [ ] **feat-012 그리드 전장 전환** (Codex) — 레인→3×3 그리드 배치 방어(NK 정합). 스펙 docs/specs/feat-012.md. task bxqkaexsa.
+- [ ] 없음
 ### 다음 (What's Next)
-1. feat-012 검증·커밋 → 시각 플레이 QA(사람, `godot --path .`)로 그리드 체감.
+1. 시각 플레이 QA(사람, `godot --path .`) — 그리드 타일 배치·적 컬럼 전진·보상 복귀 체감 확인.
 2. feat-013 건물(building) 카드 — NK 핵심 요소.
 3. (이후) 계략·보패(v0.4) → 메타·저장(v0.5) → 천계/마계 6국(v0.6).
 
@@ -32,20 +33,20 @@
 - **분업 — 구현 Codex 외주** — Claude 스펙/정본/검증, Codex(5.5 xhigh, 샌드박스 workspace-write) 구현. feat-005~008 외주, 매 피처 편집장 독립 재검증 + git diff 스코프 확인.
 - **feat-005 = 내장 테스트 하네스(GUT 아님)** — 외부 코드 반입이 안전 게이트 차단. *_smoke.gd 패턴을 TestCase+runner로 일반화.
 - **비전투 노드 = 보상·보급** — 덱 압축은 배치 모델상 효과 약해 제외, 실제 게이트인 지휘력을 키우는 보급으로.
-- 전투 로직/표현 분리, 적은 카드 아님, trait_id, 승=적전멸/패=기지도달·아군전멸 — 상세 CHANGELOG.
+- 전투 로직/표현 분리, 적은 카드 아님, trait_id, 그리드 이후 승=모든 파도 적전멸/패=적 기지도달(돌파) — 상세 CHANGELOG.
 
 ## 이번 세션 수정 파일 (Files Modified)
-- 커밋 — v0.1 283f68a / v0.2 …b5a9d30 / v0.3 77b7474(skill) (+ feat-010 커밋 예정)
-- feat-010 — type_chart.gd·battle_unit.gd·battle_sim.gd·wave_factory.gd·test/test_type_chart.gd
-- 문서 — docs/worldview.md(6국), docs/roadmap.md, docs/specs/feat-009~011, 상태(feature_list·progress·CHANGELOG)
+- feat-012 — scripts/battle/battle_sim.gd·battle_unit.gd·skill_system.gd·wave_factory.gd·battle.gd, tools/sim_smoke.gd
+- 테스트 — test/test_grid.gd 신설, test_battle_sim·test_multiwave·test_skills·test_status·test_type_chart·test_battle_unit 갱신
+- 상태 — feature_list.json·progress.md·CHANGELOG.md·session-handoff.md
 
 ## 검증 증거
-- [x] `./init.sh` (2026-05-30, feat-010) → 카드검증(10·1) / sim·reward 스모크 / run_map·battle 부팅 / 단위 9파일 **236 단언** 통과(승리 13.1s). 종료 0.
-- [x] feat-009·010 스코프 — git diff로 resources/.tres/run_*/screens 미수정 확인.
-- [ ] 시각 플레이(맵 노드→전투+스킬 플래시+상성→보상→다음 막→보스) → agy 또는 사람 확인 필요.
+- [x] `./init.sh` (2026-05-30, feat-012) → 카드검증(10·1) / sim default_waves 승리·무배치 돌파 패배 / reward / run_map·battle 부팅 / 단위 11파일 **275 단언** 통과. 종료 0.
+- [x] feat-012 스코프 — git status/diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙) 미수정.
+- [ ] 시각 플레이(타일 선택→전투+스킬 플래시+돌파/승리→보상→지도 복귀) → 사람 또는 agy 확인 필요.
 
 ## 아카이브 포인터
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh`로 베이스라인(125단언) 확인. 메인 씬은 `run_map.tscn`. 다음 큰 덩어리는 v0.3 장수 스킬 시스템(docs/roadmap.md 참조) — skill_id를 실제 전투 효과로 발동. 단위 테스트는 `res://test/runner.gd`가 `test/test_*.gd` 수집.
+`./init.sh`로 베이스라인(275단언) 확인. 메인 씬은 `run_map.tscn`, 전투 씬은 3×3 그리드 타일을 동적 생성한다. 다음 큰 덩어리는 feat-013 건물 카드이며, 단위 테스트는 `res://test/runner.gd`가 `test/test_*.gd` 수집.

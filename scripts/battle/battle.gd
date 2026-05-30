@@ -1,4 +1,4 @@
-# v0.1 전투 화면 — 군주의 시작 덱을 레인에 배치하고(배치 단계) "전투 시작"을 누르면 오토배틀이 진행된다.
+# 전투 화면 — 군주의 덱을 3×3 그리드 타일에 배치하고 "전투 시작"을 누르면 오토배틀이 진행된다.
 # 순수 전투 로직은 BattleSim에 있다. 이 스크립트는 입력·배치 UI·유닛 시각화만 담당한다.
 extends Control
 
@@ -7,9 +7,12 @@ enum Phase { DEPLOY, BATTLE, DONE }
 const LORD_ID := &"lord_liubei"
 const START_POINTS := 12
 
-const FIELD_LEFT := 520.0
+const FIELD_LEFT := 560.0
 const FIELD_RIGHT := 1840.0
-const LANE_Y := [260.0, 520.0, 780.0]
+const FIELD_TOP := 120.0
+const FIELD_BOTTOM := 900.0
+const TILE_W := 150.0
+const TILE_H := 82.0
 const UNIT_W := 70.0
 const UNIT_H := 52.0
 
@@ -19,7 +22,9 @@ var _lord: LordData
 var _points: int = START_POINTS
 var _max_points: int = START_POINTS
 var _vis: Dictionary = {}            # BattleUnit -> { root: Control, hp: ColorRect }
-var _lane_count := [0, 0, 0]         # 레인별 아군 배치 수(겹침 방지 오프셋)
+var _tile_buttons: Dictionary = {}   # "col:row" -> Button
+var _occupied_tiles: Dictionary = {} # "col:row" -> BattleUnit
+var _selected_card_id: StringName = &""
 var _node_completed := false
 
 var _units_layer: Control
@@ -55,23 +60,34 @@ func _build_field() -> void:
 	bg.color = Color(0.09, 0.08, 0.11)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
-	# 레인 띠 + 기지 표시
-	for lane in BattleSim.LANE_COUNT:
+	# 컬럼 띠 + 기지/진입선 표시
+	for col in BattleSim.COL_COUNT:
 		var band := ColorRect.new()
-		band.color = Color(0.16, 0.15, 0.19) if lane % 2 == 0 else Color(0.13, 0.12, 0.16)
-		band.position = Vector2(FIELD_LEFT - 30.0, LANE_Y[lane] - 95.0)
-		band.size = Vector2(FIELD_RIGHT - FIELD_LEFT + 60.0, 190.0)
+		band.color = Color(0.16, 0.15, 0.19) if col % 2 == 0 else Color(0.13, 0.12, 0.16)
+		var col_left := FIELD_LEFT + float(col) * _column_width()
+		band.position = Vector2(col_left + 8.0, FIELD_TOP)
+		band.size = Vector2(_column_width() - 16.0, FIELD_BOTTOM - FIELD_TOP)
 		add_child(band)
 	var p_base := ColorRect.new()
 	p_base.color = Color(0.25, 0.4, 0.75)
-	p_base.position = Vector2(FIELD_LEFT - 40.0, LANE_Y[0] - 95.0)
-	p_base.size = Vector2(8.0, LANE_Y[2] - LANE_Y[0] + 190.0)
+	p_base.position = Vector2(FIELD_LEFT, FIELD_BOTTOM + 18.0)
+	p_base.size = Vector2(FIELD_RIGHT - FIELD_LEFT, 8.0)
 	add_child(p_base)
 	var e_base := ColorRect.new()
 	e_base.color = Color(0.75, 0.25, 0.25)
-	e_base.position = Vector2(FIELD_RIGHT + 32.0, LANE_Y[0] - 95.0)
-	e_base.size = Vector2(8.0, LANE_Y[2] - LANE_Y[0] + 190.0)
+	e_base.position = Vector2(FIELD_LEFT, FIELD_TOP - 24.0)
+	e_base.size = Vector2(FIELD_RIGHT - FIELD_LEFT, 8.0)
 	add_child(e_base)
+	for col in BattleSim.COL_COUNT:
+		for row in BattleSim.ROW_COUNT:
+			var tile := Button.new()
+			tile.position = _tile_position(col, row)
+			tile.size = Vector2(TILE_W, TILE_H)
+			tile.text = ""
+			tile.add_theme_font_size_override("font_size", 15)
+			tile.pressed.connect(_on_tile_pressed.bind(col, row))
+			add_child(tile)
+			_tile_buttons[_tile_key(col, row)] = tile
 	_units_layer = Control.new()
 	_units_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_units_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -79,8 +95,8 @@ func _build_field() -> void:
 	# 결과 오버레이
 	_result_label = Label.new()
 	_result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_result_label.position = Vector2(FIELD_LEFT, 60.0)
-	_result_label.size = Vector2(FIELD_RIGHT - FIELD_LEFT, 80.0)
+	_result_label.position = Vector2(FIELD_LEFT, 32.0)
+	_result_label.size = Vector2(FIELD_RIGHT - FIELD_LEFT, 70.0)
 	_result_label.add_theme_font_size_override("font_size", 56)
 	_result_label.visible = false
 	add_child(_result_label)
@@ -116,7 +132,7 @@ func _build_panel() -> void:
 	_update_wave_label()
 
 	var guide := Label.new()
-	guide.text = "카드 오른쪽 1·2·3 버튼으로 레인에 배치하세요."
+	guide.text = "카드를 선택한 뒤 전장 타일을 클릭해 배치하세요."
 	guide.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	panel.add_child(guide)
 
@@ -143,36 +159,54 @@ func _make_card_row(card_id: StringName) -> Control:
 		name_label.text = "%s (%d)" % [card.display_name, card.cost]
 	else:
 		name_label.text = String(card_id)
-	name_label.custom_minimum_size = Vector2(220.0, 0.0)
+	name_label.custom_minimum_size = Vector2(300.0, 0.0)
 	row.add_child(name_label)
-	for lane in BattleSim.LANE_COUNT:
-		var b := Button.new()
-		b.text = str(lane + 1)
-		b.custom_minimum_size = Vector2(56.0, 0.0)
-		b.pressed.connect(_on_deploy_pressed.bind(card_id, lane))
-		row.add_child(b)
+	var b := Button.new()
+	b.text = "선택"
+	b.custom_minimum_size = Vector2(84.0, 0.0)
+	b.pressed.connect(_on_card_selected.bind(card_id))
+	row.add_child(b)
 	return row
 
 # ── 입력 ────────────────────────────────────────────────────
-func _on_deploy_pressed(card_id: StringName, lane: int) -> void:
+func _on_card_selected(card_id: StringName) -> void:
+	if _phase != Phase.DEPLOY:
+		return
+	var card := CardLibrary.get_card(card_id)
+	if card == null:
+		return
+	_selected_card_id = card_id
+	_hint_label.text = "%s 선택됨 — 빈 타일을 클릭하세요." % card.display_name
+
+func _on_tile_pressed(col: int, row: int) -> void:
 	if _phase != Phase.DEPLOY or _lord == null:
 		return
+	if _selected_card_id == &"":
+		_hint_label.text = "먼저 배치할 카드를 선택하세요."
+		return
+	var key := _tile_key(col, row)
+	if _occupied_tiles.has(key):
+		_hint_label.text = "이미 배치된 타일입니다."
+		return
+	var card_id := _selected_card_id
 	var card := CardLibrary.get_card(card_id)
 	if card == null:
 		return
 	if _points < card.cost:
 		_hint_label.text = "지휘력이 부족합니다 (필요 %d)." % card.cost
 		return
-	var x := 30.0 + float(_lane_count[lane]) * 26.0
-	var u := CardLibrary.build_player_unit(card_id, lane, x, _lord)
+	var depth := BattleSim.depth_for_row(row)
+	var u := CardLibrary.build_player_unit(card_id, col, depth, _lord)
 	if u == null:
 		return
+	u.row = row
 	_sim.add_unit(u)
 	_spawn_visual(u)
-	_lane_count[lane] += 1
+	_occupied_tiles[key] = u
+	_update_tile_label(col, row, u.display_name)
 	_points -= card.cost
 	_update_points()
-	_hint_label.text = "%s → %d레인 배치" % [card.display_name, lane + 1]
+	_hint_label.text = "%s → %d컬럼 %d행 배치" % [card.display_name, col + 1, row + 1]
 
 func _on_start_pressed() -> void:
 	if _phase != Phase.DEPLOY:
@@ -237,8 +271,9 @@ func _sync_visuals() -> void:
 	_update_wave_label()
 
 func _position_visual(u: BattleUnit) -> void:
-	var sx := _map_x(u.x) - UNIT_W * 0.5
-	var sy := float(LANE_Y[u.lane]) - UNIT_H * 0.5
+	var offset := _unit_visual_offset(u)
+	var sx := _map_col(u.lane) - UNIT_W * 0.5 + offset.x
+	var sy := _map_depth(u.x) - UNIT_H * 0.5 + offset.y
 	_vis[u]["root"].position = Vector2(sx, sy)
 
 func _flash_skill_casts() -> void:
@@ -260,8 +295,38 @@ func _sim_units() -> Array[BattleUnit]:
 	units.append_array(_sim.enemy_units)
 	return units
 
-func _map_x(sim_x: float) -> float:
-	return FIELD_LEFT + (sim_x / BattleSim.LANE_LENGTH) * (FIELD_RIGHT - FIELD_LEFT)
+func _column_width() -> float:
+	return (FIELD_RIGHT - FIELD_LEFT) / float(BattleSim.COL_COUNT)
+
+func _map_col(col: int) -> float:
+	return FIELD_LEFT + (float(col) + 0.5) * _column_width()
+
+func _map_depth(depth: float) -> float:
+	var t := clampf(depth / BattleSim.LANE_LENGTH, 0.0, 1.0)
+	return FIELD_BOTTOM - t * (FIELD_BOTTOM - FIELD_TOP)
+
+func _tile_position(col: int, row: int) -> Vector2:
+	return Vector2(_map_col(col) - TILE_W * 0.5, _map_depth(BattleSim.depth_for_row(row)) - TILE_H * 0.5)
+
+func _tile_key(col: int, row: int) -> String:
+	return "%d:%d" % [col, row]
+
+func _update_tile_label(col: int, row: int, text: String) -> void:
+	var tile: Button = _tile_buttons.get(_tile_key(col, row), null)
+	if tile != null:
+		tile.text = text
+		tile.disabled = true
+
+func _unit_visual_offset(u: BattleUnit) -> Vector2:
+	if u.team == BattleUnit.Team.PLAYER:
+		return Vector2.ZERO
+	var index := 0
+	for other in _sim.enemy_units:
+		if other == u:
+			break
+		if other.lane == u.lane and absf(other.x - u.x) < 4.0:
+			index += 1
+	return Vector2(float((index % 3) - 1) * 18.0, float(index / 3) * 14.0)
 
 func _update_wave_label() -> void:
 	if _wave_label == null:

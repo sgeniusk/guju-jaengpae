@@ -1,4 +1,4 @@
-# 병종 상성표와 일반공격 적용을 검증한다.
+# 병종 상성표와 그리드 일반공격 적용을 검증한다.
 extends TestCase
 
 func test_type_chart_triangle_and_neutral_pairs() -> void:
@@ -35,13 +35,13 @@ func test_from_card_carries_troop_type() -> void:
 	var cat := CardCatalog.new()
 	cat.load_all()
 	var card := cat.get_card(&"general_zhaoyun")
-	var unit := BattleUnit.from_card(card, BattleUnit.Team.PLAYER, 0, 0.0)
+	var unit := BattleUnit.from_card(card, BattleUnit.Team.PLAYER, 0, _grid_depth(1))
 	eq(unit.troop_type, "cavalry", "조운 카드 병종 운반")
 
 func test_skill_damage_ignores_type_chart() -> void:
 	var sim := BattleSim.new()
-	var caster := BattleUnit.make(BattleUnit.Team.PLAYER, 0, 100.0, "조운", 1000, 0, 999.0, "melee", 0.0, &"caster", &"skill_changban_charge", "cavalry")
-	var target := BattleUnit.make(BattleUnit.Team.ENEMY, 0, 240.0, "요사 궁수", 1000, 0, 999.0, "melee", 0.0, &"", &"", "archer")
+	var caster := BattleUnit.make(BattleUnit.Team.PLAYER, 0, _grid_depth(1), "조운", 1000, 0, 999.0, "melee", 0.0, &"caster", &"skill_changban_charge", "cavalry")
+	var target := BattleUnit.make(BattleUnit.Team.ENEMY, 0, _grid_depth(1) + 140.0, "요사 궁수", 1000, 0, 999.0, "melee", 0.0, &"", &"", "archer")
 	sim.add_unit(caster)
 	sim.add_unit(target)
 	caster.skill_cooldown = 0.0
@@ -75,5 +75,9 @@ func test_wave_factory_assigns_enemy_troop_types() -> void:
 		truthy(found[key], "%s 등장 확인" % key)
 
 func _unit(team: int, troop_type: String, attack: int) -> BattleUnit:
-	var x := 100.0 if team == BattleUnit.Team.PLAYER else 120.0
+	var x := _grid_depth(1) if team == BattleUnit.Team.PLAYER else _grid_depth(1) + 24.0
 	return BattleUnit.make(team, 0, x, "검증 유닛", 1000, attack, 999.0, "melee", 0.0, &"", &"", troop_type)
+
+func _grid_depth(row: int) -> float:
+	var depths := [360.0, 240.0, 120.0]
+	return depths[row]

@@ -23,27 +23,29 @@ func _fail(msg: String) -> int:
 	printerr("  ", msg)
 	return 1
 
-# 시작 덱 전체(장수3·병종3)를 3레인에 배치하면 파도1을 막아낸다(승리).
+# 시작 덱 전체(장수3·병종3)를 그리드 전방 2행에 배치하면 파도1을 막아낸다(승리).
 func _case_player_wins(cat: CardCatalog, lord: LordData) -> int:
 	var sim := BattleSim.new()
 	var deck := cat.get_lord_deck(lord)
-	var lane := 0
+	var tile := 0
 	for card_id in deck:
-		sim.add_unit(cat.build_player_unit(card_id, lane, 40.0 + lane * 10.0, lord))
-		lane = (lane + 1) % BattleSim.LANE_COUNT
-	for e in WaveFactory.wave_one():
-		sim.add_unit(e)
+		var col := tile % BattleSim.LANE_COUNT
+		var row := tile / BattleSim.LANE_COUNT
+		var unit := cat.build_player_unit(card_id, col, BattleSim.depth_for_row(row), lord)
+		unit.row = row
+		sim.add_unit(unit)
+		tile += 1
+	sim.set_waves(WaveFactory.default_waves())
 	var res := sim.run_to_completion(0.1, 120.0)
 	if res != BattleSim.Result.PLAYER_WIN:
 		return _fail("승리 시나리오인데 결과=%d (%.1fs, 적잔존=%d)" % [res, sim.elapsed, sim.enemy_units.size()])
 	print("  승리 시나리오 OK (%.1fs, 아군잔존 %d)" % [sim.elapsed, sim.player_units.size()])
 	return 0
 
-# 아무도 배치하지 않으면 파도1에 패배한다.
+# 아무도 배치하지 않으면 파도1에 돌파당한다.
 func _case_player_loses(_cat: CardCatalog, _lord: LordData) -> int:
 	var sim := BattleSim.new()
-	for e in WaveFactory.wave_one():
-		sim.add_unit(e)
+	sim.set_waves([WaveFactory.wave_one()])
 	var res := sim.run_to_completion(0.1, 120.0)
 	if res != BattleSim.Result.PLAYER_LOSE:
 		return _fail("패배 시나리오인데 결과=%d" % res)
