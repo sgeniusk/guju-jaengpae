@@ -139,12 +139,12 @@
     },
     {
       "id": "feat-015b",
-      "name": "보드 기반 전투 + 배치/손패 UI",
-      "description": "전투를 영속 보드 배치에서 스폰(per-battle deploy 제거). 보드·손패 관리 화면(카드를 블록에 배치). feat-015 모델 위.",
+      "name": "보드 기반 전투 (battle from board)",
+      "description": "전투를 영속 보드 배치에서 스폰(per-battle deploy 제거). battle.gd 보드 스폰 + 배치 단계 제거, CardCatalog.build_board_army, RunManager.get_board. 손패 수동배치·드래프트·우물·상점은 015c. 스펙 docs/specs/feat-015b.md.",
       "dependencies": ["feat-015"],
-      "status": "not-started",
+      "status": "done",
       "owner": "Codex",
-      "evidence": ""
+      "evidence": "CardCatalog.build_board_army + RunManager.get_board + battle.gd 보드 스폰/읽기 전용 타일 전환. test_board_army 78단언, ./init.sh 전체 green(619단언, run_map/battle 부팅 OK)."
     },
     {
       "id": "feat-015c",

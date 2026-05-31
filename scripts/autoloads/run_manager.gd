@@ -12,6 +12,9 @@ func ensure_started(lord_id: StringName) -> void:
 func get_deck() -> Array[StringName]:
 	return state.board_card_ids()
 
+func get_board() -> Dictionary:
+	return state.board.duplicate()
+
 func add_card(id: StringName) -> void:
 	state.add_card(id)
 

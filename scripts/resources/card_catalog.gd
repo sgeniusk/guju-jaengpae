@@ -55,3 +55,20 @@ func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData)
 	if lord != null and lord.trait_id == &"trait_rende" and card.card_type == "troop":
 		hp_mult = 1.15
 	return BattleUnit.from_card(card, BattleUnit.Team.PLAYER, lane, x, hp_mult)
+
+# 영속 보드 블록을 전투 시작 위치의 아군 군세로 변환한다.
+func build_board_army(board: Dictionary, lord: LordData) -> Array[BattleUnit]:
+	var army: Array[BattleUnit] = []
+	for row in BattleSim.ROW_COUNT:
+		for col in BattleSim.COL_COUNT:
+			var key := "%d:%d" % [col, row]
+			if not board.has(key):
+				continue
+			var start := BattleSim.position_for_tile(col, row)
+			var unit := build_player_unit(StringName(board[key]), col, start.x, lord)
+			if unit == null:
+				continue
+			unit.row = row
+			unit.set_position(start.x, start.y)
+			army.append(unit)
+	return army

@@ -1,11 +1,10 @@
-# 전투 화면 — 군주의 덱을 3×3 시작 진형에 배치하고 "전투 시작"을 누르면 2D 오픈필드 오토배틀이 진행된다.
-# 순수 전투 로직은 BattleSim에 있다. 이 스크립트는 입력·배치 UI·유닛 시각화만 담당한다.
+# 전투 화면 — 영속 보드 배치에서 군세를 스폰하고 "전투 시작"을 누르면 2D 오픈필드 오토배틀이 진행된다.
+# 순수 전투 로직은 BattleSim에 있다. 이 스크립트는 입력·보드 표시·유닛 시각화만 담당한다.
 extends Control
 
 enum Phase { DEPLOY, BATTLE, DONE }
 
 const LORD_ID := &"lord_liubei"
-const START_POINTS := 12
 
 const FIELD_LEFT := 560.0
 const FIELD_RIGHT := 1840.0
@@ -20,18 +19,13 @@ const COMMAND_PICK_RADIUS := 70.0
 var _phase: int = Phase.DEPLOY
 var _sim := BattleSim.new()
 var _lord: LordData
-var _points: int = START_POINTS
-var _max_points: int = START_POINTS
 var _vis: Dictionary = {}            # BattleUnit -> { root: Control, hp: ColorRect }
 var _tile_buttons: Dictionary = {}   # "col:row" -> Button
-var _occupied_tiles: Dictionary = {} # "col:row" -> BattleUnit
-var _selected_card_id: StringName = &""
 var _node_completed := false
 var _command_hold_active := false
 var _commanded_target: BattleUnit = null
 
 var _units_layer: Control
-var _points_label: Label
 var _wave_label: Label
 var _hint_label: Label
 var _start_button: Button
@@ -41,10 +35,9 @@ var _overlay: Control            # 승리 보상 / 패배 재시도 패널
 func _ready() -> void:
 	_lord = CardLibrary.get_lord(LORD_ID)
 	RunManager.ensure_started(LORD_ID)
-	_max_points = RunManager.get_command_points()
-	_points = _max_points
 	_build_field()
 	_ensure_castle()
+	_spawn_board_army()
 	_build_panel()
 	if _lord == null:
 		_hint_label.text = "오류 — 군주(%s)를 불러오지 못했습니다." % LORD_ID
@@ -109,9 +102,11 @@ func _build_field() -> void:
 			var tile := Button.new()
 			tile.position = _tile_position(col, row)
 			tile.size = Vector2(TILE_W, TILE_H)
-			tile.text = ""
+			tile.text = "빈 칸"
+			tile.disabled = true
+			tile.focus_mode = Control.FOCUS_NONE
+			tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			tile.add_theme_font_size_override("font_size", 15)
-			tile.pressed.connect(_on_tile_pressed.bind(col, row))
 			add_child(tile)
 			_tile_buttons[_tile_key(col, row)] = tile
 	_units_layer = Control.new()
@@ -146,11 +141,6 @@ func _build_panel() -> void:
 		trait_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		panel.add_child(trait_label)
 
-	_points_label = Label.new()
-	_points_label.add_theme_font_size_override("font_size", 22)
-	panel.add_child(_points_label)
-	_update_points()
-
 	_wave_label = Label.new()
 	_wave_label.add_theme_font_size_override("font_size", 22)
 	_wave_label.visible = false
@@ -158,13 +148,15 @@ func _build_panel() -> void:
 	_update_wave_label()
 
 	var guide := Label.new()
-	guide.text = "카드를 선택한 뒤 전장 타일을 클릭해 배치하세요."
+	guide.text = "보드 배치가 이번 전투 군세입니다."
 	guide.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	panel.add_child(guide)
 
-	# 덱 카드 행 (런 상태의 현재 덱 — 시작 덱 + 전리 보상)
-	for card_id in RunManager.get_deck():
-		panel.add_child(_make_card_row(card_id))
+	var board_head := Label.new()
+	board_head.text = "보드 군세 — %d장" % _board_unit_count()
+	board_head.add_theme_font_size_override("font_size", 20)
+	panel.add_child(board_head)
+	_add_board_summary(panel)
 
 	_start_button = Button.new()
 	_start_button.text = "전투 시작"
@@ -177,9 +169,26 @@ func _build_panel() -> void:
 	_hint_label.modulate = Color(1.0, 0.8, 0.4)
 	panel.add_child(_hint_label)
 
-func _make_card_row(card_id: StringName) -> Control:
+func _add_board_summary(panel: VBoxContainer) -> void:
+	var board := RunManager.get_board()
+	var any := false
+	for key in RunState.block_keys():
+		if not board.has(key):
+			continue
+		any = true
+		panel.add_child(_make_board_row(key, StringName(board[key])))
+	if not any:
+		var empty := Label.new()
+		empty.text = "보드 군세 없음"
+		panel.add_child(empty)
+
+func _make_board_row(block_key: String, card_id: StringName) -> Control:
 	var card := CardLibrary.get_card(card_id)
 	var row := HBoxContainer.new()
+	var slot_label := Label.new()
+	slot_label.text = _block_label(block_key)
+	slot_label.custom_minimum_size = Vector2(92.0, 0.0)
+	row.add_child(slot_label)
 	var name_label := Label.new()
 	if card != null:
 		name_label.text = "%s (%d)" % [card.display_name, card.cost]
@@ -187,60 +196,15 @@ func _make_card_row(card_id: StringName) -> Control:
 		name_label.text = String(card_id)
 	name_label.custom_minimum_size = Vector2(300.0, 0.0)
 	row.add_child(name_label)
-	var b := Button.new()
-	b.text = "선택"
-	b.custom_minimum_size = Vector2(84.0, 0.0)
-	b.pressed.connect(_on_card_selected.bind(card_id))
-	row.add_child(b)
 	return row
 
 # ── 입력 ────────────────────────────────────────────────────
-func _on_card_selected(card_id: StringName) -> void:
-	if _phase != Phase.DEPLOY:
-		return
-	var card := CardLibrary.get_card(card_id)
-	if card == null:
-		return
-	_selected_card_id = card_id
-	_hint_label.text = "%s 선택됨 — 빈 타일을 클릭하세요." % card.display_name
-
-func _on_tile_pressed(col: int, row: int) -> void:
-	if _phase != Phase.DEPLOY or _lord == null:
-		return
-	if _selected_card_id == &"":
-		_hint_label.text = "먼저 배치할 카드를 선택하세요."
-		return
-	var key := _tile_key(col, row)
-	if _occupied_tiles.has(key):
-		_hint_label.text = "이미 배치된 타일입니다."
-		return
-	var card_id := _selected_card_id
-	var card := CardLibrary.get_card(card_id)
-	if card == null:
-		return
-	if _points < card.cost:
-		_hint_label.text = "지휘력이 부족합니다 (필요 %d)." % card.cost
-		return
-	var start := BattleSim.position_for_tile(col, row)
-	var u := CardLibrary.build_player_unit(card_id, col, start.x, _lord)
-	if u == null:
-		return
-	u.row = row
-	u.set_position(start.x, start.y)
-	_sim.add_unit(u)
-	_spawn_visual(u)
-	_occupied_tiles[key] = u
-	_update_tile_label(col, row, u.display_name)
-	_points -= card.cost
-	_update_points()
-	_hint_label.text = "%s → 시작 진형 %d열 %d행 배치" % [card.display_name, col + 1, row + 1]
-
 func _on_start_pressed() -> void:
 	if _phase != Phase.DEPLOY:
 		return
 	_ensure_castle()
-	if _sim.player_units.is_empty():
-		_hint_label.text = "최소 한 유닛을 배치해야 합니다."
+	if _board_unit_count() <= 0:
+		_hint_label.text = "보드 군세가 비어 있습니다."
 		return
 	_sim.set_waves(WaveFactory.waves_for_node(RunManager.active_node_type()))
 	_phase = Phase.BATTLE
@@ -335,6 +299,14 @@ func _sim_units() -> Array[BattleUnit]:
 	units.append_array(_sim.player_units)
 	units.append_array(_sim.enemy_units)
 	return units
+
+func _spawn_board_army() -> void:
+	var board := RunManager.get_board()
+	var army := CardLibrary.catalog.build_board_army(board, _lord)
+	for unit in army:
+		_sim.add_unit(unit)
+		_spawn_visual(unit)
+		_update_tile_label(unit.lane, unit.row, unit.display_name)
 
 func _ensure_castle() -> void:
 	var castle := _sim.add_castle()
@@ -471,7 +443,7 @@ func _build_outcome_ui(win: bool) -> void:
 		_add_map_or_conquest_button(box)
 		return
 	var head := Label.new()
-	head.text = "전리품 — 한 장을 골라 덱에 넣으세요"
+	head.text = "전리품 — 한 장을 골라 군세에 넣으세요"
 	head.add_theme_font_size_override("font_size", 24)
 	box.add_child(head)
 	for id in candidates:
@@ -483,7 +455,7 @@ func _pick_reward(id: StringName) -> void:
 	var card := CardLibrary.get_card(id)
 	var got_name := card.display_name if card != null else String(id)
 	EventBus.card_rewarded.emit(id)
-	_hint_label.text = "획득 — %s! 덱에 편입되었습니다." % got_name
+	_hint_label.text = "획득 — %s! 군세에 편입되었습니다." % got_name
 	_complete_node_once()
 	var box := _new_overlay_box()
 	var got := Label.new()
@@ -501,7 +473,7 @@ func _add_map_or_conquest_button(box: VBoxContainer) -> void:
 		box.add_child(done)
 		box.add_child(_make_button("새 런", _restart_run))
 	else:
-		box.add_child(_make_button("지도로 (덱 %d장)" % RunManager.get_deck().size(), _go_to_run_map))
+		box.add_child(_make_button("지도로 (보드 %d장)" % RunManager.get_deck().size(), _go_to_run_map))
 
 func _complete_node_once() -> void:
 	if _node_completed:
@@ -540,5 +512,15 @@ func _card_brief(card: CardData) -> String:
 		return "%s/%s" % [card.troop_type, card.attack_range]
 	return card.card_type
 
-func _update_points() -> void:
-	_points_label.text = "지휘력 — %d / %d" % [_points, _max_points]
+func _board_unit_count() -> int:
+	var count := 0
+	for u in _sim.player_units:
+		if u != null and not u.is_castle:
+			count += 1
+	return count
+
+func _block_label(block_key: String) -> String:
+	var parts := block_key.split(":")
+	if parts.size() != 2:
+		return block_key
+	return "%d열 %d행" % [int(parts[0]) + 1, int(parts[1]) + 1]
