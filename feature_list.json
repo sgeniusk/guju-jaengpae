@@ -148,9 +148,18 @@
     },
     {
       "id": "feat-015c",
-      "name": "상점 노드 + 보상 드래프트 + 우물 UI",
-      "description": "4스테이지마다 상점(골드로 구매), 승리 보상 3중1 드래프트→손패, 우물 버리기 UI. 손패 3 해소 강제.",
+      "name": "수동 보드 배치 + 보상 드래프트 + 우물",
+      "description": "배치 agency 복원 — 손패 카드를 골라 보드의 원하는 블록에 배치(place_from_hand). start_run/보상이 손패로(자동 보드 배치 제거). 우물 버리기 +10골드. battle.gd 배치 단계 복원. 스펙 docs/specs/feat-015c.md.",
       "dependencies": ["feat-015b"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "start_run/보상은 손패로, battle.gd 배치 단계에서 손패 선택→빈 블록 배치·우물 +10골드·보드 1장 이상 전투 시작. test_run_board/test_board_army/test_run_reward 갱신. ./init.sh 전체 green(605단언, run_map/battle 부팅 OK)."
+    },
+    {
+      "id": "feat-015d",
+      "name": "상점 노드",
+      "description": "4스테이지마다 상점 노드(모은 골드로 카드 구매→손패). 손패 3 엄격 해소. feat-015c 위.",
+      "dependencies": ["feat-015c"],
       "status": "not-started",
       "owner": "Codex",
       "evidence": ""

@@ -16,7 +16,10 @@ func get_board() -> Dictionary:
 	return state.board.duplicate()
 
 func add_card(id: StringName) -> void:
-	state.add_card(id)
+	hand_add(id)
+
+func hand_add(id: StringName) -> void:
+	state.hand_add(id)
 
 func get_hand() -> Array[StringName]:
 	var out: Array[StringName] = []

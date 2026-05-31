@@ -41,10 +41,11 @@ func test_roll_returns_requested_count_when_pool_has_enough() -> void:
 	var roll := RewardPool.roll(cat, run.owned_card_ids(), 3)
 	eq(roll.size(), 3, "3장 보상 후보")
 
-func test_start_run_sets_initial_board_and_started() -> void:
+func test_start_run_sets_initial_hand_and_started() -> void:
 	if not _require_methods(["board_card_ids"]):
 		return
-	eq(run.board_card_ids().size(), 6, "시작 보드 6장")
+	eq(run.board_card_ids().size(), 0, "시작 보드 0장")
+	eq(run.hand.size(), 6, "시작 손패 6장")
 	truthy(run.started, "런 시작 상태")
 	eq(run.lord_id, &"lord_liubei", "군주 id 기록")
 

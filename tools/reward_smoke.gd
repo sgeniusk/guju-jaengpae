@@ -1,4 +1,4 @@
-# 전리(보상)·보드/owned 영속 헤드리스 스모크 — RunState/RewardPool 로직을 검증한다.
+# 전리(보상)·손패/owned 영속 헤드리스 스모크 — RunState/RewardPool 로직을 검증한다.
 # 실행 — godot --headless --path . --script res://tools/reward_smoke.gd
 extends SceneTree
 
@@ -26,10 +26,12 @@ func _run_checks(cat: CardCatalog, lord: LordData) -> int:
 	var e := 0
 	var run := RunState.new()
 	run.start_run(lord, cat)
-	if run.board_card_ids().size() != 6:
-		e += _fail("시작 보드가 6장이 아님: %d" % run.board_card_ids().size())
+	if run.board_card_ids().size() != 0:
+		e += _fail("시작 보드가 비어 있지 않음: %d" % run.board_card_ids().size())
+	if run.hand.size() != 6:
+		e += _fail("시작 손패가 6장이 아님: %d" % run.hand.size())
 	var elig := RewardPool.eligible(cat, run.owned_card_ids())
-	print("  시작 보드 %d장, 보상 후보 %d장" % [run.board_card_ids().size(), elig.size()])
+	print("  시작 손패 %d장, 보상 후보 %d장" % [run.hand.size(), elig.size()])
 	if elig.is_empty():
 		return e + _fail("보상 후보가 없음 (보상 카드를 추가했는지 확인)")
 	for id in elig:
@@ -39,6 +41,8 @@ func _run_checks(cat: CardCatalog, lord: LordData) -> int:
 	var picked: StringName = elig[0]
 	var before := run.owned_card_ids().size()
 	run.add_card(picked)
+	if not run.hand.has(picked):
+		e += _fail("획득 카드가 손패에 없음")
 	if run.owned_card_ids().size() != before + 1:
 		e += _fail("획득 후 owned 크기가 +1이 아님")
 	if not run.has_card(picked):

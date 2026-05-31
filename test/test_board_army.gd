@@ -45,18 +45,20 @@ func test_build_board_army_skips_empty_invalid_and_unknown_blocks() -> void:
 	if army.size() == 1:
 		_assert_unit_at_tile(army[0], &"troop_infantry", 0, 1)
 
-func test_start_run_board_builds_lord_starting_army() -> void:
+func test_start_run_waits_for_manual_board_placement_before_building_army() -> void:
 	if not _require_build_board_army():
 		return
 	var run := RunState.new()
 	run.start_run(lord, cat)
 	var army: Array = cat.call("build_board_army", run.board, lord)
 	var deck := cat.get_lord_deck(lord)
-	eq(army.size(), deck.size(), "시작 보드 6장은 시작 군세 6유닛")
-	for idx in mini(army.size(), deck.size()):
-		var key: String = RunState.block_keys()[idx]
-		var parts := key.split(":")
-		_assert_unit_at_tile(army[idx], deck[idx], int(parts[0]), int(parts[1]))
+	eq(army.size(), 0, "시작 보드는 비어 있어 군세가 없음")
+	eq(run.hand, deck, "시작 카드는 손패에서 수동 배치를 기다림")
+	truthy(run.place_from_hand(0, "1:2"), "손패 첫 카드 수동 배치")
+	army = cat.call("build_board_army", run.board, lord)
+	eq(army.size(), 1, "배치한 보드 카드만 군세 생성")
+	if army.size() == 1:
+		_assert_unit_at_tile(army[0], deck[0], 1, 2)
 
 func test_run_manager_get_board_returns_copy_of_current_board() -> void:
 	CardLibrary.catalog.load_all()
@@ -66,10 +68,10 @@ func test_run_manager_get_board_returns_copy_of_current_board() -> void:
 	if not RunManager.has_method("get_board"):
 		return
 	var board: Dictionary = RunManager.call("get_board")
-	eq(board.size(), 6, "시작 런 보드 6칸")
+	eq(board.size(), 0, "시작 런 보드 빈 칸")
 	eq(board, RunManager.state.board, "get_board는 현재 보드 내용 반환")
 	board["0:0"] = &"mutated_card"
-	ne(RunManager.state.board.get("0:0"), &"mutated_card", "반환 보드 수정은 런 상태를 바꾸지 않음")
+	falsy(RunManager.state.board.has("0:0"), "반환 보드 수정은 런 상태를 바꾸지 않음")
 
 func _require_build_board_army() -> bool:
 	truthy(cat.has_method("build_board_army"), "CardCatalog.build_board_army 존재")

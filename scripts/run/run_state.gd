@@ -27,10 +27,9 @@ func start_run(lord: LordData, catalog: CardCatalog) -> void:
 	board.clear()
 	hand.clear()
 	gold = 0
-	var keys := block_keys()
 	var starting_cards := catalog.get_lord_deck(lord)
-	for idx in mini(starting_cards.size(), BOARD_BLOCKS):
-		board[keys[idx]] = starting_cards[idx]
+	for card_id in starting_cards:
+		hand.append(card_id)
 	wave_index = 0
 	command_points = 12
 	started = true
@@ -96,11 +95,7 @@ func has_card(id: StringName) -> bool:
 	return owned_card_ids().has(id)
 
 func add_card(id: StringName) -> void:
-	var block_key = first_free_block()
-	if block_key == null:
-		hand_add(id)
-	else:
-		board[block_key] = id
+	hand_add(id)
 
 func add_command_points(n: int) -> void:
 	command_points += n

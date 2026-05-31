@@ -24,8 +24,15 @@ var _tile_buttons: Dictionary = {}   # "col:row" -> Button
 var _node_completed := false
 var _command_hold_active := false
 var _commanded_target: BattleUnit = null
+var _selected_hand_index := -1
 
 var _units_layer: Control
+var _panel: VBoxContainer
+var _board_head: Label
+var _board_box: VBoxContainer
+var _hand_box: VBoxContainer
+var _gold_label: Label
+var _well_button: Button
 var _wave_label: Label
 var _hint_label: Label
 var _start_button: Button
@@ -103,10 +110,9 @@ func _build_field() -> void:
 			tile.position = _tile_position(col, row)
 			tile.size = Vector2(TILE_W, TILE_H)
 			tile.text = "빈 칸"
-			tile.disabled = true
 			tile.focus_mode = Control.FOCUS_NONE
-			tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			tile.add_theme_font_size_override("font_size", 15)
+			tile.pressed.connect(_on_tile_pressed.bind(_tile_key(col, row)))
 			add_child(tile)
 			_tile_buttons[_tile_key(col, row)] = tile
 	_units_layer = Control.new()
@@ -123,64 +129,66 @@ func _build_field() -> void:
 	add_child(_result_label)
 
 func _build_panel() -> void:
-	var panel := VBoxContainer.new()
-	panel.position = Vector2(28.0, 28.0)
-	panel.custom_minimum_size = Vector2(440.0, 0.0)
-	panel.add_theme_constant_override("separation", 10)
-	add_child(panel)
+	_panel = VBoxContainer.new()
+	_panel.position = Vector2(28.0, 28.0)
+	_panel.custom_minimum_size = Vector2(440.0, 0.0)
+	_panel.add_theme_constant_override("separation", 10)
+	add_child(_panel)
 
 	var title := Label.new()
 	var lord_name := _lord.display_name if _lord != null else "?"
 	title.text = "군주 — %s (촉)" % lord_name
 	title.add_theme_font_size_override("font_size", 26)
-	panel.add_child(title)
+	_panel.add_child(title)
 
 	if _lord != null and _lord.trait_name != "":
 		var trait_label := Label.new()
 		trait_label.text = "특성 — %s" % _lord.trait_name
 		trait_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		panel.add_child(trait_label)
+		_panel.add_child(trait_label)
 
 	_wave_label = Label.new()
 	_wave_label.add_theme_font_size_override("font_size", 22)
 	_wave_label.visible = false
-	panel.add_child(_wave_label)
+	_panel.add_child(_wave_label)
 	_update_wave_label()
 
 	var guide := Label.new()
-	guide.text = "보드 배치가 이번 전투 군세입니다."
+	guide.text = "배치 단계"
 	guide.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	panel.add_child(guide)
+	_panel.add_child(guide)
 
-	var board_head := Label.new()
-	board_head.text = "보드 군세 — %d장" % _board_unit_count()
-	board_head.add_theme_font_size_override("font_size", 20)
-	panel.add_child(board_head)
-	_add_board_summary(panel)
+	_board_head = Label.new()
+	_board_head.add_theme_font_size_override("font_size", 20)
+	_panel.add_child(_board_head)
+
+	_board_box = VBoxContainer.new()
+	_board_box.add_theme_constant_override("separation", 4)
+	_panel.add_child(_board_box)
+
+	_hand_box = VBoxContainer.new()
+	_hand_box.add_theme_constant_override("separation", 4)
+	_panel.add_child(_hand_box)
+
+	_gold_label = Label.new()
+	_panel.add_child(_gold_label)
+
+	_well_button = Button.new()
+	_well_button.custom_minimum_size = Vector2(0.0, 40.0)
+	_well_button.pressed.connect(_on_well_pressed)
+	_panel.add_child(_well_button)
 
 	_start_button = Button.new()
 	_start_button.text = "전투 시작"
 	_start_button.custom_minimum_size = Vector2(0.0, 44.0)
 	_start_button.pressed.connect(_on_start_pressed)
-	panel.add_child(_start_button)
+	_panel.add_child(_start_button)
 
 	_hint_label = Label.new()
 	_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint_label.modulate = Color(1.0, 0.8, 0.4)
-	panel.add_child(_hint_label)
-
-func _add_board_summary(panel: VBoxContainer) -> void:
-	var board := RunManager.get_board()
-	var any := false
-	for key in RunState.block_keys():
-		if not board.has(key):
-			continue
-		any = true
-		panel.add_child(_make_board_row(key, StringName(board[key])))
-	if not any:
-		var empty := Label.new()
-		empty.text = "보드 군세 없음"
-		panel.add_child(empty)
+	_panel.add_child(_hint_label)
+	_refresh_deploy_ui()
 
 func _make_board_row(block_key: String, card_id: StringName) -> Control:
 	var card := CardLibrary.get_card(card_id)
@@ -198,13 +206,159 @@ func _make_board_row(block_key: String, card_id: StringName) -> Control:
 	row.add_child(name_label)
 	return row
 
+func _refresh_deploy_ui() -> void:
+	var hand := RunManager.get_hand()
+	if _selected_hand_index >= hand.size():
+		_selected_hand_index = -1
+	if _board_head != null:
+		_board_head.text = "보드 군세 — %d장" % RunManager.get_board().size()
+	if _gold_label != null:
+		_gold_label.text = "골드 — %d" % RunManager.get_gold()
+	_rebuild_board_summary()
+	_rebuild_hand_list(hand)
+	if _well_button != null:
+		_well_button.text = "우물 +%d골드" % RunState.WELL_GOLD
+		_well_button.disabled = _phase != Phase.DEPLOY or _selected_hand_index < 0
+	if _start_button != null:
+		_start_button.disabled = _phase != Phase.DEPLOY or _board_unit_count() <= 0
+	_refresh_board_tiles()
+
+func _rebuild_board_summary() -> void:
+	if _board_box == null:
+		return
+	_clear_children(_board_box)
+	var board := RunManager.get_board()
+	var any := false
+	for key in RunState.block_keys():
+		if not board.has(key):
+			continue
+		any = true
+		_board_box.add_child(_make_board_row(key, StringName(board[key])))
+	if not any:
+		var empty := Label.new()
+		empty.text = "보드 군세 없음"
+		_board_box.add_child(empty)
+
+func _rebuild_hand_list(hand: Array[StringName]) -> void:
+	if _hand_box == null:
+		return
+	_clear_children(_hand_box)
+	var head := Label.new()
+	head.add_theme_font_size_override("font_size", 20)
+	if hand.size() > RunState.HAND_MAX:
+		head.text = "손패 — %d장 / 권장 %d장" % [hand.size(), RunState.HAND_MAX]
+	else:
+		head.text = "손패 — %d장" % hand.size()
+	_hand_box.add_child(head)
+	if hand.is_empty():
+		var empty := Label.new()
+		empty.text = "손패 없음"
+		_hand_box.add_child(empty)
+		return
+	for idx in hand.size():
+		var card_id: StringName = hand[idx]
+		var card := CardLibrary.get_card(card_id)
+		var card_name := card.display_name if card != null else String(card_id)
+		var card_cost := card.cost if card != null else 0
+		var b := Button.new()
+		b.toggle_mode = true
+		b.button_pressed = idx == _selected_hand_index
+		b.text = "%d. %s (%d)" % [idx + 1, card_name, card_cost]
+		b.custom_minimum_size = Vector2(0.0, 36.0)
+		b.disabled = _phase != Phase.DEPLOY
+		b.pressed.connect(_select_hand.bind(idx))
+		_hand_box.add_child(b)
+
+func _refresh_board_tiles() -> void:
+	var board := RunManager.get_board()
+	for key in _tile_buttons.keys():
+		var tile: Button = _tile_buttons[key]
+		if tile == null:
+			continue
+		if board.has(key):
+			var card := CardLibrary.get_card(StringName(board[key]))
+			tile.text = card.display_name if card != null else String(board[key])
+			tile.disabled = true
+			tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		else:
+			tile.text = "빈 칸"
+			tile.disabled = _phase != Phase.DEPLOY
+			tile.mouse_filter = Control.MOUSE_FILTER_STOP if _phase == Phase.DEPLOY else Control.MOUSE_FILTER_IGNORE
+
+func _clear_children(node: Node) -> void:
+	for child in node.get_children():
+		node.remove_child(child)
+		child.queue_free()
+
 # ── 입력 ────────────────────────────────────────────────────
+func _select_hand(index: int) -> void:
+	if _phase != Phase.DEPLOY:
+		return
+	var hand := RunManager.get_hand()
+	if index < 0 or index >= hand.size():
+		_selected_hand_index = -1
+		_refresh_deploy_ui()
+		return
+	if _selected_hand_index == index:
+		_selected_hand_index = -1
+		_hint_label.text = "카드 선택 해제"
+	else:
+		_selected_hand_index = index
+		var card := CardLibrary.get_card(hand[index])
+		var card_name := card.display_name if card != null else String(hand[index])
+		_hint_label.text = "선택 — %s" % card_name
+	_refresh_deploy_ui()
+
+func _on_tile_pressed(block_key: String) -> void:
+	if _phase != Phase.DEPLOY:
+		return
+	if _selected_hand_index < 0:
+		_hint_label.text = "손패 카드를 먼저 선택하세요."
+		return
+	var hand := RunManager.get_hand()
+	if _selected_hand_index >= hand.size():
+		_selected_hand_index = -1
+		_hint_label.text = "선택한 카드가 없습니다."
+		_refresh_deploy_ui()
+		return
+	var card_id: StringName = hand[_selected_hand_index]
+	if not RunManager.place_from_hand(_selected_hand_index, block_key):
+		_hint_label.text = "배치할 수 없습니다."
+		_refresh_deploy_ui()
+		return
+	_spawn_unit_for_board_key(block_key)
+	var card := CardLibrary.get_card(card_id)
+	var card_name := card.display_name if card != null else String(card_id)
+	_selected_hand_index = -1
+	_hint_label.text = "배치 — %s" % card_name
+	_refresh_deploy_ui()
+
+func _on_well_pressed() -> void:
+	if _phase != Phase.DEPLOY:
+		return
+	var hand := RunManager.get_hand()
+	if _selected_hand_index < 0 or _selected_hand_index >= hand.size():
+		_hint_label.text = "우물에 보낼 카드를 선택하세요."
+		_refresh_deploy_ui()
+		return
+	var card_id: StringName = hand[_selected_hand_index]
+	if not RunManager.discard_from_hand(_selected_hand_index):
+		_hint_label.text = "우물에 보낼 수 없습니다."
+		_refresh_deploy_ui()
+		return
+	var card := CardLibrary.get_card(card_id)
+	var card_name := card.display_name if card != null else String(card_id)
+	_selected_hand_index = -1
+	_hint_label.text = "우물 — %s, +%d골드" % [card_name, RunState.WELL_GOLD]
+	_refresh_deploy_ui()
+
 func _on_start_pressed() -> void:
 	if _phase != Phase.DEPLOY:
 		return
 	_ensure_castle()
 	if _board_unit_count() <= 0:
 		_hint_label.text = "보드 군세가 비어 있습니다."
+		_refresh_deploy_ui()
 		return
 	_sim.set_waves(WaveFactory.waves_for_node(RunManager.active_node_type()))
 	_phase = Phase.BATTLE
@@ -212,6 +366,7 @@ func _on_start_pressed() -> void:
 	_sync_visuals()
 	_start_button.disabled = true
 	_hint_label.text = "전투 중…"
+	_refresh_deploy_ui()
 
 # ── 시각화 ──────────────────────────────────────────────────
 func _spawn_visual(u: BattleUnit) -> void:
@@ -303,6 +458,19 @@ func _sim_units() -> Array[BattleUnit]:
 func _spawn_board_army() -> void:
 	var board := RunManager.get_board()
 	var army := CardLibrary.catalog.build_board_army(board, _lord)
+	for unit in army:
+		_sim.add_unit(unit)
+		_spawn_visual(unit)
+		_update_tile_label(unit.lane, unit.row, unit.display_name)
+	_refresh_board_tiles()
+
+func _spawn_unit_for_board_key(block_key: String) -> void:
+	var board := RunManager.get_board()
+	if not board.has(block_key):
+		return
+	var single := {}
+	single[block_key] = board[block_key]
+	var army := CardLibrary.catalog.build_board_army(single, _lord)
 	for unit in army:
 		_sim.add_unit(unit)
 		_spawn_visual(unit)
@@ -443,7 +611,7 @@ func _build_outcome_ui(win: bool) -> void:
 		_add_map_or_conquest_button(box)
 		return
 	var head := Label.new()
-	head.text = "전리품 — 한 장을 골라 군세에 넣으세요"
+	head.text = "전리품 — 한 장을 골라 손패에 넣으세요"
 	head.add_theme_font_size_override("font_size", 24)
 	box.add_child(head)
 	for id in candidates:
@@ -451,11 +619,11 @@ func _build_outcome_ui(win: bool) -> void:
 		box.add_child(_make_button("%s (%d) — %s" % [card.display_name, card.cost, _card_brief(card)], _pick_reward.bind(id)))
 
 func _pick_reward(id: StringName) -> void:
-	RunManager.add_card(id)
+	RunManager.hand_add(id)
 	var card := CardLibrary.get_card(id)
 	var got_name := card.display_name if card != null else String(id)
 	EventBus.card_rewarded.emit(id)
-	_hint_label.text = "획득 — %s! 군세에 편입되었습니다." % got_name
+	_hint_label.text = "획득 — %s! 손패에 들어왔습니다." % got_name
 	_complete_node_once()
 	var box := _new_overlay_box()
 	var got := Label.new()
@@ -473,7 +641,7 @@ func _add_map_or_conquest_button(box: VBoxContainer) -> void:
 		box.add_child(done)
 		box.add_child(_make_button("새 런", _restart_run))
 	else:
-		box.add_child(_make_button("지도로 (보드 %d장)" % RunManager.get_deck().size(), _go_to_run_map))
+		box.add_child(_make_button("지도로 (보드 %d장 / 손패 %d장)" % [RunManager.get_deck().size(), RunManager.get_hand().size()], _go_to_run_map))
 
 func _complete_node_once() -> void:
 	if _node_completed:

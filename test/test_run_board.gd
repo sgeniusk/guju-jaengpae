@@ -28,7 +28,7 @@ func test_block_keys_are_nine_unique_3x3_keys() -> void:
 			truthy(int(parts[0]) >= 0 and int(parts[0]) <= 2, "col 범위 0..2")
 			truthy(int(parts[1]) >= 0 and int(parts[1]) <= 2, "row 범위 0..2")
 
-func test_start_run_places_lord_deck_on_board_and_resets_hand_gold() -> void:
+func test_start_run_places_lord_deck_in_hand_and_resets_board_gold() -> void:
 	run.start_run(lord, cat)
 	truthy(_has_property(run, "board"), "RunState.board 존재")
 	truthy(_has_property(run, "hand"), "RunState.hand 존재")
@@ -36,10 +36,10 @@ func test_start_run_places_lord_deck_on_board_and_resets_hand_gold() -> void:
 	truthy(run.has_method("board_card_ids"), "RunState.board_card_ids 존재")
 	if not _has_property(run, "board") or not _has_property(run, "hand") or not _has_property(run, "gold") or not run.has_method("board_card_ids"):
 		return
-	eq(run.board.size(), 6, "유비 시작 카드 6장은 보드에 배치")
-	eq(run.hand.size(), 0, "시작 손패는 비어 있음")
+	eq(run.board.size(), 0, "시작 보드는 비어 있음")
+	eq(run.hand, cat.get_lord_deck(lord), "유비 시작 카드 6장은 손패에 들어감")
 	eq(run.gold, 0, "시작 골드는 0")
-	eq(run.board_card_ids(), cat.get_lord_deck(lord), "보드 카드 순서는 시작 덱 순서")
+	eq(run.board_card_ids(), [], "시작 보드 카드 없음")
 
 func test_place_from_hand_moves_card_to_free_block_only() -> void:
 	if not _require_methods(["hand_add", "place_from_hand"]):
@@ -85,7 +85,6 @@ func test_discard_from_hand_removes_card_and_adds_well_gold() -> void:
 func test_owned_card_ids_and_gold_spend_rules() -> void:
 	if not _require_methods(["hand_add", "hand_over_limit", "owned_card_ids", "add_gold", "spend_gold"]):
 		return
-	run.start_run(lord, cat)
 	run.hand_add(&"general_zhaoyun")
 	falsy(run.hand_over_limit(), "손패 1장은 제한 이내")
 	run.hand_add(&"general_huangzhong")
@@ -103,27 +102,32 @@ func test_owned_card_ids_and_gold_spend_rules() -> void:
 	falsy(run.spend_gold(6), "부족한 골드 소비 실패")
 	eq(run.gold, 5, "실패한 소비는 골드 불변")
 
-func test_run_manager_deck_and_add_card_bridge_board_then_hand() -> void:
+func test_starting_hand_can_exceed_soft_limit() -> void:
+	if not _require_methods(["hand_over_limit"]):
+		return
+	run.start_run(lord, cat)
+	eq(run.hand.size(), 6, "시작 손패는 시작 카드 수만큼 허용")
+	truthy(run.hand_over_limit(), "손패 한도 3은 소프트 경고")
+
+func test_run_manager_deck_and_add_card_bridge_to_hand() -> void:
 	RunManager.reset_run()
 	RunManager.ensure_started(&"lord_liubei")
-	for method in ["get_deck", "add_card", "get_hand"]:
+	for method in ["get_deck", "add_card", "get_hand", "hand_add"]:
 		truthy(RunManager.has_method(method), "RunManager.%s 존재" % method)
-	if not RunManager.has_method("get_deck") or not RunManager.has_method("add_card") or not RunManager.has_method("get_hand"):
+	if not RunManager.has_method("get_deck") or not RunManager.has_method("add_card") or not RunManager.has_method("get_hand") or not RunManager.has_method("hand_add"):
 		return
 	if not RunManager.state.has_method("board_card_ids") or not RunManager.state.has_method("first_free_block") or not RunManager.state.has_method("board_full"):
 		truthy(false, "RunManager.state 보드 브리지 API 존재")
 		return
 	eq(RunManager.get_deck(), RunManager.state.board_card_ids(), "get_deck은 보드 카드 브리지")
-	var free_before = RunManager.state.first_free_block()
-	truthy(free_before != null, "시작 보드에는 빈 블록 존재")
+	eq(RunManager.get_deck(), [], "시작 보드는 비어 있음")
+	var hand_before := RunManager.get_hand().size()
 	RunManager.add_card(&"general_zhaoyun")
-	eq(RunManager.state.board.get(free_before), &"general_zhaoyun", "add_card는 빈 블록에 우선 배치")
-	eq(RunManager.get_hand().size(), 0, "빈 블록 배치 시 손패 증가 없음")
-	while not RunManager.state.board_full():
-		RunManager.add_card(StringName("fill_%d" % RunManager.state.board.size()))
-	RunManager.add_card(&"overflow_card")
-	truthy(RunManager.get_hand().has(&"overflow_card"), "보드가 가득 차면 손패로 이동")
-	eq(RunManager.get_deck(), RunManager.state.board_card_ids(), "가득 찬 뒤에도 get_deck은 보드만 반환")
+	eq(RunManager.get_hand().size(), hand_before + 1, "add_card 보상 브리지는 손패에 추가")
+	truthy(RunManager.get_hand().has(&"general_zhaoyun"), "add_card 획득 카드는 손패에 있음")
+	eq(RunManager.get_deck(), [], "add_card는 보드 자동 배치 안 함")
+	RunManager.hand_add(&"troop_crossbow")
+	truthy(RunManager.get_hand().has(&"troop_crossbow"), "hand_add 직접 위임")
 
 func test_run_manager_delegates_hand_board_and_gold_operations() -> void:
 	RunManager.reset_run()
@@ -143,6 +147,25 @@ func test_run_manager_delegates_hand_board_and_gold_operations() -> void:
 	RunManager.state.hand_add(&"general_huangzhong")
 	truthy(RunManager.discard_from_hand(0), "RunManager.discard_from_hand 위임")
 	eq(RunManager.get_gold(), 15, "우물 버리기 골드 반영")
+
+func test_run_manager_starting_hand_place_and_well_flow() -> void:
+	RunManager.reset_run()
+	RunManager.ensure_started(&"lord_liubei")
+	for method in ["get_board", "get_hand", "place_from_hand", "discard_from_hand", "get_gold"]:
+		truthy(RunManager.has_method(method), "RunManager.%s 존재" % method)
+	if not RunManager.has_method("get_board") or not RunManager.has_method("get_hand"):
+		return
+	var starting_hand := RunManager.get_hand()
+	eq(starting_hand.size(), 6, "시작 손패 6장")
+	eq(RunManager.get_board().size(), 0, "시작 보드 비어 있음")
+	var placed: StringName = starting_hand[0]
+	truthy(RunManager.place_from_hand(0, "2:1"), "시작 손패에서 보드 배치")
+	eq(RunManager.get_board().get("2:1"), placed, "선택 블록에 배치")
+	eq(RunManager.get_hand().size(), 5, "배치 후 손패 -1")
+	var discarded: StringName = RunManager.get_hand()[0]
+	truthy(RunManager.discard_from_hand(0), "남은 손패 우물 처리")
+	falsy(RunManager.get_hand().has(discarded), "우물 처리 카드 제거")
+	eq(RunManager.get_gold(), RunState.WELL_GOLD, "우물 골드 반영")
 
 func test_reward_pool_excludes_owned_board_and_hand_cards() -> void:
 	if not _require_methods(["hand_add", "owned_card_ids"]):
