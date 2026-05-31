@@ -13,6 +13,7 @@ cost = 2
 fantasy_tier = "romance"
 description = "빠르게 적진을 파고드는 돌격 병종. 기동력과 공격력이 높지만 무르다."
 troop_type = "cavalry"
+target_rule = "backline"
 max_hp = 110
 attack = 30
 attack_interval = 1.1

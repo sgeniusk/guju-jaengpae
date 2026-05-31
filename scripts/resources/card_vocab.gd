@@ -7,6 +7,7 @@ const CARD_TYPES := ["general", "troop", "scheme", "treasure"]
 const TROOP_TYPES := ["infantry", "archer", "cavalry", "crossbow", "navy", "fantasy"]
 const FANTASY_TIERS := ["historical", "romance", "mythic"]
 const ATTACK_RANGES := ["melee", "ranged"]
+const TARGET_RULES := ["nearest", "backline", "strongest_ranged", "lowest_hp", "highest_hp"]
 
 static func is_in(value: String, allowed: Array) -> bool:
 	return value in allowed

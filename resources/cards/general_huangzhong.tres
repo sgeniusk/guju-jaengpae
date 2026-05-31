@@ -13,6 +13,7 @@ cost = 3
 fantasy_tier = "romance"
 description = "촉의 노장(老將) 명궁. 정군산에서 하후연을 벤 백발백중의 사수."
 troop_type = "archer"
+target_rule = "strongest_ranged"
 max_hp = 160
 attack = 50
 attack_interval = 1.5

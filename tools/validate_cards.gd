@@ -60,6 +60,8 @@ func _validate_cards(dir_path: String) -> int:
 				errors += _err(path, "troop_type 값 오류: %s" % res.get("troop_type"))
 			if not CardVocab.is_in(String(res.get("attack_range")), CardVocab.ATTACK_RANGES):
 				errors += _err(path, "attack_range 값 오류: %s" % res.get("attack_range"))
+			if not CardVocab.is_in(String(res.get("target_rule")), CardVocab.TARGET_RULES):
+				errors += _err(path, "target_rule 값 오류: %s" % res.get("target_rule"))
 			if int(res.get("max_hp")) <= 0:
 				errors += _err(path, "max_hp는 0보다 커야 함")
 			if int(res.get("attack")) < 0:

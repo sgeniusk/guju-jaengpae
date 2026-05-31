@@ -13,6 +13,7 @@ cost = 1
 fantasy_tier = "historical"
 description = "전열을 지키는 기본 보병. 값싸고 균형 잡힌 근접 병종."
 troop_type = "infantry"
+target_rule = "nearest"
 max_hp = 140
 attack = 16
 attack_interval = 1.2

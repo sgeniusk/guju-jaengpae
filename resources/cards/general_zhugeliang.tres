@@ -13,6 +13,7 @@ cost = 4
 fantasy_tier = "mythic"
 description = "촉의 군사(軍師). 선술·기문둔갑을 다루는 도사 계열의 책사."
 troop_type = "fantasy"
+target_rule = "backline"
 max_hp = 180
 attack = 44
 attack_interval = 1.6

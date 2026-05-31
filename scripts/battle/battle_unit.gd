@@ -20,6 +20,7 @@ var attack: int = 0
 var attack_interval: float = 1.0
 var attack_range: String = "melee"
 var troop_type: String = "infantry"
+var target_rule: String = "nearest"
 var move_speed: float = 40.0
 var cooldown: float = 0.0     # 다음 공격까지 남은 시간(초)
 var skill_id: StringName = &""
@@ -29,7 +30,7 @@ var is_castle: bool = false
 var commanded_target: BattleUnit = null
 var controllable: bool = false
 
-static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int, p_atk: int, p_interval: float, p_range: String, p_speed: float, p_card_id: StringName = &"", p_skill_id: StringName = &"", p_troop_type: String = "infantry", p_row: int = -1, p_py: float = -1.0, p_is_castle: bool = false) -> BattleUnit:
+static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int, p_atk: int, p_interval: float, p_range: String, p_speed: float, p_card_id: StringName = &"", p_skill_id: StringName = &"", p_troop_type: String = "infantry", p_row: int = -1, p_py: float = -1.0, p_is_castle: bool = false, p_target_rule: String = "nearest") -> BattleUnit:
 	var u := BattleUnit.new()
 	u.team = p_team
 	u.lane = p_lane
@@ -42,6 +43,7 @@ static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int
 	u.attack_interval = maxf(0.05, p_interval)
 	u.attack_range = p_range
 	u.troop_type = p_troop_type
+	u.target_rule = p_target_rule if p_target_rule in CardVocab.TARGET_RULES else "nearest"
 	u.move_speed = maxf(0.0, p_speed)
 	u.card_id = p_card_id
 	u.skill_id = p_skill_id
@@ -49,7 +51,7 @@ static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int
 	return u
 
 static func from_card(card: UnitCardData, p_team: int, p_lane: int, p_x: float, hp_mult: float = 1.0, p_row: int = -1, p_py: float = -1.0) -> BattleUnit:
-	var u := make(p_team, p_lane, p_x, card.display_name, int(round(card.max_hp * hp_mult)), card.attack, card.attack_interval, card.attack_range, card.move_speed, card.id, card.skill_id, card.troop_type, p_row, p_py)
+	var u := make(p_team, p_lane, p_x, card.display_name, int(round(card.max_hp * hp_mult)), card.attack, card.attack_interval, card.attack_range, card.move_speed, card.id, card.skill_id, card.troop_type, p_row, p_py, false, card.target_rule)
 	u.controllable = card.card_type == "general"
 	return u
 

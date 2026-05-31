@@ -17,6 +17,7 @@ const COL_Y := [150.0, 300.0, 450.0]
 const MELEE_REACH := 36.0
 const RANGED_REACH := 280.0
 const _SkillSystem := preload("res://scripts/battle/skill_system.gd")
+const _TargetRules := preload("res://scripts/battle/target_rules.gd")
 
 var player_units: Array[BattleUnit] = []
 var enemy_units: Array[BattleUnit] = []
@@ -95,7 +96,7 @@ func step(delta: float) -> void:
 		_process_skill(u, delta)
 		if u.cooldown > 0.0:
 			u.cooldown -= delta
-		var target := _nearest_enemy(u)
+		var target := _pick_target(u)
 		if target != null and u.distance_to(target) <= _reach_of(u):
 			if u.cooldown <= 0.0:
 				var dmg := int(round(u.effective_attack() * TypeChart.multiplier(u.troop_type, target.troop_type)))
@@ -124,7 +125,7 @@ func _spawn_next_wave() -> void:
 func _reach_of(u: BattleUnit) -> float:
 	return RANGED_REACH if u.attack_range == "ranged" else MELEE_REACH
 
-func _nearest_enemy(u: BattleUnit) -> BattleUnit:
+func _pick_target(u: BattleUnit) -> BattleUnit:
 	var foes := enemy_units if u.team == BattleUnit.Team.PLAYER else player_units
 	if u.controllable:
 		var commanded := u.commanded_target
@@ -133,16 +134,7 @@ func _nearest_enemy(u: BattleUnit) -> BattleUnit:
 	var taunt := u.taunt_source()
 	if taunt != null and taunt.is_alive() and foes.has(taunt):
 		return taunt
-	var best: BattleUnit = null
-	var best_d := INF
-	for f in foes:
-		if not f.is_alive():
-			continue
-		var d := u.distance_to(f)
-		if d < best_d:
-			best_d = d
-			best = f
-	return best
+	return _TargetRules.pick(u.target_rule, u, foes)
 
 func _move_toward(u: BattleUnit, target: BattleUnit, delta: float) -> void:
 	if target == null or u.move_speed <= 0.0:

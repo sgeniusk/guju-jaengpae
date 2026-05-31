@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-05-31 — feat-018 타겟 AI 시스템 (done · Codex 구현)
+- **TargetRules** — `scripts/battle/target_rules.gd`를 추가해 `nearest`·`backline`·`strongest_ranged`·`lowest_hp`·`highest_hp`를 순수 static 규칙으로 선택한다. 죽은 적은 제외하고, 동률은 2D 최근접으로 결정한다.
+- **BattleSim** — `_nearest_enemy`를 `_pick_target`으로 일반화했다. 표적 우선순위는 장수 commanded_target > 도발 > `target_rule`이며, EventBus·렌더 호출 없이 결정적으로 유지한다.
+- **데이터화** — `UnitCardData.target_rule`와 `CardVocab.TARGET_RULES`를 추가하고, 10개 카드 `.tres`와 `WaveFactory` 적 생성에 스펙 기본값을 지정했다. `validate_cards.gd`가 target_rule 허용값을 검증한다.
+- **검증** — `test/test_target_rules.gd` 신설(17단언). `./init.sh` 전체 green: 카드검증(10·1), sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s, reward, run_map/battle 부팅, 단위 15파일 412단언.
+- **스코프** — 전투 외 시스템(`scripts/run/*`, RunMap/RunManager, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙, battle.gd) 미수정.
+
 ## 2026-05-30 — feat-014 성(城) 방어 목표 (done · Codex 구현)
 - **성 모델** — `BattleSim.add_castle()`가 플레이어 진영 맨 안쪽 `CASTLE_X=40`, 중앙 `FIELD_H/2`에 `BattleUnit` 성을 생성한다. 성은 `is_castle=true`, HP 1200, 공격 0, 이동속도 0, 병종 infantry로 둔다.
 - **승패** — 성이 있는 전투는 성 파괴=PLAYER_LOSE, 적 군세 전멸(+대기 파도 없음)=PLAYER_WIN으로 판정한다. 성이 없는 시뮬레이션은 기존 아군 전멸 패배 동작을 유지한다.

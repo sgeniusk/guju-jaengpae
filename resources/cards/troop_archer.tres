@@ -13,6 +13,7 @@ cost = 2
 fantasy_tier = "historical"
 description = "후열에서 화살을 퍼붓는 원거리 병종. 약하지만 사거리가 길다."
 troop_type = "archer"
+target_rule = "strongest_ranged"
 max_hp = 90
 attack = 22
 attack_interval = 1.0

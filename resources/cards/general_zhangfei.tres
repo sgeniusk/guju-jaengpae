@@ -13,6 +13,7 @@ cost = 3
 fantasy_tier = "romance"
 description = "촉의 맹장. 장판교에서 홀로 조조의 대군을 막아선 호장(虎將)."
 troop_type = "infantry"
+target_rule = "nearest"
 max_hp = 420
 attack = 38
 attack_interval = 1.3

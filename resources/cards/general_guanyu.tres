@@ -13,6 +13,7 @@ cost = 4
 fantasy_tier = "mythic"
 description = "촉의 오호대장군 수장. 무신(武神)으로 신격화된 일기당천의 맹장."
 troop_type = "infantry"
+target_rule = "nearest"
 max_hp = 320
 attack = 60
 attack_interval = 1.1

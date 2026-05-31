@@ -154,6 +154,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "BattleUnit commanded_target/controllable + BattleSim 지정>도발>최근접 + battle.gd 클릭/홀드 전원 장수 표적 지정·하이라이트. test_hero_command 12단언, ./init.sh 전체 green(395단언, run_map/battle 부팅 OK)."
+    },
+    {
+      "id": "feat-018",
+      "name": "타겟 AI 시스템 (target rules)",
+      "description": "유닛별 조건부 타겟 규칙(nearest·backline·strongest_ranged·lowest_hp·highest_hp) 데이터 주도. TargetRules + BattleSim _pick_target(영웅>도발>규칙) + UnitCardData.target_rule + .tres 지정. 병종이 전술적으로 달라짐. 스펙 docs/specs/feat-018.md.",
+      "dependencies": ["feat-017"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "TargetRules 5규칙 + BattleSim _pick_target(영웅>도발>규칙) + UnitCardData.target_rule/.tres/wave 운반. test_target_rules 17단언, ./init.sh 전체 green(412단언, 성 방어 승리 25.5s)."
     }
   ]
 }

@@ -4,6 +4,7 @@ class_name UnitCardData
 extends CardData
 
 @export_enum("infantry", "archer", "cavalry", "crossbow", "navy", "fantasy") var troop_type: String = "infantry"
+@export_enum("nearest", "backline", "strongest_ranged", "lowest_hp", "highest_hp") var target_rule: String = "nearest"
 @export var max_hp: int = 100
 @export var attack: int = 10
 @export var attack_interval: float = 1.0   # 공격 간격(초)

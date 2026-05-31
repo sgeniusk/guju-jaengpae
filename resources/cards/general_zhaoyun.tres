@@ -13,6 +13,7 @@ cost = 4
 fantasy_tier = "mythic"
 description = "촉의 오호대장군. 장판파에서 단기필마로 아두를 구한 상산의 호장."
 troop_type = "cavalry"
+target_rule = "backline"
 max_hp = 240
 attack = 48
 attack_interval = 1.0

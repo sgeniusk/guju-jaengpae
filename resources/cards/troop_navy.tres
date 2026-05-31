@@ -13,6 +13,7 @@ cost = 2
 fantasy_tier = "romance"
 description = "강을 누비는 수전(水戰) 병종. 단단하고 끈질기게 전열을 버틴다."
 troop_type = "navy"
+target_rule = "nearest"
 max_hp = 150
 attack = 20
 attack_interval = 1.2
