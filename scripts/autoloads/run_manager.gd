@@ -1,4 +1,4 @@
-# 현재 런의 상태를 보관하는 싱글톤. 씬을 다시 불러도(전투 반복) 덱이 유지된다. 순수 로직은 RunState/RewardPool에 위임.
+# 현재 런의 상태를 보관하는 싱글톤. 씬을 다시 불러도(전투 반복) 보드·손패·경제가 유지된다. 순수 로직은 RunState/RewardPool에 위임.
 extends Node
 
 var state := RunState.new()
@@ -10,10 +10,34 @@ func ensure_started(lord_id: StringName) -> void:
 		state.map.generate(_new_map_seed())
 
 func get_deck() -> Array[StringName]:
-	return state.deck
+	return state.board_card_ids()
 
 func add_card(id: StringName) -> void:
 	state.add_card(id)
+
+func get_hand() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for id in state.hand:
+		out.append(id)
+	return out
+
+func get_gold() -> int:
+	return state.gold
+
+func place_from_hand(hand_index: int, block_key: String) -> bool:
+	return state.place_from_hand(hand_index, block_key)
+
+func discard_from_hand(hand_index: int) -> bool:
+	return state.discard_from_hand(hand_index)
+
+func add_gold(n: int) -> void:
+	state.add_gold(n)
+
+func spend_gold(n: int) -> bool:
+	return state.spend_gold(n)
+
+func board_full() -> bool:
+	return state.board_full()
 
 func get_command_points() -> int:
 	return state.command_points if state != null else 12
@@ -56,7 +80,7 @@ func node_label(node_type: int) -> String:
 
 # 보상 후보 최대 n장.
 func reward_candidates(n: int) -> Array[StringName]:
-	return RewardPool.roll(CardLibrary.catalog, state.deck, n)
+	return RewardPool.roll(CardLibrary.catalog, state.owned_card_ids(), n)
 
 func reset_run() -> void:
 	state = RunState.new()

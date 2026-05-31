@@ -2,6 +2,14 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-05-31 — feat-015 경제·보드 상태 모델 1단계 (done · Codex 구현)
+- **RunState 보드 모델** — 기존 `deck` 중심 상태를 `board`(3×3 블록키 `col:row` → 카드 id), `hand`(3장 기준), `gold`로 전환했다. `start_run()`은 군주 시작 카드를 보드에 순서대로 채우고 손패·골드를 비운다.
+- **경제 API** — `place_from_hand`, `discard_from_hand`(+10골드), `hand_over_limit`, `board_card_ids`, `owned_card_ids`, `add_gold`, `spend_gold`를 순수·결정적으로 추가했다.
+- **브리지 유지** — `RunManager.get_deck()`은 보드 카드만 반환해 기존 battle/run_map의 배치 소스를 유지한다. `RunManager.add_card()`는 빈 보드 블록에 우선 배치하고, 보드가 가득 차면 손패로 보낸다.
+- **보상 기준** — `RewardPool.eligible/roll`은 `owned(board+hand)`를 받아 후보에서 제외한다. 보상 스모크도 owned 기준으로 갱신했다.
+- **검증** — `test/test_run_board.gd` 신설(122단언), 기존 run 보상/맵 테스트 owned 기준 갱신. `./init.sh` 전체 green: 카드검증(10·1), sim 성 방어 승리 25.5s·성 노출 패배 29.0s, reward owned 7장·후보 3장, run_map/battle 부팅, 단위 16파일 541단언.
+- **스코프** — 전투/씬/리소스(`scripts/battle/*`, `scripts/screens/*`, `scenes/*`, `resources/.tres`) 미수정. 전투 보드 스폰·UI·상점은 feat-015b/015c로 남긴다.
+
 ## 2026-05-31 — feat-018 타겟 AI 시스템 (done · Codex 구현)
 - **TargetRules** — `scripts/battle/target_rules.gd`를 추가해 `nearest`·`backline`·`strongest_ranged`·`lowest_hp`·`highest_hp`를 순수 static 규칙으로 선택한다. 죽은 적은 제외하고, 동률은 2D 최근접으로 결정한다.
 - **BattleSim** — `_nearest_enemy`를 `_pick_target`으로 일반화했다. 표적 우선순위는 장수 commanded_target > 도발 > `target_rule`이며, EventBus·렌더 호출 없이 결정적으로 유지한다.

@@ -130,9 +130,27 @@
     },
     {
       "id": "feat-015",
-      "name": "골드 경제 + 상점",
-      "description": "전투 중 골드 획득 → 다음 턴 골드로 상점에서 카드 구매. 첫 턴 성+유닛 배치(2장 규모). 현 '3장 중 1장 공짜 보상'을 골드 상점으로 교체. RunState 골드, 상점 화면.",
+      "name": "경제·보드 상태 모델 (1단계)",
+      "description": "NK식 손패·영속보드·경제의 상태 모델 — RunState board(블록→카드)/hand(3)/gold + 우물(+10g)·owned. 브리지로 빌드 유지. 전투-보드 스폰·UI는 015b, 상점·드래프트는 015c. 스펙 docs/specs/feat-015.md.",
       "dependencies": ["feat-014"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "RunState board/hand/gold + RunManager get_deck/add_card 브리지 + RewardPool owned 기준. test_run_board 122단언 신설, ./init.sh 전체 green(541단언, run_map/battle 부팅 OK)."
+    },
+    {
+      "id": "feat-015b",
+      "name": "보드 기반 전투 + 배치/손패 UI",
+      "description": "전투를 영속 보드 배치에서 스폰(per-battle deploy 제거). 보드·손패 관리 화면(카드를 블록에 배치). feat-015 모델 위.",
+      "dependencies": ["feat-015"],
+      "status": "not-started",
+      "owner": "Codex",
+      "evidence": ""
+    },
+    {
+      "id": "feat-015c",
+      "name": "상점 노드 + 보상 드래프트 + 우물 UI",
+      "description": "4스테이지마다 상점(골드로 구매), 승리 보상 3중1 드래프트→손패, 우물 버리기 UI. 손패 3 해소 강제.",
+      "dependencies": ["feat-015b"],
       "status": "not-started",
       "owner": "Codex",
       "evidence": ""

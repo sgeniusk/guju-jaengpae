@@ -62,15 +62,19 @@ func test_reward_flow_adds_card_and_removes_it_from_eligible() -> void:
 	cat.load_all()
 	var run := RunState.new()
 	run.start_run(cat.get_lord(&"lord_liubei"), cat)
-	var eligible := RewardPool.eligible(cat, run.deck)
+	truthy(run.has_method("owned_card_ids"), "RunState.owned_card_ids 존재")
+	truthy(run.has_method("hand_add"), "RunState.hand_add 존재")
+	if not run.has_method("owned_card_ids") or not run.has_method("hand_add"):
+		return
+	var eligible := RewardPool.eligible(cat, run.owned_card_ids())
 	var picked: StringName = eligible[0]
-	var before := run.deck.size()
+	var before: int = run.owned_card_ids().size()
 
-	run.add_card(picked)
+	run.hand_add(picked)
 
-	eq(run.deck.size(), before + 1, "REWARD 해결 후 덱 +1")
+	eq(run.owned_card_ids().size(), before + 1, "REWARD 해결 후 owned +1")
 	truthy(run.has_card(picked), "획득 카드 보유")
-	falsy(RewardPool.eligible(cat, run.deck).has(picked), "획득 카드는 후보에서 제외")
+	falsy(RewardPool.eligible(cat, run.owned_card_ids()).has(picked), "획득 카드는 후보에서 제외")
 
 func _type_sequence(layers: Array) -> Array[int]:
 	var out: Array[int] = []
