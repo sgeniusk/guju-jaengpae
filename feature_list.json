@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.3.5 — Nine Kings 정합: 3×3 배치 + 오픈필드 난전 + 군주 대 군주 (스샷 실측 반영, 레인·컬럼 모델 폐기)",
+  "milestone": "v0.4 — 선형 스테이지 사다리 + 스테이지 캐이던스(상점4·보스5·확장5). 오픈필드 난전·3×3 배치 유지, 분기 노드맵 폐기.",
   "features": [
     {
       "id": "feat-001",
@@ -63,7 +63,7 @@
       "dependencies": ["feat-006"],
       "status": "done",
       "owner": "Codex",
-      "evidence": "RunMap + run_map.tscn main_scene + 노드별 WaveFactory + battle→map 복귀. test_run_map 20단언 추가, ./init.sh 96단언 green, run_map/battle 부팅 스모크 OK."
+      "evidence": "RunMap + run_map.tscn main_scene + 노드별 WaveFactory + battle→map 복귀. test_run_map 20단언 추가, ./init.sh 96단언 green, run_map/battle 부팅 스모크 OK. NOTE — 분기 모델은 feat-019 선형 사다리로 폐기."
     },
     {
       "id": "feat-008",
@@ -72,7 +72,7 @@
       "dependencies": ["feat-007"],
       "status": "done",
       "owner": "Codex",
-      "evidence": "RunMap NodeType 5종(+REWARD/SUPPLY)·is_battle·가중 생성, RunState command_points + battle.gd가 런 지휘력 사용, run_map 비전투 오버레이(보상 선택/보급 확인)→막 진행. test_map_nodes 29단언. ./init.sh 125단언 green, 회귀·스코프 준수."
+      "evidence": "RunMap NodeType 5종(+REWARD/SUPPLY)·is_battle·가중 생성, RunState command_points + battle.gd가 런 지휘력 사용, run_map 비전투 오버레이(보상 선택/보급 확인)→막 진행. test_map_nodes 29단언. ./init.sh 125단언 green, 회귀·스코프 준수. NOTE — 비전투/분기 노드는 feat-019 선형 전환으로 폐기."
     },
     {
       "id": "feat-009",
@@ -157,9 +157,9 @@
     },
     {
       "id": "feat-015d",
-      "name": "상점 노드",
-      "description": "4스테이지마다 상점 노드(모은 골드로 카드 구매→손패). 손패 3 엄격 해소. feat-015c 위.",
-      "dependencies": ["feat-015c"],
+      "name": "상점 이벤트 (캐이던스 4)",
+      "description": "StageCadence.is_shop(4·8·12…) 스테이지에 상점 — 모은 골드로 카드 구매→손패. 손패 3 엄격 해소. feat-019 캐이던스 위.",
+      "dependencies": ["feat-019"],
       "status": "not-started",
       "owner": "Codex",
       "evidence": ""
@@ -190,6 +190,33 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "TargetRules 5규칙 + BattleSim _pick_target(영웅>도발>규칙) + UnitCardData.target_rule/.tres/wave 운반. test_target_rules 17단언, ./init.sh 전체 green(412단언, 성 방어 승리 25.5s)."
+    },
+    {
+      "id": "feat-019",
+      "name": "선형 스테이지 사다리 + StageCadence",
+      "description": "분기 노드맵(feat-007/008) 폐기 → 선형 stage_index 진행. 순수 StageCadence(상점4·보스5·확장5·난이도 스케일) + WaveFactory.stage_waves(스테이지 비례 강화·5마다 보스) + run_map 화면 선형화 + battle.gd 파도 소스/승리 후 advance_stage. 상점·확장 wiring은 015d·020. 스펙 docs/specs/feat-019.md.",
+      "dependencies": ["feat-015c"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "StageCadence + RunState.stage_index + RunManager 선형 API + WaveFactory.stage_waves + run_map/battle 선형 흐름. test_stage_cadence 신설, 분기 테스트 대체. ./init.sh 전체 green(618단언, run_map/battle 부팅 OK)."
+    },
+    {
+      "id": "feat-020",
+      "name": "땅 확장 (board expansion)",
+      "description": "StageCadence.is_expand(5마다) 보스 보상으로 보드 +1랭크. RunState 동적 board_rows(시작3·상한6=18칸) + 전장 깊이 스케일 + 확장 보상 이벤트. feat-019 위.",
+      "dependencies": ["feat-019"],
+      "status": "not-started",
+      "owner": "Codex",
+      "evidence": ""
+    },
+    {
+      "id": "feat-021",
+      "name": "왕의 칙령 (King's Edict / 전역 perk)",
+      "description": "StageCadence.is_edict(3마다, EDICT_INTERVAL=3 knob) 스테이지에 칙령 드래프트 — 전역 런 혜택 perk 3중1(전 유닛 공격력 +%·골드 획득 +%·성 HP +%·지원 건물 효과 2배 등). RunState.edicts 누적, 전투 빌드·경제에 전역 수정자 적용. 건물 관련 칙령은 feat-016 후(경제·전투 칙령은 먼저 가능). feat-019 캐이던스 위.",
+      "dependencies": ["feat-019"],
+      "status": "not-started",
+      "owner": "Codex",
+      "evidence": ""
     }
   ]
 }

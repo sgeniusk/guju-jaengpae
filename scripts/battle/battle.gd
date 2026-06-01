@@ -5,6 +5,7 @@ extends Control
 enum Phase { DEPLOY, BATTLE, DONE }
 
 const LORD_ID := &"lord_liubei"
+const _StageCadence := preload("res://scripts/run/stage_cadence.gd")
 
 const FIELD_LEFT := 560.0
 const FIELD_RIGHT := 1840.0
@@ -21,7 +22,7 @@ var _sim := BattleSim.new()
 var _lord: LordData
 var _vis: Dictionary = {}            # BattleUnit -> { root: Control, hp: ColorRect }
 var _tile_buttons: Dictionary = {}   # "col:row" -> Button
-var _node_completed := false
+var _stage_advanced := false
 var _command_hold_active := false
 var _commanded_target: BattleUnit = null
 var _selected_hand_index := -1
@@ -134,6 +135,13 @@ func _build_panel() -> void:
 	_panel.custom_minimum_size = Vector2(440.0, 0.0)
 	_panel.add_theme_constant_override("separation", 10)
 	add_child(_panel)
+
+	var stage := Label.new()
+	stage.text = _StageCadence.stage_label(RunManager.stage_index())
+	stage.add_theme_font_size_override("font_size", 24)
+	if RunManager.is_boss_stage():
+		stage.modulate = Color(1.0, 0.55, 0.35)
+	_panel.add_child(stage)
 
 	var title := Label.new()
 	var lord_name := _lord.display_name if _lord != null else "?"
@@ -360,7 +368,7 @@ func _on_start_pressed() -> void:
 		_hint_label.text = "보드 군세가 비어 있습니다."
 		_refresh_deploy_ui()
 		return
-	_sim.set_waves(WaveFactory.waves_for_node(RunManager.active_node_type()))
+	_sim.set_waves(RunManager.current_waves())
 	_phase = Phase.BATTLE
 	_clear_hero_command(false)
 	_sync_visuals()
@@ -607,8 +615,8 @@ func _build_outcome_ui(win: bool) -> void:
 		var none := Label.new()
 		none.text = "획득 가능한 보상이 없습니다."
 		box.add_child(none)
-		_complete_node_once()
-		_add_map_or_conquest_button(box)
+		_advance_stage_once()
+		_add_next_stage_button(box)
 		return
 	var head := Label.new()
 	head.text = "전리품 — 한 장을 골라 손패에 넣으세요"
@@ -624,30 +632,22 @@ func _pick_reward(id: StringName) -> void:
 	var got_name := card.display_name if card != null else String(id)
 	EventBus.card_rewarded.emit(id)
 	_hint_label.text = "획득 — %s! 손패에 들어왔습니다." % got_name
-	_complete_node_once()
+	_advance_stage_once()
 	var box := _new_overlay_box()
 	var got := Label.new()
 	got.text = "획득 — %s" % got_name
 	got.add_theme_font_size_override("font_size", 24)
 	box.add_child(got)
-	_add_map_or_conquest_button(box)
+	_add_next_stage_button(box)
 
-func _add_map_or_conquest_button(box: VBoxContainer) -> void:
-	if RunManager.map_finished():
-		_result_label.text = "구주 정복!"
-		var done := Label.new()
-		done.text = "구주 정복!"
-		done.add_theme_font_size_override("font_size", 30)
-		box.add_child(done)
-		box.add_child(_make_button("새 런", _restart_run))
-	else:
-		box.add_child(_make_button("지도로 (보드 %d장 / 손패 %d장)" % [RunManager.get_deck().size(), RunManager.get_hand().size()], _go_to_run_map))
+func _add_next_stage_button(box: VBoxContainer) -> void:
+	box.add_child(_make_button("다음 스테이지로 (보드 %d장 / 손패 %d장)" % [RunManager.get_deck().size(), RunManager.get_hand().size()], _go_to_run_map))
 
-func _complete_node_once() -> void:
-	if _node_completed:
+func _advance_stage_once() -> void:
+	if _stage_advanced:
 		return
-	RunManager.complete_node()
-	_node_completed = true
+	RunManager.advance_stage()
+	_stage_advanced = true
 
 func _go_to_run_map() -> void:
 	GameManager.change_scene("res://scenes/screens/run_map.tscn")

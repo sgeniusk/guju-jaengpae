@@ -2,6 +2,8 @@
 class_name WaveFactory
 extends RefCounted
 
+const _StageCadence := preload("res://scripts/run/stage_cadence.gd")
+
 # 파도 1 — 적 진영 x=FIELD_W에서 y를 3개 측면으로 나눠 등장한다.
 static func wave_one() -> Array[BattleUnit]:
 	var spawn_x := BattleSim.FIELD_W
@@ -19,23 +21,10 @@ static func default_waves() -> Array:
 		_wave_three(),
 	]
 
-static func waves_for_node(node_type: int) -> Array:
-	match node_type:
-		RunMap.NodeType.BATTLE:
-			return default_waves()
-		RunMap.NodeType.ELITE:
-			return elite_waves()
-		RunMap.NodeType.BOSS:
-			return boss_waves()
-		_:
-			return default_waves()
-
-static func elite_waves() -> Array:
-	return [
-		_scaled_wave(wave_one(), 1.15, 1.10),
-		_scaled_wave(_wave_two(), 1.2, 1.15),
-		_scaled_wave(_wave_three(), 1.25, 1.2),
-	]
+static func stage_waves(stage: int) -> Array:
+	var waves := boss_waves() if _StageCadence.is_boss(stage) else default_waves()
+	var scale: float = _StageCadence.difficulty_scale(stage)
+	return _scaled_waves(waves, scale, scale)
 
 static func boss_waves() -> Array:
 	var spawn_x := BattleSim.FIELD_W
@@ -89,6 +78,12 @@ static func _scaled_wave(wave: Array, hp_mult: float, attack_mult: float) -> Arr
 			false,
 			unit.target_rule
 		))
+	return out
+
+static func _scaled_waves(waves: Array, hp_mult: float, attack_mult: float) -> Array:
+	var out: Array = []
+	for wave in waves:
+		out.append(_scaled_wave(wave, hp_mult, attack_mult))
 	return out
 
 static func _enemy_unit(lane: int, x: float, display_name: String, hp: int, attack: int, interval: float, attack_range: String, speed: float, troop_type: String, target_rule: String = "nearest") -> BattleUnit:

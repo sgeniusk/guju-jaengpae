@@ -1,4 +1,4 @@
-# 한 런의 변경 가능한 상태 — 군주, 영속 보드·손패·골드, 파도 진행도, 노드 맵. 순수 로직(헤드리스 테스트 가능).
+# 한 런의 변경 가능한 상태 — 군주, 스테이지, 영속 보드·손패·골드, 파도 진행도. 순수 로직(헤드리스 테스트 가능).
 class_name RunState
 extends RefCounted
 
@@ -10,9 +10,9 @@ var lord_id: StringName = &""
 var board: Dictionary = {}
 var hand: Array[StringName] = []
 var gold: int = 0
+var stage_index: int = 1
 var wave_index: int = 0
 var started: bool = false
-var map := RunMap.new()
 var command_points: int = 12
 
 static func block_keys() -> Array[String]:
@@ -27,6 +27,7 @@ func start_run(lord: LordData, catalog: CardCatalog) -> void:
 	board.clear()
 	hand.clear()
 	gold = 0
+	stage_index = 1
 	var starting_cards := catalog.get_lord_deck(lord)
 	for card_id in starting_cards:
 		hand.append(card_id)
@@ -97,5 +98,5 @@ func has_card(id: StringName) -> bool:
 func add_card(id: StringName) -> void:
 	hand_add(id)
 
-func add_command_points(n: int) -> void:
-	command_points += n
+func advance_stage() -> void:
+	stage_index += 1

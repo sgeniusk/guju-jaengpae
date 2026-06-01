@@ -3,9 +3,9 @@
 이 파일은 재시작 상태용이다. 전체 이력이 아니다. 오래된 증거는 CHANGELOG·reports·docs로 옮긴다. (≤120줄)
 
 ## 현재 상태 (Current State)
-**마지막 갱신 (Last Updated)** — 2026-05-31
+**마지막 갱신 (Last Updated)** — 2026-06-01
 **활성 피처 (Active Feature)** — 없음
-**현재 목표 (Current Objective)** — feat-015c 수동 보드 배치 + 보상 드래프트 + 우물 구현 완료. 다음은 시각 플레이 QA와 feat-015d 상점 노드. 로드맵 — docs/roadmap.md.
+**현재 목표 (Current Objective)** — feat-019 선형 스테이지 사다리 + StageCadence 구현 완료. 다음은 feat-015d 상점 이벤트와 feat-020 땅 확장. 로드맵 — docs/roadmap.md.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -25,12 +25,13 @@
 - [x] **feat-015 경제·보드 상태 모델 1단계** (Codex) — RunState board(3×3)/hand(3)/gold + 우물(+10g)·owned, RunManager get_deck/add_card 브리지, RewardPool owned 기준. `test_run_board.gd` 신설. ./init.sh 541단언 green.
 - [x] **feat-015b 보드 기반 전투** (Codex) — 전투를 RunManager.get_board()의 영속 보드에서 스폰, per-battle 카드 선택·타일 클릭·지휘력 패널 제거, 읽기 전용 보드 타일/군세 요약. `test_board_army.gd` 신설. ./init.sh 619단언 green.
 - [x] **feat-015c 수동 보드 배치 + 보상 드래프트 + 우물** (Codex) — start_run/보상은 손패로, 전투 씬 배치 단계에서 손패 선택→빈 블록 배치·우물 +10골드·보드 1장 이상 전투 시작. `test_run_board`/`test_board_army`/`test_run_reward` 갱신. ./init.sh 605단언 green.
+- [x] **feat-019 선형 스테이지 사다리 + StageCadence** (Codex) — 분기 RunMap 폐기, RunState.stage_index 선형 진행, StageCadence(상점4·보스5·확장5·난이도) + WaveFactory.stage_waves + run_map/battle 선형 흐름. `test_stage_cadence` 신설, 분기 테스트 대체. ./init.sh 618단언 green.
 ### 진행 중 (What's In Progress)
 - [ ] 없음
 ### 다음 (What's Next)
-1. 시각 플레이 QA(사람, `godot --path .`) — 시작 진형 배치·양쪽 이동 수렴·전투 중 장수 표적 지정·스킬 플래시·승리 보상·지도 복귀 체감 확인.
-2. feat-015d 상점 노드 — 4스테이지마다 골드 소비 구매→손패, 손패 3 엄격 해소 검토.
-3. feat-016 건물(building) 카드 + 오라 — NK 핵심 요소.
+1. 시각 플레이 QA(사람, `godot --path .`) — 선형 스테이지 화면→전투→보상→다음 스테이지 복귀 체감 확인.
+2. feat-015d 상점 이벤트 — StageCadence.is_shop(4·8·12…)에 골드 소비 구매→손패, 손패 3 엄격 해소 검토.
+3. feat-020 땅 확장 — StageCadence.is_expand(5·10·15…) 보스 보상으로 보드 확장.
 
 ## 블로커 / 리스크 (Blockers / Risks)
 - [ ] 시각 QA 부채 누적 — feat-003/004/006/007/008 화면·상호작용과 feat-017 전투 중 표적 지정 체감은 헤드리스로 미확인. 사람 플레이 필요.
@@ -46,8 +47,8 @@
 - 전투 로직/표현 분리, 적은 카드 아님, trait_id, 오픈필드 이후 승=모든 파도 적전멸/패=아군 전멸 — 상세 CHANGELOG.
 
 ## 이번 세션 수정 파일 (Files Modified)
-- feat-015c — scripts/run/run_state.gd, scripts/autoloads/run_manager.gd, scripts/battle/battle.gd
-- 테스트 — test/test_run_board.gd, test/test_board_army.gd, test/test_run_reward.gd, tools/reward_smoke.gd
+- feat-019 — scripts/run/stage_cadence.gd, scripts/run/run_state.gd, scripts/autoloads/run_manager.gd, scripts/battle/wave_factory.gd, scripts/screens/run_map.gd, scripts/battle/battle.gd, scripts/run/run_map.gd 삭제
+- 테스트 — test/test_stage_cadence.gd, test/test_run_map.gd, test/test_map_nodes.gd 삭제
 - 상태 — feature_list.json·progress.md
 
 ## 검증 증거
@@ -58,6 +59,7 @@
 - [x] `./init.sh` (2026-05-31, feat-015) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward owned 7장·후보 3장 / run_map·battle 부팅 / 단위 16파일 **541 단언** 통과. 종료 0.
 - [x] `./init.sh` (2026-05-31, feat-015b) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward owned 7장·후보 3장 / run_map·battle 부팅 / 단위 17파일 **619 단언** 통과. 종료 0.
 - [x] `./init.sh` (2026-05-31, feat-015c) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward 시작 손패 6장·후보 4장·획득 후 owned 7장 / run_map·battle 부팅 / 단위 17파일 **605 단언** 통과. 종료 0.
+- [x] `./init.sh` (2026-06-01, feat-019) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward 시작 손패 6장·후보 4장·획득 후 owned 7장 / run_map·battle 부팅 / 단위 17파일 **618 단언** 통과. 종료 0.
 - [x] feat-013 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙) 미수정.
 - [x] feat-014 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙) 미수정.
 - [x] feat-017 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙, WaveFactory) 미수정.
@@ -65,10 +67,11 @@
 - [x] feat-015 스코프 — 전투/씬/리소스(`scripts/battle/*`, `scripts/screens/*`, `scenes/*`, `resources/.tres`) 미수정. 브리지로 run_map/battle 부팅 유지.
 - [x] feat-015b 스코프 — 수정 허용 파일만 변경(scripts/battle/battle.gd, scripts/resources/card_catalog.gd, scripts/autoloads/run_manager.gd, test/test_board_army.gd, 상태 파일). 금지 영역(`battle_sim.gd`, `battle_unit.gd`, `run_state.gd`, `reward_pool.gd`, scenes/screens, resources/.tres, RunMap, TypeChart/SkillSystem/TargetRules) 미수정.
 - [x] feat-015c 스코프 — 수정 허용 파일과 테스트/스모크/상태만 변경. 금지 영역(`battle_sim.gd`, `battle_unit.gd`, `card_catalog.gd`, TargetRules/SkillSystem/WaveFactory, scenes/screens, resources/.tres, RunMap, TypeChart) 미수정.
+- [x] feat-019 스코프 — 수정 허용 파일과 테스트/상태만 변경. 금지 영역(`battle_sim.gd`, `battle_unit.gd`, `card_catalog.gd`, `target_rules.gd`, `skill_system.gd`, `type_chart.gd`, resources, `.tres`, scene 구조) 미수정.
 - [ ] 시각 플레이(읽기 전용 보드 표시→전투+장수 표적 지정+스킬 플래시+전멸 승패→보상→지도 복귀) → 사람 또는 agy 확인 필요.
 
 ## 아카이브 포인터
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh`로 feat-015c 완료 상태(605단언) 확인. RunState는 시작 덱을 손패에 넣고 보드는 비운다. battle.gd는 배치 단계에서 손패 카드를 빈 블록에 놓아 영속 보드를 만들고, 전투 시작 시 기존 CardCatalog.build_board_army() 경로로 보드 군세를 스폰한다. 보상은 손패로 들어가며, 우물은 손패 카드 제거 +10골드다. 다음 큰 덩어리는 feat-015d 상점 노드이며, 단위 테스트는 `res://test/runner.gd`가 `test/test_*.gd` 수집.
+`./init.sh`로 feat-019 완료 상태(618단언) 확인. RunState는 `stage_index` 1부터 시작해 승리 보상 후 `advance_stage()`로 선형 증가한다. `StageCadence`는 상점4·보스5·확장5·난이도 배율 예측자만 제공하고, 상점·확장 화면 흐름에는 아직 연결하지 않는다. `RunMap` 분기맵은 삭제됐다. 다음 큰 덩어리는 feat-015d 상점 이벤트이며, 단위 테스트는 `res://test/runner.gd`가 `test/test_*.gd` 수집.
