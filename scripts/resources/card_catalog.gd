@@ -6,13 +6,25 @@ const CARDS_DIR := "res://resources/cards"
 const LORDS_DIR := "res://resources/lords"
 
 var cards: Dictionary = {}   # StringName -> CardData
+var building_cards: Dictionary = {}   # StringName -> BuildingCardData
 var lords: Dictionary = {}   # StringName -> LordData
 
 func load_all() -> void:
 	cards.clear()
+	building_cards.clear()
 	lords.clear()
-	_load_dir(CARDS_DIR, cards)
+	_load_cards_dir(CARDS_DIR)
 	_load_dir(LORDS_DIR, lords)
+
+func _load_cards_dir(dir_path: String) -> void:
+	var loaded: Dictionary = {}
+	_load_dir(dir_path, loaded)
+	for id in loaded.keys():
+		var card: CardData = loaded[id]
+		if card != null and String(card.get("card_type")) == "building":
+			building_cards[id] = card
+		else:
+			cards[id] = card
 
 func _load_dir(dir_path: String, target: Dictionary) -> void:
 	var dir := DirAccess.open(dir_path)
@@ -30,7 +42,7 @@ func _load_dir(dir_path: String, target: Dictionary) -> void:
 	dir.list_dir_end()
 
 func get_card(id: StringName) -> CardData:
-	return cards.get(id, null)
+	return cards.get(id, building_cards.get(id, null))
 
 func get_lord(id: StringName) -> LordData:
 	return lords.get(id, null)

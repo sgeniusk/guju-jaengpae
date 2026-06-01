@@ -1,4 +1,4 @@
-# 전투 화면 — 영속 보드 배치에서 군세를 스폰하고 "전투 시작"을 누르면 2D 오픈필드 오토배틀이 진행된다.
+# 전투 화면 — Node2D 월드와 CanvasLayer HUD로 전투 뷰만 렌더링한다.
 # 순수 전투 로직은 BattleSim에 있다. 이 스크립트는 입력·보드 표시·유닛 시각화만 담당한다.
 extends Control
 
@@ -6,28 +6,73 @@ enum Phase { DEPLOY, BATTLE, DONE }
 
 const LORD_ID := &"lord_liubei"
 const _StageCadence := preload("res://scripts/run/stage_cadence.gd")
+const _BattleHudState := preload("res://scripts/battle/hud_state.gd")
+const _BattlefieldTheme := preload("res://scripts/battle/battlefield_theme.gd")
+const _BoardEconomy := preload("res://scripts/run/board_economy.gd")
 
-const FIELD_LEFT := 560.0
-const FIELD_RIGHT := 1840.0
-const FIELD_TOP := 120.0
-const FIELD_BOTTOM := 900.0
-const TILE_W := 150.0
-const TILE_H := 82.0
-const UNIT_W := 70.0
-const UNIT_H := 52.0
+const VIEW_ORIGIN := Vector2(520.0, 225.0)
+const VIEW_SCALE_X := 1.28
+const VIEW_SCALE_Y := 0.86
+const ISO_HALF_W := 48.0
+const ISO_HALF_H := 24.0
+const TILE_TEXTURE_SCALE := 0.75
+const UNIT_W := 90.0
+const UNIT_H := 84.0
+const GENERAL_W := 104.0
+const GENERAL_H := 110.0
+const BOSS_W := 152.0
+const BOSS_H := 182.0
+const CASTLE_W := 124.0
+const CASTLE_H := 154.0
+const BUILDING_W := 92.0
+const BUILDING_H := 88.0
 const COMMAND_PICK_RADIUS := 70.0
+const MAX_FLOATING_DAMAGE_LABELS := 40
 
 var _phase: int = Phase.DEPLOY
 var _sim := BattleSim.new()
 var _lord: LordData
-var _vis: Dictionary = {}            # BattleUnit -> { root: Control, hp: ColorRect }
-var _tile_buttons: Dictionary = {}   # "col:row" -> Button
+var _vis: Dictionary = {}            # BattleUnit -> { root, body, hp, command_marker, hp_width }
+var _building_vis: Dictionary = {}   # "col:row" -> { root, gold_label, gold_per_sec }
+var _tile_buttons: Dictionary = {}   # "col:row" -> { area, poly, label }
+var _placeholder_textures: Dictionary = {}
+var _theme: Dictionary = {}
 var _stage_advanced := false
-var _command_hold_active := false
+var _command_toggle_active := false
 var _commanded_target: BattleUnit = null
 var _selected_hand_index := -1
+var _speed := 1.0
+var _paused := false
+var _auto_enabled := false
+var _enemy_force_max := 0
+var _last_ladder_stage := -1
+var _battle_gold_per_sec := 0
+var _battle_gold_accum := 0.0
 
-var _units_layer: Control
+var _world_root: Node2D
+var _camera: Camera2D
+var _background_layer: Node2D
+var _iso_base_layer: Node2D
+var _buildings_layer: Node2D
+var _units_layer: Node2D
+var _vfx_layer: Node2D
+var _hud: CanvasLayer
+var _top_left: Control
+var _top_center: Control
+var _top_right: Control
+var _left_bar: Control
+var _bottom_bars: Control
+var _deploy_panel: Control
+var _hud_theme: Theme
+var _top_gold_label: Label
+var _stage_ladder_box: HBoxContainer
+var _stage_year_label: Label
+var _pause_button: Button
+var _auto_button: Button
+var _speed_buttons: Array[Button] = []
+var _ability_buttons: Array[Button] = []
+var _bar_rows: Dictionary = {}
+var _damage_font: Font
 var _panel: VBoxContainer
 var _board_head: Label
 var _board_box: VBoxContainer
@@ -43,7 +88,11 @@ var _overlay: Control            # 승리 보상 / 패배 재시도 패널
 func _ready() -> void:
 	_lord = CardLibrary.get_lord(LORD_ID)
 	RunManager.ensure_started(LORD_ID)
+	_theme = _BattlefieldTheme.theme_for_mode("plain")
+	_bind_scene_nodes()
+	_build_hud_theme()
 	_build_field()
+	_build_hud()
 	_ensure_castle()
 	_spawn_board_army()
 	_build_panel()
@@ -52,10 +101,13 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	if _phase != Phase.BATTLE:
+		_sync_hud()
 		return
-	if _command_hold_active:
-		_apply_hero_command_at(get_global_mouse_position())
-	_sim.step(delta)
+	var step_delta := _BattleHudState.speed_delta(delta, _speed, _paused, true)
+	if step_delta > 0.0:
+		_sim.step(step_delta)
+		_accumulate_building_gold(step_delta)
+		_play_damage_events()
 	_prune_command_target()
 	_sync_visuals()
 	_flash_skill_casts()
@@ -69,72 +121,382 @@ func _input(event: InputEvent) -> void:
 		var mouse_button := event as InputEventMouseButton
 		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
 			return
-		_command_hold_active = mouse_button.pressed
-		if mouse_button.pressed:
+		if _command_toggle_active and mouse_button.pressed:
 			_apply_hero_command_at(mouse_button.position)
-		get_viewport().set_input_as_handled()
-	elif event is InputEventMouseMotion and _command_hold_active:
-		var motion := event as InputEventMouseMotion
-		_apply_hero_command_at(motion.position)
-		get_viewport().set_input_as_handled()
+			get_viewport().set_input_as_handled()
 
 # ── 화면 구성 ───────────────────────────────────────────────
+func _bind_scene_nodes() -> void:
+	_world_root = get_node_or_null("WorldRoot") as Node2D
+	if _world_root == null:
+		_world_root = Node2D.new()
+		_world_root.name = "WorldRoot"
+		add_child(_world_root)
+	_camera = _world_root.get_node_or_null("Camera2D") as Camera2D
+	if _camera == null:
+		_camera = Camera2D.new()
+		_camera.name = "Camera2D"
+		_world_root.add_child(_camera)
+	_camera.position = Vector2(960.0, 540.0)
+	_camera.enabled = true
+	_camera.zoom = Vector2.ONE
+	_background_layer = _ensure_node2d(_world_root, "BackgroundLayer")
+	_iso_base_layer = _ensure_node2d(_world_root, "IsoBaseLayer")
+	_buildings_layer = _ensure_node2d(_world_root, "BuildingsLayer")
+	_buildings_layer.y_sort_enabled = true
+	_units_layer = _ensure_node2d(_world_root, "UnitsLayer")
+	_units_layer.y_sort_enabled = true
+	_vfx_layer = _ensure_node2d(_world_root, "VfxLayer")
+	_hud = get_node_or_null("HUD") as CanvasLayer
+	if _hud == null:
+		_hud = CanvasLayer.new()
+		_hud.name = "HUD"
+		add_child(_hud)
+	for name in ["TopLeft", "TopCenter", "TopRight", "LeftBar", "BottomBars", "DeployPanel"]:
+		if _hud.get_node_or_null(name) == null:
+			var c := Control.new()
+			c.name = name
+			_hud.add_child(c)
+	_top_left = _hud.get_node("TopLeft") as Control
+	_top_center = _hud.get_node("TopCenter") as Control
+	_top_right = _hud.get_node("TopRight") as Control
+	_left_bar = _hud.get_node("LeftBar") as Control
+	_bottom_bars = _hud.get_node("BottomBars") as Control
+	_deploy_panel = _hud.get_node("DeployPanel") as Control
+	_deploy_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_deploy_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_layout_hud_slot(_top_left, Vector2(24.0, 22.0), Vector2(250.0, 54.0))
+	_layout_hud_slot(_top_center, Vector2(510.0, 18.0), Vector2(900.0, 88.0))
+	_layout_hud_slot(_top_right, Vector2(1450.0, 22.0), Vector2(440.0, 54.0))
+	_layout_hud_slot(_left_bar, Vector2(24.0, 180.0), Vector2(76.0, 360.0))
+	_layout_hud_slot(_bottom_bars, Vector2(540.0, 900.0), Vector2(840.0, 142.0))
+
+func _layout_hud_slot(node: Control, pos: Vector2, size: Vector2) -> void:
+	if node == null:
+		return
+	node.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	node.position = pos
+	node.size = size
+	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+func _ensure_node2d(parent: Node, node_name: String) -> Node2D:
+	var node := parent.get_node_or_null(node_name) as Node2D
+	if node == null:
+		node = Node2D.new()
+		node.name = node_name
+		parent.add_child(node)
+	return node
+
 func _build_field() -> void:
-	var bg := ColorRect.new()
-	bg.color = Color(0.09, 0.08, 0.11)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
-	var field := ColorRect.new()
-	field.color = Color(0.12, 0.15, 0.10)
-	field.position = Vector2(FIELD_LEFT, FIELD_TOP)
-	field.size = Vector2(FIELD_RIGHT - FIELD_LEFT, FIELD_BOTTOM - FIELD_TOP)
-	add_child(field)
-	for col in BattleSim.COL_COUNT:
-		var guide := ColorRect.new()
-		guide.color = Color(0.20, 0.24, 0.16, 0.45)
-		guide.position = Vector2(FIELD_LEFT, _map_py(BattleSim.start_y_for_col(col)) - 2.0)
-		guide.size = Vector2(FIELD_RIGHT - FIELD_LEFT, 4.0)
-		add_child(guide)
-	var p_base := ColorRect.new()
-	p_base.color = Color(0.25, 0.4, 0.75)
-	p_base.position = Vector2(FIELD_LEFT - 16.0, FIELD_TOP)
-	p_base.size = Vector2(8.0, FIELD_BOTTOM - FIELD_TOP)
-	add_child(p_base)
-	var e_base := ColorRect.new()
-	e_base.color = Color(0.75, 0.25, 0.25)
-	e_base.position = Vector2(FIELD_RIGHT + 8.0, FIELD_TOP)
-	e_base.size = Vector2(8.0, FIELD_BOTTOM - FIELD_TOP)
-	add_child(e_base)
-	for col in BattleSim.COL_COUNT:
-		for row in BattleSim.ROW_COUNT:
-			var tile := Button.new()
-			tile.position = _tile_position(col, row)
-			tile.size = Vector2(TILE_W, TILE_H)
-			tile.text = "빈 칸"
-			tile.focus_mode = Control.FOCUS_NONE
-			tile.add_theme_font_size_override("font_size", 15)
-			tile.pressed.connect(_on_tile_pressed.bind(_tile_key(col, row)))
-			add_child(tile)
-			_tile_buttons[_tile_key(col, row)] = tile
-	_units_layer = Control.new()
-	_units_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_units_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_units_layer)
-	# 결과 오버레이
+	_clear_children(_background_layer)
+	_clear_children(_iso_base_layer)
+	_clear_children(_buildings_layer)
+	_clear_children(_units_layer)
+	_clear_children(_vfx_layer)
+	_tile_buttons.clear()
+	_building_vis.clear()
+	_build_background()
+	_build_iso_base()
 	_result_label = Label.new()
 	_result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_result_label.position = Vector2(FIELD_LEFT, 32.0)
-	_result_label.size = Vector2(FIELD_RIGHT - FIELD_LEFT, 70.0)
+	_result_label.position = Vector2(560.0, 32.0)
+	_result_label.size = Vector2(980.0, 70.0)
 	_result_label.add_theme_font_size_override("font_size", 56)
 	_result_label.visible = false
-	add_child(_result_label)
+	_deploy_panel.add_child(_result_label)
+
+func _build_hud_theme() -> void:
+	_hud_theme = Theme.new()
+	if ResourceLoader.exists("res://assets/fonts/pixel.ttf"):
+		_damage_font = load("res://assets/fonts/pixel.ttf") as Font
+	var panel := _stylebox(Color(0.76, 0.66, 0.47, 0.86), Color(0.19, 0.12, 0.07, 0.95), 2, 8)
+	var button := _stylebox(Color(0.33, 0.22, 0.12, 0.92), Color(0.84, 0.63, 0.24, 0.95), 2, 8)
+	var button_hover := _stylebox(Color(0.44, 0.29, 0.13, 0.96), Color(0.96, 0.75, 0.30, 1.0), 2, 8)
+	var button_pressed := _stylebox(Color(0.70, 0.45, 0.15, 0.98), Color(1.0, 0.86, 0.38, 1.0), 2, 8)
+	var button_disabled := _stylebox(Color(0.16, 0.15, 0.13, 0.70), Color(0.35, 0.31, 0.24, 0.85), 1, 8)
+	for type in ["PanelContainer", "Panel"]:
+		_hud_theme.set_stylebox("panel", type, panel)
+	for type in ["Button"]:
+		_hud_theme.set_stylebox("normal", type, button)
+		_hud_theme.set_stylebox("hover", type, button_hover)
+		_hud_theme.set_stylebox("pressed", type, button_pressed)
+		_hud_theme.set_stylebox("disabled", type, button_disabled)
+		_hud_theme.set_color("font_color", type, Color(0.96, 0.88, 0.68))
+		_hud_theme.set_color("font_pressed_color", type, Color(0.13, 0.08, 0.04))
+		_hud_theme.set_color("font_disabled_color", type, Color(0.55, 0.51, 0.42))
+	_hud_theme.set_color("font_color", "Label", Color(0.12, 0.08, 0.04))
+	_hud_theme.set_font_size("font_size", "Label", 17)
+	_hud_theme.set_font_size("font_size", "Button", 17)
+
+func _stylebox(bg: Color, border: Color, border_width: int, radius: int) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = bg
+	box.border_color = border
+	box.set_border_width_all(border_width)
+	box.set_corner_radius_all(radius)
+	box.content_margin_left = 10.0
+	box.content_margin_right = 10.0
+	box.content_margin_top = 6.0
+	box.content_margin_bottom = 6.0
+	return box
+
+func _build_hud() -> void:
+	_build_resource_counter()
+	_build_stage_ladder()
+	_build_speed_controls()
+	_build_ability_bar()
+	_build_bottom_bars()
+	_sync_hud()
+
+func _build_resource_counter() -> void:
+	_clear_children(_top_left)
+	var panel := _make_hud_panel(_top_left)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	panel.add_child(row)
+	var icon := _hud_icon("res://assets/sprites/ui/icon_gold.png", "◆", Vector2(34.0, 34.0))
+	row.add_child(icon)
+	_top_gold_label = Label.new()
+	_top_gold_label.add_theme_font_size_override("font_size", 24)
+	_top_gold_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(_top_gold_label)
+
+func _build_stage_ladder() -> void:
+	_clear_children(_top_center)
+	var panel := _make_hud_panel(_top_center)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	panel.add_child(box)
+	_stage_year_label = Label.new()
+	_stage_year_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_stage_year_label.add_theme_font_size_override("font_size", 18)
+	box.add_child(_stage_year_label)
+	_stage_ladder_box = HBoxContainer.new()
+	_stage_ladder_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	_stage_ladder_box.add_theme_constant_override("separation", 8)
+	box.add_child(_stage_ladder_box)
+
+func _build_speed_controls() -> void:
+	_clear_children(_top_right)
+	_speed_buttons.clear()
+	var panel := _make_hud_panel(_top_right)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_END
+	row.add_theme_constant_override("separation", 6)
+	panel.add_child(row)
+	_auto_button = Button.new()
+	_auto_button.toggle_mode = true
+	_auto_button.text = "auto"
+	_auto_button.custom_minimum_size = Vector2(70.0, 38.0)
+	_auto_button.pressed.connect(_on_auto_toggled)
+	row.add_child(_auto_button)
+	_pause_button = Button.new()
+	_pause_button.toggle_mode = true
+	_pause_button.text = "Ⅱ"
+	_pause_button.custom_minimum_size = Vector2(48.0, 38.0)
+	_pause_button.pressed.connect(_on_pause_toggled)
+	row.add_child(_pause_button)
+	for value in [1.0, 2.0, 3.0]:
+		var b := Button.new()
+		b.text = "×%d" % int(value)
+		b.toggle_mode = true
+		b.custom_minimum_size = Vector2(58.0, 38.0)
+		b.pressed.connect(_set_speed.bind(value))
+		row.add_child(b)
+		_speed_buttons.append(b)
+
+func _build_ability_bar() -> void:
+	_clear_children(_left_bar)
+	_ability_buttons.clear()
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 14)
+	_left_bar.add_child(box)
+	var well := _make_ability_button("우", "우물")
+	well.pressed.connect(_on_ability_well_pressed)
+	box.add_child(well)
+	_ability_buttons.append(well)
+	var focus := _make_ability_button("표", "집중표적")
+	focus.toggle_mode = true
+	focus.pressed.connect(_on_focus_toggled)
+	box.add_child(focus)
+	_ability_buttons.append(focus)
+	for label in ["2", "3"]:
+		var disabled := _make_ability_button(label, "예약")
+		disabled.disabled = true
+		box.add_child(disabled)
+		_ability_buttons.append(disabled)
+
+func _build_bottom_bars() -> void:
+	_clear_children(_bottom_bars)
+	_bar_rows.clear()
+	var panel := _make_hud_panel(_bottom_bars)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 7)
+	panel.add_child(box)
+	_add_hud_bar(box, "castle", "성", Color(0.23, 0.72, 0.48))
+	_add_hud_bar(box, "champion", "챔피언", Color(0.80, 0.20, 0.38))
+	_add_hud_bar(box, "force", "군세", Color(0.86, 0.58, 0.20))
+
+func _make_hud_panel(parent: Control) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.theme = _hud_theme
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(panel)
+	return panel
+
+func _hud_icon(path: String, fallback: String, size: Vector2) -> Control:
+	if ResourceLoader.exists(path):
+		var tex := TextureRect.new()
+		tex.texture = load(path) as Texture2D
+		tex.custom_minimum_size = size
+		tex.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		return tex
+	var label := Label.new()
+	label.text = fallback
+	label.custom_minimum_size = size
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", int(size.y * 0.72))
+	return label
+
+func _make_ability_button(fallback: String, tooltip: String) -> Button:
+	var button := Button.new()
+	button.theme = _hud_theme
+	button.text = fallback
+	button.tooltip_text = tooltip
+	button.custom_minimum_size = Vector2(62.0, 62.0)
+	var normal := _stylebox(Color(0.30, 0.20, 0.12, 0.94), Color(0.88, 0.64, 0.22, 0.96), 2, 31)
+	var pressed := _stylebox(Color(0.75, 0.48, 0.16, 0.98), Color(1.0, 0.86, 0.38, 1.0), 3, 31)
+	var disabled := _stylebox(Color(0.13, 0.12, 0.11, 0.78), Color(0.32, 0.29, 0.23, 0.9), 1, 31)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", pressed)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
+	return button
+
+func _add_hud_bar(parent: VBoxContainer, id: String, label_text: String, fill_color: Color) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+	var label := Label.new()
+	label.text = label_text
+	label.custom_minimum_size = Vector2(104.0, 24.0)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(label)
+	var bar := ProgressBar.new()
+	bar.min_value = 0.0
+	bar.max_value = 1.0
+	bar.step = 0.001
+	bar.value = 1.0
+	bar.show_percentage = false
+	bar.custom_minimum_size = Vector2(650.0, 24.0)
+	bar.add_theme_stylebox_override("background", _stylebox(Color(0.08, 0.07, 0.05, 0.84), Color(0.19, 0.12, 0.07, 0.95), 1, 5))
+	bar.add_theme_stylebox_override("fill", _stylebox(fill_color, Color(0.96, 0.82, 0.32, 0.75), 0, 5))
+	row.add_child(bar)
+	var value_label := Label.new()
+	value_label.custom_minimum_size = Vector2(54.0, 24.0)
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(value_label)
+	_bar_rows[id] = { "row": row, "label": label, "bar": bar, "value": value_label, "base_modulate": row.modulate }
+
+func _build_background() -> void:
+	var bg_path := _BattlefieldTheme.background_path(_theme)
+	if ResourceLoader.exists(bg_path):
+		var tex := load(bg_path) as Texture2D
+		if tex != null:
+			var bg := Sprite2D.new()
+			bg.name = "ThemeBackground"
+			bg.centered = false
+			bg.texture = tex
+			bg.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			var tex_size := tex.get_size()
+			if tex_size.x > 0.0 and tex_size.y > 0.0:
+				bg.scale = Vector2(1920.0 / tex_size.x, 1080.0 / tex_size.y)
+			bg.modulate = _theme.get("ambient", Color.WHITE)
+			bg.z_index = -1000
+			_background_layer.add_child(bg)
+			return
+	_build_fallback_background()
+
+func _build_fallback_background() -> void:
+	var sky := Polygon2D.new()
+	sky.polygon = PackedVector2Array([Vector2.ZERO, Vector2(1920.0, 0.0), Vector2(1920.0, 420.0), Vector2(0.0, 500.0)])
+	sky.color = Color(0.13, 0.16, 0.22)
+	_background_layer.add_child(sky)
+	var ground := Polygon2D.new()
+	ground.polygon = PackedVector2Array([Vector2(0.0, 390.0), Vector2(1920.0, 320.0), Vector2(1920.0, 1080.0), Vector2(0.0, 1080.0)])
+	ground.color = Color(0.11, 0.18, 0.12)
+	_background_layer.add_child(ground)
+
+func _build_iso_base() -> void:
+	var tile_texture := _load_texture("res://assets/sprites/iso/tile_grass.png")
+	for col in BattleSim.COL_COUNT:
+		for row in BattleSim.ROW_COUNT:
+			var block_key := _tile_key(col, row)
+			var center := field_to_screen_position(BattleSim.position_for_tile(col, row))
+			var tile_sprite := Sprite2D.new()
+			tile_sprite.texture = tile_texture
+			tile_sprite.centered = true
+			tile_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			tile_sprite.position = center
+			tile_sprite.scale = Vector2(TILE_TEXTURE_SCALE, TILE_TEXTURE_SCALE)
+			tile_sprite.z_index = int(center.y)
+			tile_sprite.modulate = Color(1.0, 1.0, 1.0, 0.72)
+			_iso_base_layer.add_child(tile_sprite)
+			var fallback_poly: Polygon2D = null
+			if tile_texture == null:
+				fallback_poly = Polygon2D.new()
+				fallback_poly.polygon = _diamond_points()
+				fallback_poly.position = center
+				fallback_poly.color = Color(0.20, 0.34, 0.20, 0.90)
+				fallback_poly.z_index = int(center.y)
+				_iso_base_layer.add_child(fallback_poly)
+			var label := Label.new()
+			label.text = ""
+			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			label.position = center + Vector2(-58.0, -12.0)
+			label.size = Vector2(116.0, 24.0)
+			label.add_theme_font_size_override("font_size", 12)
+			label.modulate = Color(0.10, 0.07, 0.03, 0.86)
+			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_iso_base_layer.add_child(label)
+			var area := Area2D.new()
+			area.position = center
+			area.input_pickable = true
+			area.input_event.connect(_on_tile_area_input.bind(block_key))
+			var shape := CollisionPolygon2D.new()
+			shape.polygon = _diamond_points()
+			area.add_child(shape)
+			_iso_base_layer.add_child(area)
+			_tile_buttons[block_key] = { "area": area, "sprite": tile_sprite, "poly": fallback_poly, "label": label }
+
+func _diamond_points() -> PackedVector2Array:
+	return PackedVector2Array([Vector2(0.0, -ISO_HALF_H), Vector2(ISO_HALF_W, 0.0), Vector2(0.0, ISO_HALF_H), Vector2(-ISO_HALF_W, 0.0)])
+
+func field_to_screen(px: float, py: float) -> Vector2:
+	return VIEW_ORIGIN + Vector2(px * VIEW_SCALE_X, py * VIEW_SCALE_Y)
+
+func field_to_screen_position(pos: Vector2) -> Vector2:
+	return field_to_screen(pos.x, pos.y)
 
 func _build_panel() -> void:
+	var panel_frame := PanelContainer.new()
+	panel_frame.theme = _hud_theme
+	panel_frame.position = Vector2(32.0, 148.0)
+	panel_frame.custom_minimum_size = Vector2(400.0, 0.0)
+	panel_frame.size = Vector2(400.0, 0.0)
+	panel_frame.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel_frame.add_theme_stylebox_override("panel", _stylebox(Color(0.70, 0.60, 0.42, 0.97), Color(0.16, 0.09, 0.04, 1.0), 2, 8))
+	_deploy_panel.add_child(panel_frame)
 	_panel = VBoxContainer.new()
-	_panel.position = Vector2(28.0, 28.0)
-	_panel.custom_minimum_size = Vector2(440.0, 0.0)
+	_panel.theme = _hud_theme
+	_panel.custom_minimum_size = Vector2(376.0, 0.0)
 	_panel.add_theme_constant_override("separation", 10)
-	add_child(_panel)
+	_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel_frame.add_child(_panel)
 
 	var stage := Label.new()
 	stage.text = _StageCadence.stage_label(RunManager.stage_index())
@@ -182,11 +544,13 @@ func _build_panel() -> void:
 	_panel.add_child(_gold_label)
 
 	_well_button = Button.new()
+	_well_button.theme = _hud_theme
 	_well_button.custom_minimum_size = Vector2(0.0, 40.0)
 	_well_button.pressed.connect(_on_well_pressed)
 	_panel.add_child(_well_button)
 
 	_start_button = Button.new()
+	_start_button.theme = _hud_theme
 	_start_button.text = "전투 시작"
 	_start_button.custom_minimum_size = Vector2(0.0, 44.0)
 	_start_button.pressed.connect(_on_start_pressed)
@@ -215,6 +579,7 @@ func _make_board_row(block_key: String, card_id: StringName) -> Control:
 	return row
 
 func _refresh_deploy_ui() -> void:
+	_sync_deploy_panel_visibility()
 	var hand := RunManager.get_hand()
 	if _selected_hand_index >= hand.size():
 		_selected_hand_index = -1
@@ -230,6 +595,7 @@ func _refresh_deploy_ui() -> void:
 	if _start_button != null:
 		_start_button.disabled = _phase != Phase.DEPLOY or _board_unit_count() <= 0
 	_refresh_board_tiles()
+	_sync_hud()
 
 func _rebuild_board_summary() -> void:
 	if _board_box == null:
@@ -269,6 +635,7 @@ func _rebuild_hand_list(hand: Array[StringName]) -> void:
 		var card_name := card.display_name if card != null else String(card_id)
 		var card_cost := card.cost if card != null else 0
 		var b := Button.new()
+		b.theme = _hud_theme
 		b.toggle_mode = true
 		b.button_pressed = idx == _selected_hand_index
 		b.text = "%d. %s (%d)" % [idx + 1, card_name, card_cost]
@@ -279,19 +646,34 @@ func _rebuild_hand_list(hand: Array[StringName]) -> void:
 
 func _refresh_board_tiles() -> void:
 	var board := RunManager.get_board()
+	if _phase == Phase.DEPLOY and _iso_base_layer != null:
+		_iso_base_layer.visible = true
+		_iso_base_layer.modulate.a = 1.0
 	for key in _tile_buttons.keys():
-		var tile: Button = _tile_buttons[key]
-		if tile == null:
-			continue
+		var tile: Dictionary = _tile_buttons[key]
+		var label := tile.get("label", null) as Label
+		var poly := tile.get("poly", null) as Polygon2D
+		var sprite := tile.get("sprite", null) as Sprite2D
+		var area := tile.get("area", null) as Area2D
 		if board.has(key):
 			var card := CardLibrary.get_card(StringName(board[key]))
-			tile.text = card.display_name if card != null else String(board[key])
-			tile.disabled = true
-			tile.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			if label != null:
+				label.text = card.display_name if card != null else String(board[key])
+			if poly != null:
+				poly.color = Color(0.24, 0.42, 0.26, 0.95)
+			if sprite != null:
+				sprite.modulate = Color(1.10, 1.10, 0.88, 1.0)
+			if area != null:
+				area.input_pickable = false
 		else:
-			tile.text = "빈 칸"
-			tile.disabled = _phase != Phase.DEPLOY
-			tile.mouse_filter = Control.MOUSE_FILTER_STOP if _phase == Phase.DEPLOY else Control.MOUSE_FILTER_IGNORE
+			if label != null:
+				label.text = ""
+			if poly != null:
+				poly.color = Color(0.22, 0.38, 0.22, 0.90) if _phase == Phase.DEPLOY else Color(0.17, 0.27, 0.17, 0.0)
+			if sprite != null:
+				sprite.modulate = Color(1.0, 1.0, 1.0, 0.72) if _phase == Phase.DEPLOY else Color(1.0, 1.0, 1.0, 0.0)
+			if area != null:
+				area.input_pickable = _phase == Phase.DEPLOY
 
 func _clear_children(node: Node) -> void:
 	for child in node.get_children():
@@ -316,6 +698,15 @@ func _select_hand(index: int) -> void:
 		var card_name := card.display_name if card != null else String(hand[index])
 		_hint_label.text = "선택 — %s" % card_name
 	_refresh_deploy_ui()
+
+func _on_tile_area_input(_viewport: Node, event: InputEvent, _shape_idx: int, block_key: String) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var mouse_button := event as InputEventMouseButton
+	if mouse_button.button_index != MOUSE_BUTTON_LEFT or not mouse_button.pressed:
+		return
+	_on_tile_pressed(block_key)
+	get_viewport().set_input_as_handled()
 
 func _on_tile_pressed(block_key: String) -> void:
 	if _phase != Phase.DEPLOY:
@@ -360,6 +751,32 @@ func _on_well_pressed() -> void:
 	_hint_label.text = "우물 — %s, +%d골드" % [card_name, RunState.WELL_GOLD]
 	_refresh_deploy_ui()
 
+func _on_ability_well_pressed() -> void:
+	_on_well_pressed()
+	_sync_hud()
+
+func _on_focus_toggled() -> void:
+	if _ability_buttons.size() < 2:
+		return
+	_command_toggle_active = _ability_buttons[1].button_pressed
+	if _command_toggle_active:
+		_hint_label.text = "집중표적 — 적을 클릭하세요."
+	else:
+		_clear_hero_command(true)
+	_sync_hud()
+
+func _on_pause_toggled() -> void:
+	_paused = _pause_button != null and _pause_button.button_pressed
+	_sync_hud()
+
+func _on_auto_toggled() -> void:
+	_auto_enabled = _auto_button != null and _auto_button.button_pressed
+	_sync_hud()
+
+func _set_speed(value: float) -> void:
+	_speed = clampf(value, 1.0, 3.0)
+	_sync_hud()
+
 func _on_start_pressed() -> void:
 	if _phase != Phase.DEPLOY:
 		return
@@ -369,8 +786,14 @@ func _on_start_pressed() -> void:
 		_refresh_deploy_ui()
 		return
 	_sim.set_waves(RunManager.current_waves())
+	_enemy_force_max = maxi(1, _sim.enemy_units.size())
+	_apply_building_auras()
+	_battle_gold_per_sec = _BoardEconomy.gold_per_sec(RunManager.get_board(), CardLibrary.catalog)
+	_battle_gold_accum = 0.0
+	_update_building_gold_labels()
 	_phase = Phase.BATTLE
 	_clear_hero_command(false)
+	_fade_iso_tiles_out()
 	_sync_visuals()
 	_start_button.disabled = true
 	_hint_label.text = "전투 중…"
@@ -378,42 +801,48 @@ func _on_start_pressed() -> void:
 
 # ── 시각화 ──────────────────────────────────────────────────
 func _spawn_visual(u: BattleUnit) -> void:
-	var root := Control.new()
-	root.size = Vector2(UNIT_W, UNIT_H)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var body := ColorRect.new()
-	if u.is_castle:
-		body.color = Color(0.62, 0.56, 0.40)
-	else:
-		body.color = Color(0.32, 0.52, 0.9) if u.team == BattleUnit.Team.PLAYER else Color(0.85, 0.32, 0.32)
-	var command_marker := ColorRect.new()
+	var size := _unit_size(u)
+	var root := Node2D.new()
+	root.position = field_to_screen(u.px, u.py)
+	root.y_sort_enabled = true
+	var command_marker := Polygon2D.new()
+	command_marker.polygon = PackedVector2Array([Vector2(0.0, -18.0), Vector2(34.0, 0.0), Vector2(0.0, 18.0), Vector2(-34.0, 0.0)])
 	command_marker.color = Color(1.0, 0.85, 0.1, 0.55)
-	command_marker.position = Vector2(-5.0, -5.0)
-	command_marker.size = Vector2(UNIT_W + 10.0, UNIT_H + 10.0)
+	command_marker.position = Vector2(0.0, -6.0)
 	command_marker.visible = false
 	root.add_child(command_marker)
-	body.size = Vector2(UNIT_W, UNIT_H)
-	body.position = Vector2.ZERO
+	var body := Sprite2D.new()
+	body.centered = true
+	var texture := _unit_texture(u)
+	body.texture = texture
+	body.modulate = Color.WHITE
+	body.flip_h = u.team == BattleUnit.Team.ENEMY
+	body.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_fit_sprite_to_size(body, texture, size)
+	body.position = Vector2(0.0, -size.y * 0.5)
 	root.add_child(body)
 	var hp_bg := ColorRect.new()
-	hp_bg.color = Color(0, 0, 0, 0.6)
-	hp_bg.position = Vector2(3.0, 3.0)
-	hp_bg.size = Vector2(UNIT_W - 6.0, 6.0)
+	hp_bg.color = Color(0, 0, 0, 0.65)
+	hp_bg.position = Vector2(-size.x * 0.5, -size.y - 12.0)
+	hp_bg.size = Vector2(size.x, 6.0)
+	hp_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(hp_bg)
 	var hp := ColorRect.new()
 	hp.color = Color(0.4, 0.9, 0.4) if u.team == BattleUnit.Team.PLAYER else Color(0.95, 0.6, 0.3)
-	hp.position = Vector2(3.0, 3.0)
-	hp.size = Vector2(UNIT_W - 6.0, 6.0)
+	hp.position = hp_bg.position
+	hp.size = hp_bg.size
+	hp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(hp)
 	var name_label := Label.new()
 	name_label.text = u.display_name
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.position = Vector2(0.0, 14.0)
-	name_label.size = Vector2(UNIT_W, UNIT_H - 14.0)
+	name_label.position = Vector2(-size.x * 0.75, -size.y - 36.0)
+	name_label.size = Vector2(size.x * 1.5, 22.0)
 	name_label.add_theme_font_size_override("font_size", 14)
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(name_label)
 	_units_layer.add_child(root)
-	_vis[u] = { "root": root, "body": body, "base_color": body.color, "hp": hp, "command_marker": command_marker }
+	_vis[u] = { "root": root, "body": body, "base_color": body.modulate, "hp": hp, "command_marker": command_marker, "hp_width": size.x }
 	_position_visual(u)
 
 func _sync_visuals() -> void:
@@ -425,37 +854,189 @@ func _sync_visuals() -> void:
 		active[u] = true
 		if not _vis.has(u):
 			_spawn_visual(u)
+	var to_remove: Array = []
 	for u in _vis.keys():
 		if not active.has(u) or not u.is_alive():
-			_vis[u]["root"].queue_free()
-			_vis.erase(u)
+			to_remove.append(u)
+	for u in to_remove:
+		var root: Node = _vis[u].get("root", null)
+		if root != null:
+			root.queue_free()
+		_vis.erase(u)
 	for u in active_units:
 		if _vis.has(u):
 			_position_visual(u)
-			_vis[u]["hp"].size.x = (UNIT_W - 6.0) * u.hp_ratio()
-			var marker: ColorRect = _vis[u].get("command_marker", null)
+			var hp: ColorRect = _vis[u].get("hp", null)
+			if hp != null:
+				hp.size.x = float(_vis[u].get("hp_width", UNIT_W)) * u.hp_ratio()
+			var marker: Polygon2D = _vis[u].get("command_marker", null)
 			if marker != null:
 				marker.visible = u == _commanded_target
 	_update_wave_label()
+	_sync_hud()
+
+func _sync_hud() -> void:
+	if _top_gold_label != null:
+		_top_gold_label.text = "%d" % RunManager.get_gold()
+	_sync_stage_ladder()
+	_sync_speed_controls()
+	_sync_ability_bar()
+	_sync_bottom_bars()
+
+func _sync_stage_ladder() -> void:
+	if _stage_ladder_box == null:
+		return
+	var current_stage := RunManager.stage_index()
+	if _stage_year_label != null:
+		_stage_year_label.text = "%d년 전선" % _BattleHudState.stage_year(current_stage)
+	if current_stage == _last_ladder_stage and _stage_ladder_box.get_child_count() > 0:
+		return
+	_last_ladder_stage = current_stage
+	_clear_children(_stage_ladder_box)
+	for node in _BattleHudState.stage_nodes(current_stage):
+		var kind := String(node.get("kind", "combat"))
+		var is_current := bool(node.get("is_current", false))
+		var item := PanelContainer.new()
+		item.theme = _hud_theme
+		item.custom_minimum_size = Vector2(104.0, 50.0)
+		item.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var bg := Color(0.80, 0.68, 0.42, 0.98) if is_current else Color(0.42, 0.31, 0.18, 0.88)
+		var border := Color(1.0, 0.84, 0.34, 1.0) if is_current else Color(0.74, 0.55, 0.24, 0.90)
+		item.add_theme_stylebox_override("panel", _stylebox(bg, border, 2, 8))
+		var v := VBoxContainer.new()
+		v.alignment = BoxContainer.ALIGNMENT_CENTER
+		v.add_theme_constant_override("separation", 0)
+		item.add_child(v)
+		var icon := _hud_icon("res://assets/sprites/ui/node_%s.png" % kind, String(node.get("icon", "?")), Vector2(30.0, 28.0))
+		v.add_child(icon)
+		var label := Label.new()
+		label.text = "%s %d" % [String(node.get("label", "")), int(node.get("stage", 0))]
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 13)
+		label.modulate = Color(0.13, 0.08, 0.04) if is_current else Color(0.93, 0.83, 0.63)
+		v.add_child(label)
+		_stage_ladder_box.add_child(item)
+
+func _sync_speed_controls() -> void:
+	if _pause_button != null:
+		_pause_button.button_pressed = _paused
+		_pause_button.text = "▶" if _paused else "Ⅱ"
+	if _auto_button != null:
+		_auto_button.button_pressed = _auto_enabled
+	for button in _speed_buttons:
+		var label := button.text.replace("×", "")
+		button.button_pressed = is_equal_approx(label.to_float(), _speed)
+
+func _sync_ability_bar() -> void:
+	if _ability_buttons.size() < 2:
+		return
+	_ability_buttons[0].disabled = _phase != Phase.DEPLOY or _selected_hand_index < 0
+	_ability_buttons[1].disabled = _phase != Phase.BATTLE
+	_ability_buttons[1].button_pressed = _command_toggle_active
+
+func _sync_bottom_bars() -> void:
+	if _sim.enemy_units.size() > _enemy_force_max:
+		_enemy_force_max = _sim.enemy_units.size()
+	_update_bar_row("castle", _BattleHudState.castle_ratio(_sim.castle), true, "성")
+	var champion := _BattleHudState.champion_state(_sim.enemy_units)
+	_update_bar_row("champion", float(champion.get("ratio", 0.0)), bool(champion.get("active", false)), String(champion.get("label", "챔피언")))
+	var force_ratio := _BattleHudState.enemy_force_ratio(_sim.enemy_units.size(), _enemy_force_max, _sim.wave_index, _sim.wave_total)
+	_update_bar_row("force", force_ratio, _phase == Phase.BATTLE or _sim.wave_total > 0, "군세")
+
+func _update_bar_row(id: String, ratio: float, active: bool, label_text: String) -> void:
+	if not _bar_rows.has(id):
+		return
+	var row_data: Dictionary = _bar_rows[id]
+	var row := row_data.get("row", null) as HBoxContainer
+	var label := row_data.get("label", null) as Label
+	var bar := row_data.get("bar", null) as ProgressBar
+	var value_label := row_data.get("value", null) as Label
+	if row != null:
+		row.modulate = Color(1.0, 1.0, 1.0, 1.0) if active else Color(0.55, 0.52, 0.45, 0.60)
+	if label != null:
+		label.text = label_text
+	if bar != null:
+		bar.value = clampf(ratio, 0.0, 1.0)
+	if value_label != null:
+		value_label.text = "%d%%" % int(round(clampf(ratio, 0.0, 1.0) * 100.0)) if active else "-"
 
 func _position_visual(u: BattleUnit) -> void:
+	var root := _vis[u]["root"] as Node2D
 	var offset := _unit_visual_offset(u)
-	var sx := _map_px(u.px) - UNIT_W * 0.5 + offset.x
-	var sy := _map_py(u.py) - UNIT_H * 0.5 + offset.y
-	_vis[u]["root"].position = Vector2(sx, sy)
+	root.position = field_to_screen(u.px, u.py) + offset
+	root.z_index = int(u.py)
 
 func _flash_skill_casts() -> void:
 	for cast in _sim.last_skill_casts:
 		var caster: BattleUnit = cast.get("caster", null)
 		if caster == null or not _vis.has(caster):
 			continue
-		var body: ColorRect = _vis[caster].get("body", null)
+		var body := _vis[caster].get("body", null) as Sprite2D
 		if body == null or not is_instance_valid(body):
 			continue
-		var base_color: Color = _vis[caster].get("base_color", body.color)
-		body.color = Color(1.0, 1.0, 1.0)
+		var base_color: Color = _vis[caster].get("base_color", body.modulate)
+		body.modulate = Color(1.0, 1.0, 1.0)
 		var tween := create_tween()
-		tween.tween_property(body, "color", base_color, 0.15)
+		tween.tween_property(body, "modulate", base_color, 0.15)
+
+func _play_damage_events() -> void:
+	for event in _sim.last_damage_events:
+		_spawn_damage_number(event)
+		_flash_damaged_target(event)
+
+func _spawn_damage_number(event: Dictionary) -> void:
+	if _vfx_layer == null:
+		return
+	while _vfx_layer.get_child_count() >= MAX_FLOATING_DAMAGE_LABELS:
+		var oldest := _vfx_layer.get_child(0)
+		_vfx_layer.remove_child(oldest)
+		oldest.queue_free()
+	var amount := int(event.get("amount", 0))
+	var kind := String(event.get("kind", "attack"))
+	var is_crit := bool(event.get("is_crit", false))
+	var label := Label.new()
+	label.text = "%d%s" % [amount, "!" if is_crit else ""]
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.position = field_to_screen(float(event.get("px", 0.0)), float(event.get("py", 0.0))) + Vector2(-48.0, -96.0)
+	label.size = Vector2(96.0, 34.0)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.z_index = 10000
+	label.add_theme_font_size_override("font_size", 27 if is_crit else 22)
+	label.add_theme_color_override("font_shadow_color", Color(0.05, 0.02, 0.01, 0.85))
+	label.add_theme_constant_override("shadow_offset_x", 2)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	if _damage_font != null:
+		label.add_theme_font_override("font", _damage_font)
+	if kind == "skill":
+		label.modulate = Color(0.78, 0.48, 1.0, 1.0)
+	elif is_crit:
+		label.modulate = Color(1.0, 0.20, 0.16, 1.0)
+	else:
+		label.modulate = Color(1.0, 0.95, 0.72, 1.0)
+	_vfx_layer.add_child(label)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 58.0, 0.62).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.62).set_delay(0.14)
+	tween.set_parallel(false)
+	tween.tween_callback(Callable(label, "queue_free"))
+
+func _flash_damaged_target(event: Dictionary) -> void:
+	var target: BattleUnit = event.get("target", null)
+	if target == null or not _vis.has(target):
+		return
+	var body := _vis[target].get("body", null) as Sprite2D
+	if body == null or not is_instance_valid(body):
+		return
+	var base_color: Color = _vis[target].get("base_color", body.modulate)
+	body.modulate = Color(1.0, 1.0, 1.0)
+	var tween := create_tween()
+	tween.tween_property(body, "modulate", base_color, 0.12)
+
+func _sync_deploy_panel_visibility() -> void:
+	if _deploy_panel != null:
+		_deploy_panel.visible = _phase != Phase.BATTLE
 
 func _sim_units() -> Array[BattleUnit]:
 	var units: Array[BattleUnit] = []
@@ -470,11 +1051,14 @@ func _spawn_board_army() -> void:
 		_sim.add_unit(unit)
 		_spawn_visual(unit)
 		_update_tile_label(unit.lane, unit.row, unit.display_name)
+	_spawn_board_buildings(board)
 	_refresh_board_tiles()
 
 func _spawn_unit_for_board_key(block_key: String) -> void:
 	var board := RunManager.get_board()
 	if not board.has(block_key):
+		return
+	if _spawn_building_for_board_key(block_key, board):
 		return
 	var single := {}
 	single[block_key] = board[block_key]
@@ -484,10 +1068,168 @@ func _spawn_unit_for_board_key(block_key: String) -> void:
 		_spawn_visual(unit)
 		_update_tile_label(unit.lane, unit.row, unit.display_name)
 
+func _spawn_board_buildings(board: Dictionary) -> void:
+	for entry in _BoardEconomy.buildings_on_board(board, CardLibrary.catalog):
+		_spawn_building_for_board_key(String(entry.get("key", "")), board)
+
+func _spawn_building_for_board_key(block_key: String, board: Dictionary) -> bool:
+	if not board.has(block_key):
+		return false
+	var card := CardLibrary.get_card(StringName(board[block_key]))
+	if card == null or String(card.get("card_type")) != "building":
+		return false
+	if _building_vis.has(block_key):
+		return true
+	var parts := block_key.split(":")
+	if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
+		return true
+	var col := int(parts[0])
+	var row := int(parts[1])
+	var center := field_to_screen_position(BattleSim.position_for_tile(col, row))
+	var root := Node2D.new()
+	root.position = center
+	root.z_index = int(center.y) - 1
+	var body := Sprite2D.new()
+	body.centered = true
+	var texture := _building_texture(card)
+	body.texture = texture
+	body.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_fit_sprite_to_size(body, texture, Vector2(BUILDING_W, BUILDING_H))
+	body.position = Vector2(0.0, -BUILDING_H * 0.48)
+	root.add_child(body)
+	var name_label := Label.new()
+	name_label.text = card.display_name
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.position = Vector2(-58.0, -BUILDING_H - 30.0)
+	name_label.size = Vector2(116.0, 22.0)
+	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(name_label)
+	var gold_label := Label.new()
+	gold_label.text = ""
+	gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gold_label.position = Vector2(-58.0, -BUILDING_H - 56.0)
+	gold_label.size = Vector2(116.0, 26.0)
+	gold_label.add_theme_font_size_override("font_size", 21)
+	gold_label.add_theme_color_override("font_shadow_color", Color(0.05, 0.02, 0.01, 0.9))
+	gold_label.add_theme_constant_override("shadow_offset_x", 2)
+	gold_label.add_theme_constant_override("shadow_offset_y", 2)
+	gold_label.modulate = Color(1.0, 0.86, 0.26, 1.0)
+	gold_label.visible = false
+	gold_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _damage_font != null:
+		gold_label.add_theme_font_override("font", _damage_font)
+	root.add_child(gold_label)
+	_buildings_layer.add_child(root)
+	_building_vis[block_key] = {
+		"root": root,
+		"gold_label": gold_label,
+		"gold_per_sec": maxi(0, int(card.get("gold_per_sec"))),
+	}
+	return true
+
+func _building_texture(card: CardData) -> Texture2D:
+	var path := ""
+	if card != null and card.id == &"building_dunjeon":
+		path = "res://assets/sprites/buildings/farm.png"
+	elif card != null and card.id == &"building_mangru":
+		path = "res://assets/sprites/buildings/tower.png"
+	if not path.is_empty() and ResourceLoader.exists(path):
+		var tex := load(path) as Texture2D
+		if tex != null:
+			return tex
+	return _placeholder_texture(int(BUILDING_W), int(BUILDING_H), Color(0.58, 0.42, 0.22))
+
+func _apply_building_auras() -> void:
+	_BoardEconomy.apply_auras(_sim.player_units, RunManager.get_board(), CardLibrary.catalog)
+
+func _accumulate_building_gold(delta: float) -> void:
+	if _battle_gold_per_sec <= 0:
+		return
+	_battle_gold_accum += float(_battle_gold_per_sec) * delta
+	_update_building_gold_labels()
+
+func _update_building_gold_labels() -> void:
+	var total := int(floor(_battle_gold_accum))
+	for data in _building_vis.values():
+		var label := data.get("gold_label", null) as Label
+		if label == null:
+			continue
+		var rate := int(data.get("gold_per_sec", 0))
+		label.visible = rate > 0 and (_phase == Phase.BATTLE or total > 0)
+		if rate > 0:
+			label.text = "+%d" % total
+
 func _ensure_castle() -> void:
 	var castle := _sim.add_castle()
 	if not _vis.has(castle):
 		_spawn_visual(castle)
+
+func _unit_texture(u: BattleUnit) -> Texture2D:
+	var path := _unit_texture_path(u)
+	if not path.is_empty() and ResourceLoader.exists(path):
+		var tex := load(path) as Texture2D
+		if tex != null:
+			return tex
+	var size := _unit_size(u)
+	return _placeholder_texture(int(size.x), int(size.y), _unit_color(u))
+
+func _load_texture(path: String) -> Texture2D:
+	if ResourceLoader.exists(path):
+		return load(path) as Texture2D
+	return null
+
+func _fit_sprite_to_size(sprite: Sprite2D, texture: Texture2D, target_size: Vector2) -> void:
+	if sprite == null or texture == null:
+		return
+	var source_size := texture.get_size()
+	if source_size.x <= 0.0 or source_size.y <= 0.0:
+		return
+	var scale_factor := minf(target_size.x / source_size.x, target_size.y / source_size.y)
+	sprite.scale = Vector2(scale_factor, scale_factor)
+
+func _unit_texture_path(u: BattleUnit) -> String:
+	if u.is_castle:
+		return "res://assets/sprites/buildings/castle.png"
+	var faction := "shu" if u.team == BattleUnit.Team.PLAYER else "demon"
+	if _is_boss(u):
+		return "res://assets/sprites/units/%s/boss_dongzhuo.png" % faction
+	if u.team == BattleUnit.Team.PLAYER and not u.card_id.is_empty():
+		var general_path := "res://assets/sprites/units/%s/%s.png" % [faction, String(u.card_id)]
+		if ResourceLoader.exists(general_path):
+			return general_path
+	return "res://assets/sprites/units/%s/%s.png" % [faction, u.troop_type]
+
+func _placeholder_texture(width: int, height: int, color: Color) -> Texture2D:
+	var key := "%d:%d:%s" % [width, height, color.to_html(true)]
+	if _placeholder_textures.has(key):
+		return _placeholder_textures[key]
+	var image := Image.create(width, height, false, Image.FORMAT_RGBA8)
+	image.fill(color)
+	var texture := ImageTexture.create_from_image(image)
+	_placeholder_textures[key] = texture
+	return texture
+
+func _unit_size(u: BattleUnit) -> Vector2:
+	if u.is_castle:
+		return Vector2(CASTLE_W, CASTLE_H)
+	if _is_boss(u):
+		return Vector2(BOSS_W, BOSS_H)
+	if String(u.card_id).begins_with("general_"):
+		return Vector2(GENERAL_W, GENERAL_H)
+	return Vector2(UNIT_W, UNIT_H)
+
+func _unit_color(u: BattleUnit) -> Color:
+	if u.is_castle:
+		return Color(0.62, 0.56, 0.40)
+	if u.team == BattleUnit.Team.PLAYER:
+		return Color(0.25, 0.70, 0.55)
+	if _is_boss(u):
+		return Color(0.64, 0.12, 0.32)
+	return Color(0.62, 0.18, 0.42)
+
+func _is_boss(u: BattleUnit) -> bool:
+	return u.display_name == "마왕 동탁"
 
 func _apply_hero_command_at(screen_pos: Vector2) -> void:
 	var target := _enemy_near_screen_pos(screen_pos)
@@ -525,9 +1267,9 @@ func _controllable_heroes() -> Array[BattleUnit]:
 	return heroes
 
 func _enemy_near_screen_pos(screen_pos: Vector2) -> BattleUnit:
-	if screen_pos.x < FIELD_LEFT or screen_pos.x > FIELD_RIGHT or screen_pos.y < FIELD_TOP or screen_pos.y > FIELD_BOTTOM:
-		return null
 	var field_pos := _screen_to_field(screen_pos)
+	if field_pos.x < 0.0 or field_pos.x > BattleSim.FIELD_W or field_pos.y < 0.0 or field_pos.y > BattleSim.FIELD_H:
+		return null
 	var best: BattleUnit = null
 	var best_d := COMMAND_PICK_RADIUS
 	for enemy in _sim.enemy_units:
@@ -540,30 +1282,19 @@ func _enemy_near_screen_pos(screen_pos: Vector2) -> BattleUnit:
 	return best
 
 func _screen_to_field(screen_pos: Vector2) -> Vector2:
-	var tx := clampf((screen_pos.x - FIELD_LEFT) / (FIELD_RIGHT - FIELD_LEFT), 0.0, 1.0)
-	var ty := clampf((screen_pos.y - FIELD_TOP) / (FIELD_BOTTOM - FIELD_TOP), 0.0, 1.0)
-	return Vector2(tx * BattleSim.FIELD_W, ty * BattleSim.FIELD_H)
-
-func _map_px(px: float) -> float:
-	var t := clampf(px / BattleSim.FIELD_W, 0.0, 1.0)
-	return FIELD_LEFT + t * (FIELD_RIGHT - FIELD_LEFT)
-
-func _map_py(py: float) -> float:
-	var t := clampf(py / BattleSim.FIELD_H, 0.0, 1.0)
-	return FIELD_TOP + t * (FIELD_BOTTOM - FIELD_TOP)
-
-func _tile_position(col: int, row: int) -> Vector2:
-	var p := BattleSim.position_for_tile(col, row)
-	return Vector2(_map_px(p.x) - TILE_W * 0.5, _map_py(p.y) - TILE_H * 0.5)
+	return Vector2(
+		(screen_pos.x - VIEW_ORIGIN.x) / VIEW_SCALE_X,
+		(screen_pos.y - VIEW_ORIGIN.y) / VIEW_SCALE_Y
+	)
 
 func _tile_key(col: int, row: int) -> String:
 	return "%d:%d" % [col, row]
 
 func _update_tile_label(col: int, row: int, text: String) -> void:
-	var tile: Button = _tile_buttons.get(_tile_key(col, row), null)
-	if tile != null:
-		tile.text = text
-		tile.disabled = true
+	var tile: Dictionary = _tile_buttons.get(_tile_key(col, row), {})
+	var label := tile.get("label", null) as Label
+	if label != null:
+		label.text = text
 
 func _unit_visual_offset(u: BattleUnit) -> Vector2:
 	var index := 0
@@ -573,6 +1304,20 @@ func _unit_visual_offset(u: BattleUnit) -> Vector2:
 		if other.team == u.team and other.position().distance_to(u.position()) < 4.0:
 			index += 1
 	return Vector2(float((index % 3) - 1) * 18.0, float(index / 3) * 14.0)
+
+func _fade_iso_tiles_out() -> void:
+	for tile in _tile_buttons.values():
+		var area := tile.get("area", null) as Area2D
+		if area != null:
+			area.input_pickable = false
+	if _iso_base_layer == null:
+		return
+	var tween := create_tween()
+	tween.tween_property(_iso_base_layer, "modulate:a", 0.0, 0.22)
+	tween.tween_callback(func() -> void:
+		_iso_base_layer.visible = false
+		_iso_base_layer.modulate.a = 1.0
+	)
 
 func _update_wave_label() -> void:
 	if _wave_label == null:
@@ -587,6 +1332,14 @@ func _update_wave_label() -> void:
 # ── 종료 · 전리(보상) ───────────────────────────────────────
 func _end_battle() -> void:
 	_phase = Phase.DONE
+	var produced_gold := int(floor(_battle_gold_accum))
+	if produced_gold > 0:
+		RunManager.add_gold(produced_gold)
+		_update_building_gold_labels()
+		_sync_hud()
+	_sync_deploy_panel_visibility()
+	_command_toggle_active = false
+	_clear_hero_command(false)
 	_result_label.visible = true
 	var win := _sim.result == BattleSim.Result.PLAYER_WIN
 	if win:
@@ -661,15 +1414,17 @@ func _new_overlay_box() -> VBoxContainer:
 	if _overlay != null and is_instance_valid(_overlay):
 		_overlay.queue_free()
 	var box := VBoxContainer.new()
-	box.position = Vector2(FIELD_LEFT, 150.0)
-	box.custom_minimum_size = Vector2(FIELD_RIGHT - FIELD_LEFT, 0.0)
+	box.position = Vector2(560.0, 150.0)
+	box.custom_minimum_size = Vector2(980.0, 0.0)
 	box.add_theme_constant_override("separation", 10)
-	add_child(box)
+	box.mouse_filter = Control.MOUSE_FILTER_STOP
+	_deploy_panel.add_child(box)
 	_overlay = box
 	return box
 
 func _make_button(text: String, cb: Callable) -> Button:
 	var b := Button.new()
+	b.theme = _hud_theme
 	b.text = text
 	b.custom_minimum_size = Vector2(0.0, 40.0)
 	b.pressed.connect(cb)
@@ -678,6 +1433,11 @@ func _make_button(text: String, cb: Callable) -> Button:
 func _card_brief(card: CardData) -> String:
 	if card is UnitCardData:
 		return "%s/%s" % [card.troop_type, card.attack_range]
+	if String(card.get("card_type")) == "building":
+		if int(card.get("gold_per_sec")) > 0:
+			return "건물/초당 %d골드" % int(card.get("gold_per_sec"))
+		if float(card.get("aura_attack_pct")) > 0.0:
+			return "건물/공격 +%d%%" % int(round(float(card.get("aura_attack_pct")) * 100.0))
 	return card.card_type
 
 func _board_unit_count() -> int:

@@ -27,6 +27,7 @@ var wave_total := 0
 var result: int = Result.ONGOING
 var elapsed: float = 0.0
 var last_skill_casts: Array = []
+var last_damage_events: Array = []
 var castle: BattleUnit = null
 
 static func depth_for_row(row: int) -> float:
@@ -81,6 +82,7 @@ func is_over() -> bool:
 
 func step(delta: float) -> void:
 	last_skill_casts.clear()
+	last_damage_events.clear()
 	if is_over():
 		return
 	elapsed += delta
@@ -99,8 +101,18 @@ func step(delta: float) -> void:
 		var target := _pick_target(u)
 		if target != null and u.distance_to(target) <= _reach_of(u):
 			if u.cooldown <= 0.0:
-				var dmg := int(round(u.effective_attack() * TypeChart.multiplier(u.troop_type, target.troop_type)))
+				var type_multiplier := TypeChart.multiplier(u.troop_type, target.troop_type)
+				var dmg := int(round(u.effective_attack() * type_multiplier))
 				target.take_damage(dmg)
+				last_damage_events.append({
+					"target": target,
+					"amount": dmg,
+					"px": target.px,
+					"py": target.py,
+					"team": target.team,
+					"is_crit": type_multiplier >= 1.5,
+					"kind": "attack",
+				})
 				u.cooldown = u.attack_interval
 		else:
 			_move_toward(u, target, delta)

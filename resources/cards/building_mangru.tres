@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BuildingCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/building_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"building_mangru"
+display_name = "망루"
+realm = "mortal"
+nation = &"shu"
+card_type = "building"
+cost = 3
+fantasy_tier = "historical"
+description = "보드에 남아 인접 아군에게 전장 시야와 공격 지원을 제공하는 감시탑."
+gold_per_sec = 0
+aura_attack_pct = 0.12
+aura_radius = 1

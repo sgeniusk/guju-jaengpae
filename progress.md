@@ -3,9 +3,9 @@
 이 파일은 재시작 상태용이다. 전체 이력이 아니다. 오래된 증거는 CHANGELOG·reports·docs로 옮긴다. (≤120줄)
 
 ## 현재 상태 (Current State)
-**마지막 갱신 (Last Updated)** — 2026-06-01
-**활성 피처 (Active Feature)** — 없음
-**현재 목표 (Current Objective)** — feat-019 선형 스테이지 사다리 + StageCadence 구현 완료. 다음은 feat-015d 상점 이벤트와 feat-020 땅 확장. 로드맵 — docs/roadmap.md.
+**마지막 갱신 (Last Updated)** — 2026-06-02
+**활성 피처 (Active Feature)** — 없음 (v0.5 "구주 비주얼 전장" 핵심 6피처 완료)
+**현재 목표 (Current Objective)** — v0.5 완료 — feat-022/023/024/025/016 done, ./init.sh 684 단언 green. Nine Kings 풍 픽셀 전투화면 + 건물 경제 + 교체형 배경 테마. 멀티 CLI(Claude 스펙·Codex gpt-5.5 medium 구현·agy 애셋·QA). 다음 — feat-015d 상점(건물 획득 wiring)·feat-020 확장·feat-021 칙령. 정본 docs/render-architecture.md·assets/MANIFEST.md.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -26,12 +26,18 @@
 - [x] **feat-015b 보드 기반 전투** (Codex) — 전투를 RunManager.get_board()의 영속 보드에서 스폰, per-battle 카드 선택·타일 클릭·지휘력 패널 제거, 읽기 전용 보드 타일/군세 요약. `test_board_army.gd` 신설. ./init.sh 619단언 green.
 - [x] **feat-015c 수동 보드 배치 + 보상 드래프트 + 우물** (Codex) — start_run/보상은 손패로, 전투 씬 배치 단계에서 손패 선택→빈 블록 배치·우물 +10골드·보드 1장 이상 전투 시작. `test_run_board`/`test_board_army`/`test_run_reward` 갱신. ./init.sh 605단언 green.
 - [x] **feat-019 선형 스테이지 사다리 + StageCadence** (Codex) — 분기 RunMap 폐기, RunState.stage_index 선형 진행, StageCadence(상점4·보스5·확장5·난이도) + WaveFactory.stage_waves + run_map/battle 선형 흐름. `test_stage_cadence` 신설, 분기 테스트 대체. ./init.sh 618단언 green.
+- [x] **v0.5 feat-022 아이소 전장 렌더** (Codex) — battle.tscn Node2D 월드+CanvasLayer HUD, field_to_screen 단일 투영, 아이소 다이아몬드 타일, Sprite2D 빌보드 유닛+placeholder 폴백. BattleSim 불변. 618 green·스크린샷 검증.
+- [x] **v0.5 feat-023 전투 HUD** (Codex) — 3중 진행바(성·보스·군세)·스테이지 사다리·자원 카운터·속도 ×1/×2/×3·능력버튼, hud_state.gd 순수 계산 분리. 641 green.
+- [x] **v0.5 feat-025 픽셀 애셋+배경 테마** (agy→Claude) — battlefield_theme(plain, 모드-레디)+field.png 배경+타일/스케일 튜닝. agy 생성→PIL 크로마키(tools/asset_pipeline.py)→배치. 646 green.
+- [x] **v0.5 feat-024 전투 연출** (Codex) — last_damage_events 가법 노출(battle_sim·skill_system, 결정성 보존) + VfxLayer 플로팅 데미지 숫자·타격 플래시 + BATTLE 단계 패널 숨김. test_damage_events. 668 green. 스크린샷 — "+19" 데미지 숫자 표시 확인.
+- [x] **v0.5 feat-016 건물 경제** (Codex) — BuildingCardData + 둔전(골드/초)·망루(공격 오라) + 순수 BoardEconomy(BattleSim 불변) + 건물 정적 렌더·골드 적립. test_building_economy. 684 green(카드 12). **v0.5 핵심 완료.**
+- 애셋 — agy 생성+PIL 크로마키로 평원배경·성채·보스(마왕동탁)·촉5병종·촉장수5·마계3병종·건물2·아이소타일 배치. QA 스크린샷 docs/reports/v0.5-screens/.
 ### 진행 중 (What's In Progress)
 - [ ] 없음
 ### 다음 (What's Next)
-1. 시각 플레이 QA(사람, `godot --path .`) — 선형 스테이지 화면→전투→보상→다음 스테이지 복귀 체감 확인.
-2. feat-015d 상점 이벤트 — StageCadence.is_shop(4·8·12…)에 골드 소비 구매→손패, 손패 3 엄격 해소 검토.
-3. feat-020 땅 확장 — StageCadence.is_expand(5·10·15…) 보스 보상으로 보드 확장.
+1. feat-015d 상점 — 골드 구매(건물 카드 둔전·망루 등장 wiring 포함)로 실제 런에서 건물 획득.
+2. 시각 폴리시 — 아이소 타일 텍스처 적용 확인·유닛 밀도·데미지 숫자 가독성 미세 조정. 마계 노병/수군 스프라이트.
+3. feat-020 땅 확장·feat-021 왕의 칙령.
 
 ## 블로커 / 리스크 (Blockers / Risks)
 - [ ] 시각 QA 부채 누적 — feat-003/004/006/007/008 화면·상호작용과 feat-017 전투 중 표적 지정 체감은 헤드리스로 미확인. 사람 플레이 필요.

@@ -47,6 +47,7 @@ static func _cast_qinglong_strike(caster: BattleUnit, sim: BattleSim) -> void:
 	)
 	for i in mini(2, targets.size()):
 		targets[i].take_damage(80)
+		_record_damage_event(sim, targets[i], 80)
 
 static func _cast_baibu_chuanyang(caster: BattleUnit, sim: BattleSim) -> void:
 	var targets := _alive_enemies(caster, sim)
@@ -56,6 +57,7 @@ static func _cast_baibu_chuanyang(caster: BattleUnit, sim: BattleSim) -> void:
 		return caster.distance_to(a) > caster.distance_to(b)
 	)
 	targets[0].take_damage(110)
+	_record_damage_event(sim, targets[0], 110)
 
 static func _cast_qimen_bagua(caster: BattleUnit, sim: BattleSim) -> void:
 	var targets := _alive_enemies(caster, sim)
@@ -68,6 +70,7 @@ static func _cast_qimen_bagua(caster: BattleUnit, sim: BattleSim) -> void:
 	for target in targets:
 		if target.position().distance_to(center) <= 180.0:
 			target.take_damage(45)
+			_record_damage_event(sim, target, 45)
 
 static func _cast_changban_charge(caster: BattleUnit, sim: BattleSim) -> void:
 	var forward := Vector2.RIGHT if caster.team == BattleUnit.Team.PLAYER else Vector2.LEFT
@@ -77,13 +80,28 @@ static func _cast_changban_charge(caster: BattleUnit, sim: BattleSim) -> void:
 		var side_distance := absf(offset.y)
 		if forward_distance >= 0.0 and forward_distance <= 220.0 and side_distance <= 70.0:
 			target.take_damage(60)
+			_record_damage_event(sim, target, 60)
 
 static func _cast_changban_roar(caster: BattleUnit, sim: BattleSim) -> void:
 	for target in _alive_enemies(caster, sim):
 		if caster.distance_to(target) <= 220.0:
 			target.take_damage(25)
+			_record_damage_event(sim, target, 25)
 			target.add_status("taunt", 2.5, 0.0, caster)
 			target.add_status("weaken", 2.5, 0.3, caster)
+
+static func _record_damage_event(sim: BattleSim, target: BattleUnit, amount: int) -> void:
+	if sim == null or target == null:
+		return
+	sim.last_damage_events.append({
+		"target": target,
+		"amount": amount,
+		"px": target.px,
+		"py": target.py,
+		"team": target.team,
+		"is_crit": false,
+		"kind": "skill",
+	})
 
 static func _alive_enemies(caster: BattleUnit, sim: BattleSim) -> Array[BattleUnit]:
 	var targets: Array[BattleUnit] = []

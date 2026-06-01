@@ -8,3 +8,44 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_battle")
+
+[node name="WorldRoot" type="Node2D" parent="."]
+
+[node name="Camera2D" type="Camera2D" parent="WorldRoot"]
+position = Vector2(960, 540)
+enabled = true
+
+[node name="BackgroundLayer" type="Node2D" parent="WorldRoot"]
+
+[node name="IsoBaseLayer" type="Node2D" parent="WorldRoot"]
+
+[node name="UnitsLayer" type="Node2D" parent="WorldRoot"]
+y_sort_enabled = true
+
+[node name="VfxLayer" type="Node2D" parent="WorldRoot"]
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="TopLeft" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 0
+
+[node name="TopCenter" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 0
+
+[node name="TopRight" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 0
+
+[node name="LeftBar" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 0
+
+[node name="BottomBars" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 0
+
+[node name="DeployPanel" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 0

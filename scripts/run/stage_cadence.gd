@@ -16,6 +16,15 @@ static func is_shop(stage: int) -> bool:
 static func is_expand(stage: int) -> bool:
 	return _is_interval(stage, EXPAND_INTERVAL)
 
+static func node_kind(stage: int) -> String:
+	if is_boss(stage):
+		return "boss"
+	if is_shop(stage):
+		return "shop"
+	if is_expand(stage):
+		return "expand"
+	return "combat"
+
 static func difficulty_scale(stage: int) -> float:
 	return 1.0 + DIFFICULTY_STEP * float(maxi(0, stage - 1))
 

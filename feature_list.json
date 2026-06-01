@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.4 — 선형 스테이지 사다리 + 스테이지 캐이던스(상점4·보스5·확장5). 오픈필드 난전·3×3 배치 유지, 분기 노드맵 폐기.",
+  "milestone": "v0.5 — 구주 비주얼 전장. Nine Kings 풍 리치 픽셀 전투화면(아이소 기지·스프라이트 군세·대형 보스·데미지 숫자·3중 진행바·스테이지 사다리·속도 컨트롤) + 건물 경제 + 교체형 배경 테마. 멀티 CLI(Claude 스펙·Codex 구현·agy 애셋·QA). BattleSim 불변, 뷰 레이어만 오버홀. 정본 docs/render-architecture.md·assets/MANIFEST.md.",
   "features": [
     {
       "id": "feat-001",
@@ -166,12 +166,12 @@
     },
     {
       "id": "feat-016",
-      "name": "건물 카드 + 오라",
-      "description": "card_type building — 타일에 건물 배치(궁전·소환·오라). 예: 주변 유닛 공격력 주기적 +10%. NK 핵심 요소.",
-      "dependencies": ["feat-014"],
-      "status": "not-started",
+      "name": "건물 경제 (건물 카드 + 골드 생산 + 오라)",
+      "description": "BuildingCardData 신설(card_type=building) — 보드 타일에 정적 배치(진군 안 함). 둔전(屯田)=전투 중 골드/초 생산(누적 숫자 플로팅, 종료 시 RunState.gold 적립), 망루(望樓)=인접 아군 공격력 오라. 경제/오라는 순수 헬퍼로 분리(BattleSim 불변, 헤드리스 테스트). NK 핵심. 스펙 docs/specs/feat-016.md.",
+      "dependencies": ["feat-014", "feat-022"],
+      "status": "done",
       "owner": "Codex",
-      "evidence": ""
+      "evidence": "BuildingCardData(card_type=building) + 둔전(골드/초)·망루(공격 오라) .tres + 순수 BoardEconomy(buildings_on_board/gold_per_sec/apply_auras) + battle.gd 건물 정적 렌더·골드 누적·종료 적립. BattleSim 불변. test_building_economy. ./init.sh 684 단언 green(카드 12). 건물 획득(상점·보상)은 feat-015d 후속."
     },
     {
       "id": "feat-017",
@@ -217,6 +217,42 @@
       "status": "not-started",
       "owner": "Codex",
       "evidence": ""
+    },
+    {
+      "id": "feat-022",
+      "name": "아이소 전장 렌더 리팩토링",
+      "description": "battle.tscn을 Node2D 월드(Camera2D·Background·IsoBase·UnitsLayer y_sort·Vfx) + CanvasLayer HUD로 재구성. 유닛을 ColorRect→Sprite2D 빌보드(매니페스트 경로, 없으면 placeholder 색). 단일 투영 field_to_screen + py 깊이 정렬 + 좌측 아이소 다이아몬드 기지. BattleSim·기존 전투 테스트 불변. 정본 docs/render-architecture.md.",
+      "dependencies": ["feat-019"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "battle.tscn을 WorldRoot(Node2D)+HUD(CanvasLayer)로 재구성, field_to_screen 단일 투영, 3×3 아이소 다이아몬드 Area2D 타일, Sprite2D 빌보드 유닛(매니페스트 경로+ResourceLoader.exists 폴백 색). 금지파일(battle_sim·battle_unit·skill_system·target_rules·type_chart·test) diff 0. ./init.sh 618 단언 green·부팅 무에러(Claude 독립 재검증). 커밋 대기."
+    },
+    {
+      "id": "feat-023",
+      "name": "전투 HUD 오버홀",
+      "description": "3중 진행바(성 HP·보스 HP·적 군세 잔존), 스테이지 사다리(StageCadence 주도 노드+보스 왕관+상점 아이콘+N년), 자원 카운터(골드+아이콘), 속도 컨트롤(pause + 델타 ×1/×2/×3), 좌측 능력 버튼 4개(우물·집중표적·예약2). 첨부 화면 HUD 재현. 스펙 docs/specs/feat-023.md.",
+      "dependencies": ["feat-022"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "HUD(자원 카운터·스테이지 사다리·속도 ×1/×2/×3·능력버튼·하단 3중바) + hud_state.gd 순수 계산 분리 + StageCadence.node_kind. test_hud_state 신설. ./init.sh 641 단언 green. 스크린샷 검증 — HUD 작동 확인."
+    },
+    {
+      "id": "feat-024",
+      "name": "전투 연출 (데미지 숫자·타격감)",
+      "description": "BattleSim이 스텝당 last_damage_events 노출(last_skill_casts 동일 패턴, 순수 로직 유지). 뷰가 플로팅 픽셀 데미지 숫자(크리 '!'·색 구분), 타격 플래시, 공격/스킬 트윈. + BATTLE 단계 DeployPanel 숨김. 스펙 docs/specs/feat-024.md.",
+      "dependencies": ["feat-022"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "last_damage_events 가법 노출(battle_sim·skill_system) + VfxLayer 플로팅 데미지 숫자(크리·스킬 색)·타격 플래시 + BATTLE 단계 DeployPanel 숨김. test_damage_events(결정성 보존). ./init.sh 668 단언 green. 스크린샷 — 교전 중 데미지 숫자 표시 확인."
+    },
+    {
+      "id": "feat-025",
+      "name": "픽셀 애셋 + 배경 테마 시스템",
+      "description": "agy 생성(매니페스트대로) → Claude 후처리(PIL 크로마키·다운스케일) → assets/sprites/**. BattlefieldTheme(스테이지/모드 키로 배경 선택, 기본 plain=평원 진영, 모드-레디). 평원 배경·보스·성·건물·잡병·UI 아이콘. 정본 assets/MANIFEST.md.",
+      "dependencies": ["feat-022", "feat-023"],
+      "status": "done",
+      "owner": "agy→Claude",
+      "evidence": "battlefield_theme.gd(plain 슬롯, 모드-레디) + field.png 배경 배선 + tile_grass 소형 타일(전투 시 페이드) + 성채/유닛/보스 스케일 + 반투명 배치패널. agy 생성→PIL 크로마키(tools/asset_pipeline.py)→배치 — 평원배경·성채·보스·잡병4·장수5·건물2·아이소타일. test_battlefield_theme. ./init.sh 646 green. 스크린샷 검증 — 평원 배경+풀 HUD 렌더 확인."
     }
   ]
 }

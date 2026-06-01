@@ -2,6 +2,18 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-02 — v0.5 "구주 비주얼 전장" (done · 멀티 CLI: Claude 스펙 · Codex 구현 · agy 애셋)
+Nine Kings 풍 리치 픽셀 전투 화면 + 건물 경제 + 교체형 배경 테마. **BattleSim(순수 전투 로직)은 불변**, 뷰 레이어만 오버홀. 정본 `docs/render-architecture.md`·`assets/MANIFEST.md`.
+- **멀티 CLI 오케스트레이션** — Claude(편집장)가 스펙·매니페스트·정본 작성, Codex(gpt-5.5 medium, workspace-write 샌드박스)가 GDScript 구현, agy(Antigravity)가 `generate_image`로 픽셀 애셋 생성. agy 출력(1024² JPEG 무알파, brain 디렉토리)을 Claude가 PIL 크로마키·다운스케일(`tools/asset_pipeline.py`)로 투명 PNG 변환·배치. 각 피처 후 Claude 독립 `./init.sh` 재검증 + `tools/shoot_battle.gd` 스크린샷 QA.
+- **feat-022 아이소 전장 렌더** — `battle.tscn`을 Control-only에서 Node2D 월드(`Camera2D`·`BackgroundLayer`·`IsoBaseLayer`·`UnitsLayer`[y_sort]·`VfxLayer`) + `CanvasLayer` HUD로 재구성. 단일 투영 `field_to_screen`, 아이소 다이아몬드 보드 타일, ColorRect→`Sprite2D` 빌보드 유닛(매니페스트 경로 + `ResourceLoader.exists` 폴백).
+- **feat-023 전투 HUD** — 하단 3중 진행바(성 HP·보스 HP·적 군세 잔존), 상단 스테이지 사다리(`StageCadence.node_kind` + N년 플레이버), 좌상 자원 카운터, 우상 속도 컨트롤(pause + ×1/×2/×3 델타 배율), 좌측 능력 버튼(우물·집중표적). 표시 계산은 순수 `hud_state.gd`로 분리(테스트 가능).
+- **feat-024 전투 연출** — `BattleSim`·`SkillSystem`에 `last_damage_events` **가법 노출**(결정성 보존, `last_skill_casts` 패턴). `VfxLayer` 플로팅 픽셀 데미지 숫자(일반/크리/스킬 색 구분)·타격 플래시. BATTLE 단계 DeployPanel 숨김.
+- **feat-025 픽셀 애셋 + 배경 테마** — `battlefield_theme.gd`(plain 슬롯, 스테이지/모드 키 선택, **모드-레디**). `field.png` 평원 배경 배선, 소형 잔디 타일(전투 시 페이드), 성채/유닛/보스 스케일, 반투명 배치 패널. agy 생성 애셋 — 평원 배경·성채·보스(마왕 동탁)·촉 5병종·촉 장수 5종·마계 3병종·건물 2종·아이소 타일.
+- **feat-016 건물 경제** — `BuildingCardData`(card_type=building) + 둔전(屯田, 골드/초)·망루(望樓, 인접 아군 공격 오라). 순수 `BoardEconomy`(`gold_per_sec`·`apply_auras`)로 BattleSim 불변. 건물은 진군 안 하고 보드 타일에 정적, 전투 종료 시 골드 적립. 건물 **획득(상점)은 feat-015d 후속**.
+- **게임 모드 메타(구상)** — 시나리오·자유·멀티 3모드 개념을 `design-loop.md`에 기록. 배경 테마·스테이지를 모드 키로 분기 가능하게 설계. 현재 런 = 자유모드. 모드 선택 UI·시나리오 데이터·멀티는 후속.
+- **검증** — `./init.sh` 618→**684 단언**(누적 +66) green, 카드 12·군주 1, run_map/battle 부팅 무에러. 스크린샷 QA로 배경·HUD·아이소 기지·스프라이트 군세·보스·데미지 숫자·건물 렌더 확인. 순수 전투 로직 파일은 feat-024의 가법 이벤트 노출 외 불변.
+- **스코프 경계(후속)** — 마계 노병/수군 스프라이트 미생성, 건물 획득 정책(feat-015d), 타일 텍스처 미세 튜닝, feat-020 확장·feat-021 칙령.
+
 ## 2026-05-31 — feat-015 경제·보드 상태 모델 1단계 (done · Codex 구현)
 - **RunState 보드 모델** — 기존 `deck` 중심 상태를 `board`(3×3 블록키 `col:row` → 카드 id), `hand`(3장 기준), `gold`로 전환했다. `start_run()`은 군주 시작 카드를 보드에 순서대로 채우고 손패·골드를 비운다.
 - **경제 API** — `place_from_hand`, `discard_from_hand`(+10골드), `hand_over_limit`, `board_card_ids`, `owned_card_ids`, `add_gold`, `spend_gold`를 순수·결정적으로 추가했다.
