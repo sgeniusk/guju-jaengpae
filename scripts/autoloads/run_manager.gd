@@ -10,6 +10,13 @@ func ensure_started(lord_id: StringName) -> void:
 	if not state.started:
 		state.start_run(CardLibrary.get_lord(lord_id), CardLibrary.catalog)
 
+# 현재 시작된 군주의 진영(nation)을 반환한다. 미설정/없으면 촉(shu) 폴백.
+func player_faction() -> StringName:
+	var lord := CardLibrary.get_lord(state.lord_id)
+	if lord == null:
+		return &"shu"
+	return lord.nation
+
 func get_deck() -> Array[StringName]:
 	return state.board_card_ids()
 

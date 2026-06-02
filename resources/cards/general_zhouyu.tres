@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/unit_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"general_zhouyu"
+display_name = "주유"
+realm = "mortal"
+nation = &"wu"
+card_type = "general"
+cost = 4
+fantasy_tier = "heroic"
+description = "오의 대도독. 적벽의 화공."
+troop_type = "archer"
+target_rule = "backline"
+max_hp = 185
+attack = 46
+attack_interval = 1.1
+attack_range = "ranged"
+move_speed = 40.0
+skill_id = &""
+skill_text = ""

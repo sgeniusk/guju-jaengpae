@@ -84,11 +84,11 @@ func _validate_lords(dir_path: String) -> int:
 			errors += _err(path, "id 비어 있음")
 		var gens: PackedStringArray = res.get("starting_general_ids")
 		var troops: PackedStringArray = res.get("starting_troop_ids")
-		# v0.1 성공 기준 — 장수 3종·병종 3종
-		if gens.size() < 3:
-			errors += _err(path, "starting_general_ids < 3 (v0.1은 장수 3종 필요)")
+		# 군주 시작 덱 최소 — 장수 2종 이상·병종 3종 이상 (위·오 군주는 장수 2종으로 시작)
+		if gens.size() < 2:
+			errors += _err(path, "starting_general_ids < 2 (군주는 장수 2종 이상 필요)")
 		if troops.size() < 3:
-			errors += _err(path, "starting_troop_ids < 3 (v0.1은 병종 3종 필요)")
+			errors += _err(path, "starting_troop_ids < 3 (군주는 병종 3종 이상 필요)")
 	if errors == 0:
 		print("  lords: %d개 OK" % files.size())
 	return errors

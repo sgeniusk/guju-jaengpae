@@ -30,7 +30,7 @@ func test_eligible_excludes_owned_and_is_deterministic() -> void:
 		return
 	var elig := RewardPool.eligible(cat, run.owned_card_ids())
 	var elig_again := RewardPool.eligible(cat, run.owned_card_ids())
-	eq(elig.size(), 4, "시작 보드 제외 후 후보 4장")
+	eq(elig.size(), 8, "시작 보드 제외 후 후보 8장")
 	eq(elig, elig_again, "같은 입력의 후보 순서 결정적")
 	for id in elig:
 		falsy(run.owned_card_ids().has(id), "owned에 있는 카드는 후보가 아님")

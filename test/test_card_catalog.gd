@@ -18,8 +18,8 @@ func test_build_player_unit_applies_lord_trait_only_to_troops() -> void:
 	eq(guanyu.max_hp, 320, "장수 체력은 보정하지 않음")
 
 func test_catalog_loads_expected_counts() -> void:
-	eq(cat.cards.size(), 10, "카드 10장 로드")
-	eq(cat.lords.size(), 1, "군주 1명 로드")
+	eq(cat.cards.size(), 14, "카드 14장 로드")
+	eq(cat.lords.size(), 3, "군주 3명 로드")
 
 func test_get_card_known_and_unknown() -> void:
 	not_null(cat.get_card(&"general_guanyu"), "관우 카드 조회")

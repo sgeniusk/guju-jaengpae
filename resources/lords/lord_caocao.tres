@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="LordData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/lord_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lord_caocao"
+display_name = "조조"
+realm = "mortal"
+nation = &"wei"
+trait_id = &"trait_hopae"
+trait_name = "호패(虎覇)"
+trait_text = "패도의 위세. (효과는 후속 구현 — 현재 플레이버.)"
+starting_general_ids = PackedStringArray("general_caocao", "general_xiahoudun")
+starting_troop_ids = PackedStringArray("troop_infantry", "troop_cavalry", "troop_crossbow")

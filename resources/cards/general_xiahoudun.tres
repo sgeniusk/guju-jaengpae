@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/unit_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"general_xiahoudun"
+display_name = "하후돈"
+realm = "mortal"
+nation = &"wei"
+card_type = "general"
+cost = 4
+fantasy_tier = "heroic"
+description = "위의 맹장. 애꾸의 용장."
+troop_type = "cavalry"
+target_rule = "nearest"
+max_hp = 210
+attack = 46
+attack_interval = 1.0
+attack_range = "melee"
+move_speed = 58.0
+skill_id = &""
+skill_text = ""

@@ -6,7 +6,10 @@ func _ready() -> void:
 	var target_stage := 5
 	if OS.has_environment("SHOOT_STAGE"):
 		target_stage = maxi(1, int(OS.get_environment("SHOOT_STAGE")))
-	RunManager.ensure_started("lord_liubei")
+	var lord := "lord_liubei"
+	if OS.has_environment("LORD"):
+		lord = OS.get_environment("LORD")
+	RunManager.ensure_started(lord)
 	var guard := 0
 	while RunManager.stage_index() < target_stage and guard < 50:
 		RunManager.advance_stage()

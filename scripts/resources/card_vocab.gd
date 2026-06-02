@@ -5,7 +5,7 @@ const REALMS := ["mortal", "heaven", "demon"]            # 三界
 const NATIONS := ["wei", "shu", "wu"]                    # 현세 3국. 천계·마계는 후속 세션 확장.
 const CARD_TYPES := ["general", "troop", "scheme", "treasure", "building"]
 const TROOP_TYPES := ["infantry", "archer", "cavalry", "crossbow", "navy", "fantasy"]
-const FANTASY_TIERS := ["historical", "romance", "mythic"]
+const FANTASY_TIERS := ["historical", "romance", "heroic", "mythic"]
 const ATTACK_RANGES := ["melee", "ranged"]
 const TARGET_RULES := ["nearest", "backline", "strongest_ranged", "lowest_hp", "highest_hp"]
 

@@ -2,6 +2,16 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-02 — 위·오 진영 활성화 + 군주 선택 (서브에이전트 구현 · ⓐ)
+- **faction-aware 렌더링** — `battle.gd` 유닛 텍스처 faction을 플레이어 군주 nation으로(`RunManager.player_faction()`). 병종은 기존 카드 재사용 — 군주 nation이 art만 바꾼다(촉 옥록·위 강철·오 주홍).
+- **군주 선택 화면** — `scenes/screens/lord_select.tscn` 신설, `main_scene` 지정. 촉(유비)·위(조조)·오(손권) 선택 → `ensure_started`(멱등) → `run_map`.
+- **위·오 데이터** — 장수 4종(`general_caocao`·`xiahoudun`·`sunquan`·`zhouyu`, 스킬 없는 1차 컷) + 군주 2종(`lord_caocao`·`lord_sunquan`, trait는 플레이버 no-op). `card_data` fantasy_tier에 "heroic" 추가.
+- **검증** — `test/test_factions.gd`(18단언) 신설. `./init.sh` 723 단언 green. 스크린샷 — 군주 선택 화면·위·오 전투 아트 렌더 확인. battle_sim/skill_system 등 전투 로직 불변.
+- **주의(후속)** — 위·오 trait 효과 미구현(no-op), 장수 스킬 없음. v0.6 진영 데이터화 때 보강. 신규 장수가 보상 풀에 들어가 reward 픽스처 갱신됨.
+
+## 2026-06-02 — 전투·상점 폴리시 (서브에이전트 ⓑⓒⓓ)
+- **ⓑ 상점 UI** — `run_map` 상점을 카드 프레임(general/troop/building) 그리드로(골드 아이콘·비용·설명, 부족 시 비활성). **ⓒ 유닛 스케일** 상향(배경 대비 가시성). **ⓓ 기병 우향** — 7진영 cavalry.png 수평 반전. `./init.sh` 701 green.
+
 ## 2026-06-02 — feat-015d 상점 이벤트 (done · Codex 구현)
 - **상점 = 독립 스테이지** — `StageCadence.is_shop`(4·8·12…) 스테이지에서 `run_map`이 전투 대신 상점 모드를 렌더. "상점 떠나기"로 `advance_stage`.
 - **구매 경로** — `CardCatalog.purchasable_ids`(유닛+건물 합집합, 비용 오름차순), `RunManager.shop_purchase(id)`(골드 충분 시 `spend_gold`+`hand_add`, 부족 시 false·상태 불변), `is_shop_stage`. 골드로 카드를 사 손패에 넣는다.

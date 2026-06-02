@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="UnitCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/unit_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"general_caocao"
+display_name = "조조"
+realm = "mortal"
+nation = &"wei"
+card_type = "general"
+cost = 5
+fantasy_tier = "heroic"
+description = "위의 군주. 난세의 간웅, 패도로 천하를 도모한다."
+troop_type = "infantry"
+target_rule = "nearest"
+max_hp = 240
+attack = 44
+attack_interval = 1.0
+attack_range = "melee"
+move_speed = 42.0
+skill_id = &""
+skill_text = ""

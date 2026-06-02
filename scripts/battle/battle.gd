@@ -1191,7 +1191,7 @@ func _fit_sprite_to_size(sprite: Sprite2D, texture: Texture2D, target_size: Vect
 func _unit_texture_path(u: BattleUnit) -> String:
 	if u.is_castle:
 		return "res://assets/sprites/buildings/castle.png"
-	var faction := "shu" if u.team == BattleUnit.Team.PLAYER else "demon"
+	var faction := String(RunManager.player_faction()) if u.team == BattleUnit.Team.PLAYER else "demon"
 	if _is_boss(u):
 		return "res://assets/sprites/units/%s/boss_dongzhuo.png" % faction
 	if u.team == BattleUnit.Team.PLAYER and not u.card_id.is_empty():
