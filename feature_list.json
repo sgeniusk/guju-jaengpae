@@ -158,11 +158,11 @@
     {
       "id": "feat-015d",
       "name": "상점 이벤트 (캐이던스 4)",
-      "description": "StageCadence.is_shop(4·8·12…) 스테이지에 상점 — 모은 골드로 카드(유닛+건물) 구매→손패. 건물(둔전·망루) 실획득 경로. 손패 초과는 다음 전투 배치에서 해소. run_map 모드 분기. 스펙 docs/specs/feat-015d.md. (1차 Codex 시도 중단 — 코드 미반영, 재개 대기.)",
+      "description": "StageCadence.is_shop(4·8·12…) 스테이지에 상점 — 모은 골드로 카드(유닛+건물) 구매→손패. 건물(둔전·망루) 실획득 경로. 손패 초과는 다음 전투 배치에서 해소. run_map 모드 분기. 스펙 docs/specs/feat-015d.md.",
       "dependencies": ["feat-019", "feat-016"],
-      "status": "not-started",
+      "status": "done",
       "owner": "Codex",
-      "evidence": ""
+      "evidence": "CardCatalog.purchasable_ids(유닛+건물, 비용순) + RunManager.is_shop_stage/shop_purchase(골드 차감→손패, 부족 시 불변) + run_map 상점 모드(판매목록·구매·상점 떠나기=advance). 건물 둔전·망루 실획득 경로 확보. test_shop 4테스트. ./init.sh 701 단언 green. 상점 화면 캡처 검증."
     },
     {
       "id": "feat-016",

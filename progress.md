@@ -5,7 +5,7 @@
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-06-02
 **활성 피처 (Active Feature)** — 없음 (v0.5 "구주 비주얼 전장" 핵심 6피처 완료)
-**현재 목표 (Current Objective)** — v0.5 완료 — feat-022/023/024/025/016 done, ./init.sh 684 단언 green. Nine Kings 풍 전투화면 + 건물 경제 + 교체형 배경 테마. **마누스 외주 페인터리 풀세트(9세력 T0-T2, 93종) 통합** — 아트 픽셀→페인터리 전환, demon=낙양마궁 매핑. 멀티 CLI(Claude 스펙·Codex 구현·agy/Manus 애셋·QA). 다음 — feat-015d 상점(1차 Codex 중단, 재개 대기)·평원 배경 사용자 미드저니 교체·유닛↔배경 스케일 조정·feat-020/021. 정본 docs/render-architecture.md·assets/MANIFEST.md.
+**현재 목표 (Current Objective)** — v0.5 완료 — feat-022/023/024/025/016 done, ./init.sh 684 단언 green. Nine Kings 풍 전투화면 + 건물 경제 + 교체형 배경 테마. **마누스 외주 페인터리 풀세트(9세력 T0-T2, 93종) 통합** — 아트 픽셀→페인터리 전환, demon=낙양마궁 매핑. 멀티 CLI(Claude 스펙·Codex 구현·agy/Manus 애셋·QA). **feat-015d 상점 done**(701 green — 골드로 카드·건물 구매→손패). 다음 — 평원 배경 사용자 미드저니 교체·유닛↔배경 스케일 조정·위·오 진영 카드 활성·feat-020 확장·feat-021 칙령. 정본 docs/render-architecture.md·assets/MANIFEST.md.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -31,6 +31,7 @@
 - [x] **v0.5 feat-025 픽셀 애셋+배경 테마** (agy→Claude) — battlefield_theme(plain, 모드-레디)+field.png 배경+타일/스케일 튜닝. agy 생성→PIL 크로마키(tools/asset_pipeline.py)→배치. 646 green.
 - [x] **v0.5 feat-024 전투 연출** (Codex) — last_damage_events 가법 노출(battle_sim·skill_system, 결정성 보존) + VfxLayer 플로팅 데미지 숫자·타격 플래시 + BATTLE 단계 패널 숨김. test_damage_events. 668 green. 스크린샷 — "+19" 데미지 숫자 표시 확인.
 - [x] **v0.5 feat-016 건물 경제** (Codex) — BuildingCardData + 둔전(골드/초)·망루(공격 오라) + 순수 BoardEconomy(BattleSim 불변) + 건물 정적 렌더·골드 적립. test_building_economy. 684 green(카드 12). **v0.5 핵심 완료.**
+- [x] **feat-015d 상점 이벤트** (Codex) — StageCadence.is_shop 스테이지에서 run_map 상점 모드(전투 대신), CardCatalog.purchasable_ids + RunManager.shop_purchase/is_shop_stage, 골드로 유닛·건물 구매→손패. 건물 둔전·망루 실획득 경로. test_shop. ./init.sh 701 green. 상점 화면 캡처 검증.
 - 애셋 — agy 생성+PIL 크로마키로 평원배경·성채·보스(마왕동탁)·촉5병종·촉장수5·마계3병종·건물2·아이소타일 배치. QA 스크린샷 docs/reports/v0.5-screens/.
 ### 진행 중 (What's In Progress)
 - [ ] 없음

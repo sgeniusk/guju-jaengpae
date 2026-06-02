@@ -58,6 +58,20 @@ func is_boss_stage() -> bool:
 func is_shop_stage() -> bool:
 	return _StageCadence.is_shop(state.stage_index)
 
+func shop_card_ids() -> Array[StringName]:
+	return CardLibrary.catalog.purchasable_ids()
+
+func shop_purchase(id: StringName) -> bool:
+	var card := CardLibrary.get_card(id)
+	if card == null:
+		return false
+	if get_gold() < card.cost:
+		return false
+	if not spend_gold(card.cost):
+		return false
+	hand_add(id)
+	return true
+
 func is_expand_stage() -> bool:
 	return _StageCadence.is_expand(state.stage_index)
 

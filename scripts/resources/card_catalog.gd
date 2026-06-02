@@ -44,6 +44,27 @@ func _load_dir(dir_path: String, target: Dictionary) -> void:
 func get_card(id: StringName) -> CardData:
 	return cards.get(id, building_cards.get(id, null))
 
+func purchasable_ids() -> Array[StringName]:
+	var seen := {}
+	for id in cards.keys():
+		seen[StringName(id)] = true
+	for id in building_cards.keys():
+		seen[StringName(id)] = true
+
+	var ids: Array[StringName] = []
+	for id in seen.keys():
+		ids.append(StringName(id))
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		var card_a := get_card(a)
+		var card_b := get_card(b)
+		var cost_a := card_a.cost if card_a != null else 0
+		var cost_b := card_b.cost if card_b != null else 0
+		if cost_a == cost_b:
+			return String(a) < String(b)
+		return cost_a < cost_b
+	)
+	return ids
+
 func get_lord(id: StringName) -> LordData:
 	return lords.get(id, null)
 

@@ -39,17 +39,20 @@ func _build_root() -> void:
 func _build_stage_panel() -> void:
 	var stage := RunManager.stage_index()
 	var stage_label := Label.new()
-	stage_label.text = _StageCadence.stage_label(stage)
+	stage_label.text = _stage_label(stage)
 	stage_label.add_theme_font_size_override("font_size", 44)
 	if RunManager.is_boss_stage():
 		stage_label.modulate = Color(1.0, 0.55, 0.35)
+	elif RunManager.is_shop_stage():
+		stage_label.modulate = Color(0.95, 0.78, 0.36)
 	_root.add_child(stage_label)
 
 	var summary := Label.new()
-	summary.text = "보드 %d / %d · 손패 %d장 · 골드 %d · 난이도 x%.2f" % [
+	summary.text = "보드 %d / %d · 손패 %d / %d · 골드 %d · 난이도 x%.2f" % [
 		RunManager.get_board().size(),
 		RunState.BOARD_BLOCKS,
 		RunManager.get_hand().size(),
+		RunState.HAND_MAX,
 		RunManager.get_gold(),
 		RunManager.difficulty_scale(),
 	]
@@ -57,9 +60,9 @@ func _build_stage_panel() -> void:
 	_root.add_child(summary)
 
 	var boss_note := Label.new()
-	boss_note.text = "강적 출현" if RunManager.is_boss_stage() else "적 군세가 성을 향해 진군합니다."
+	boss_note.text = _stage_note()
 	boss_note.add_theme_font_size_override("font_size", 24)
-	boss_note.modulate = Color(1.0, 0.75, 0.45) if RunManager.is_boss_stage() else Color(0.78, 0.82, 0.78)
+	boss_note.modulate = Color(1.0, 0.75, 0.45) if (RunManager.is_boss_stage() or RunManager.is_shop_stage()) else Color(0.78, 0.82, 0.78)
 	_root.add_child(boss_note)
 
 	var board_box := VBoxContainer.new()
@@ -67,12 +70,56 @@ func _build_stage_panel() -> void:
 	_root.add_child(board_box)
 	_add_board_summary(board_box)
 
+	if RunManager.is_shop_stage():
+		_build_shop_panel()
+		return
+
 	var start := Button.new()
 	start.text = "전투 시작"
 	start.custom_minimum_size = Vector2(360.0, 64.0)
 	start.add_theme_font_size_override("font_size", 28)
 	start.pressed.connect(_on_battle_pressed)
 	_root.add_child(start)
+
+func _build_shop_panel() -> void:
+	var status := Label.new()
+	status.text = "상점 자금 %d금 · 손패 %d / %d" % [
+		RunManager.get_gold(),
+		RunManager.get_hand().size(),
+		RunState.HAND_MAX,
+	]
+	status.add_theme_font_size_override("font_size", 28)
+	_root.add_child(status)
+
+	if RunManager.get_hand().size() > RunState.HAND_MAX:
+		var hint := Label.new()
+		hint.text = "손패 초과분은 다음 전투 배치에서 보드로 정리하세요."
+		hint.add_theme_font_size_override("font_size", 22)
+		hint.modulate = Color(1.0, 0.82, 0.42)
+		_root.add_child(hint)
+
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 8)
+	_root.add_child(list)
+
+	for id in RunManager.shop_card_ids():
+		var card := CardLibrary.get_card(id)
+		if card == null:
+			continue
+		var button := Button.new()
+		button.text = "%s (%d) — %s" % [card.display_name, card.cost, card.description]
+		button.custom_minimum_size = Vector2(1240.0, 48.0)
+		button.add_theme_font_size_override("font_size", 21)
+		button.disabled = RunManager.get_gold() < card.cost
+		button.pressed.connect(_on_shop_card_pressed.bind(id))
+		list.add_child(button)
+
+	var leave := Button.new()
+	leave.text = "상점 떠나기"
+	leave.custom_minimum_size = Vector2(360.0, 64.0)
+	leave.add_theme_font_size_override("font_size", 28)
+	leave.pressed.connect(_on_shop_leave_pressed)
+	_root.add_child(leave)
 
 func _add_board_summary(parent: VBoxContainer) -> void:
 	var board := RunManager.get_board()
@@ -94,6 +141,26 @@ func _add_board_summary(parent: VBoxContainer) -> void:
 
 func _on_battle_pressed() -> void:
 	GameManager.change_scene(BATTLE_SCENE)
+
+func _on_shop_card_pressed(id: StringName) -> void:
+	RunManager.shop_purchase(id)
+	_render()
+
+func _on_shop_leave_pressed() -> void:
+	RunManager.advance_stage()
+	_render()
+
+func _stage_label(stage: int) -> String:
+	if RunManager.is_shop_stage():
+		return "스테이지 %d — 상점" % stage
+	return _StageCadence.stage_label(stage)
+
+func _stage_note() -> String:
+	if RunManager.is_shop_stage():
+		return "전투 전 군자금으로 카드를 구매합니다."
+	if RunManager.is_boss_stage():
+		return "강적 출현"
+	return "적 군세가 성을 향해 진군합니다."
 
 func _block_label(block_key: String) -> String:
 	var parts := block_key.split(":")
