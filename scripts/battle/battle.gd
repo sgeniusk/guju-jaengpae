@@ -444,7 +444,7 @@ func _build_iso_base() -> void:
 			tile_sprite.position = center
 			tile_sprite.scale = Vector2(TILE_TEXTURE_SCALE, TILE_TEXTURE_SCALE)
 			tile_sprite.z_index = int(center.y)
-			tile_sprite.modulate = Color(1.0, 1.0, 1.0, 0.72)
+			tile_sprite.modulate = Color(1.0, 1.0, 1.0, 0.5)
 			_iso_base_layer.add_child(tile_sprite)
 			var fallback_poly: Polygon2D = null
 			if tile_texture == null:
@@ -671,7 +671,7 @@ func _refresh_board_tiles() -> void:
 			if poly != null:
 				poly.color = Color(0.22, 0.38, 0.22, 0.90) if _phase == Phase.DEPLOY else Color(0.17, 0.27, 0.17, 0.0)
 			if sprite != null:
-				sprite.modulate = Color(1.0, 1.0, 1.0, 0.72) if _phase == Phase.DEPLOY else Color(1.0, 1.0, 1.0, 0.0)
+				sprite.modulate = Color(1.0, 1.0, 1.0, 0.5) if _phase == Phase.DEPLOY else Color(1.0, 1.0, 1.0, 0.0)
 			if area != null:
 				area.input_pickable = _phase == Phase.DEPLOY
 

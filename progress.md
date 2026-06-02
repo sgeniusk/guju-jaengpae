@@ -5,7 +5,7 @@
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-06-02
 **활성 피처 (Active Feature)** — 없음 (v0.5 "구주 비주얼 전장" 핵심 6피처 완료)
-**현재 목표 (Current Objective)** — v0.5 완료 — feat-022/023/024/025/016 done, ./init.sh 684 단언 green. Nine Kings 풍 픽셀 전투화면 + 건물 경제 + 교체형 배경 테마. 멀티 CLI(Claude 스펙·Codex gpt-5.5 medium 구현·agy 애셋·QA). 다음 — feat-015d 상점(건물 획득 wiring)·feat-020 확장·feat-021 칙령. 정본 docs/render-architecture.md·assets/MANIFEST.md.
+**현재 목표 (Current Objective)** — v0.5 완료 — feat-022/023/024/025/016 done, ./init.sh 684 단언 green. Nine Kings 풍 전투화면 + 건물 경제 + 교체형 배경 테마. **마누스 외주 페인터리 풀세트(9세력 T0-T2, 93종) 통합** — 아트 픽셀→페인터리 전환, demon=낙양마궁 매핑. 멀티 CLI(Claude 스펙·Codex 구현·agy/Manus 애셋·QA). 다음 — feat-015d 상점(1차 Codex 중단, 재개 대기)·평원 배경 사용자 미드저니 교체·유닛↔배경 스케일 조정·feat-020/021. 정본 docs/render-architecture.md·assets/MANIFEST.md.
 
 ## 상태 (Status)
 ### 완료 (What's Done)

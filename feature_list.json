@@ -158,8 +158,8 @@
     {
       "id": "feat-015d",
       "name": "상점 이벤트 (캐이던스 4)",
-      "description": "StageCadence.is_shop(4·8·12…) 스테이지에 상점 — 모은 골드로 카드 구매→손패. 손패 3 엄격 해소. feat-019 캐이던스 위.",
-      "dependencies": ["feat-019"],
+      "description": "StageCadence.is_shop(4·8·12…) 스테이지에 상점 — 모은 골드로 카드(유닛+건물) 구매→손패. 건물(둔전·망루) 실획득 경로. 손패 초과는 다음 전투 배치에서 해소. run_map 모드 분기. 스펙 docs/specs/feat-015d.md. (1차 Codex 시도 중단 — 코드 미반영, 재개 대기.)",
+      "dependencies": ["feat-019", "feat-016"],
       "status": "not-started",
       "owner": "Codex",
       "evidence": ""
