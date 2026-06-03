@@ -45,6 +45,25 @@ func test_build_board_army_skips_empty_invalid_and_unknown_blocks() -> void:
 	if army.size() == 1:
 		_assert_unit_at_tile(army[0], &"troop_infantry", 0, 1)
 
+func test_build_board_army_respects_run_board_rows() -> void:
+	if not _require_build_board_army():
+		return
+	var board := {
+		"0:0": &"general_guanyu",
+		"1:3": &"troop_archer",
+		"2:5": &"troop_infantry",
+	}
+	var default_army: Array = cat.call("build_board_army", board, lord)
+	eq(default_army.size(), 1, "기본 3행 변환은 확장 행을 스킵")
+	var four_row_army: Array = cat.call("build_board_army", board, lord, 4)
+	eq(four_row_army.size(), 2, "4행 변환은 row 3까지 포함")
+	if four_row_army.size() == 2:
+		_assert_unit_at_tile(four_row_army[1], &"troop_archer", 1, 3)
+	var six_row_army: Array = cat.call("build_board_army", board, lord, 6)
+	eq(six_row_army.size(), 3, "6행 변환은 row 5까지 포함")
+	if six_row_army.size() == 3:
+		_assert_unit_at_tile(six_row_army[2], &"troop_infantry", 2, 5)
+
 func test_start_run_waits_for_manual_board_placement_before_building_army() -> void:
 	if not _require_build_board_army():
 		return

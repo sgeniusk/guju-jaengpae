@@ -95,9 +95,10 @@ func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData)
 	return unit
 
 # 영속 보드 블록을 전투 시작 위치의 아군 군세로 변환한다.
-func build_board_army(board: Dictionary, lord: LordData) -> Array[BattleUnit]:
+func build_board_army(board: Dictionary, lord: LordData, run_board_rows: int = RunState.BOARD_ROWS_START) -> Array[BattleUnit]:
 	var army: Array[BattleUnit] = []
-	for row in BattleSim.ROW_COUNT:
+	var rows := clampi(run_board_rows, RunState.BOARD_ROWS_START, RunState.BOARD_ROWS_MAX)
+	for row in rows:
 		for col in BattleSim.COL_COUNT:
 			var key := "%d:%d" % [col, row]
 			if not board.has(key):

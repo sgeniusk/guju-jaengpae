@@ -205,9 +205,9 @@
       "name": "땅 확장 (board expansion)",
       "description": "StageCadence.is_expand(5마다) 보스 보상으로 보드 +1랭크. RunState 동적 board_rows(시작3·상한6=18칸) + 전장 깊이 스케일 + 확장 보상 이벤트. feat-019 위.",
       "dependencies": ["feat-019"],
-      "status": "not-started",
+      "status": "done",
       "owner": "Codex",
-      "evidence": ""
+      "evidence": "RunState board_rows 3→6 확장 + BattleSim 6행 static 좌표 + board_rows 기반 타일/스폰/요약/보스 보상 확장. ./init.sh 876 단언 green."
     },
     {
       "id": "feat-021",

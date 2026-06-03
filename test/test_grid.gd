@@ -8,6 +8,10 @@ func test_position_for_tile_matches_spec_constants() -> void:
 	var back_right := BattleSim.position_for_tile(2, 2)
 	almost(back_right.x, 120.0, 0.001, "후열 row 2 x")
 	almost(back_right.y, 450.0, 0.001, "우측 col 2 y")
+	var expanded_front := BattleSim.position_for_tile(1, 5)
+	almost(expanded_front.x, 720.0, 0.001, "확장 row 5 x")
+	almost(expanded_front.y, 300.0, 0.001, "확장 row 5 중앙 y")
+	eq(BattleSim.ROW_COUNT, 6, "BattleSim은 6행 좌표 상한을 안다")
 
 func test_depth_for_row_keeps_legacy_start_x_alias() -> void:
 	almost(BattleSim.depth_for_row(0), BattleSim.ROW_X[0], 0.001, "row 0 호환")

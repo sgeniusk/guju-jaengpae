@@ -434,7 +434,7 @@ func _build_fallback_background() -> void:
 func _build_iso_base() -> void:
 	var tile_texture := _load_texture("res://assets/sprites/iso/tile_grass.png")
 	for col in BattleSim.COL_COUNT:
-		for row in BattleSim.ROW_COUNT:
+		for row in RunManager.get_board_rows():
 			var block_key := _tile_key(col, row)
 			var center := field_to_screen_position(BattleSim.position_for_tile(col, row))
 			var tile_sprite := Sprite2D.new()
@@ -584,7 +584,7 @@ func _refresh_deploy_ui() -> void:
 	if _selected_hand_index >= hand.size():
 		_selected_hand_index = -1
 	if _board_head != null:
-		_board_head.text = "보드 군세 — %d장" % RunManager.get_board().size()
+		_board_head.text = "보드 군세 — %d / %d" % [RunManager.get_board().size(), RunManager.get_board_capacity()]
 	if _gold_label != null:
 		_gold_label.text = "골드 — %d" % RunManager.get_gold()
 	_rebuild_board_summary()
@@ -603,7 +603,7 @@ func _rebuild_board_summary() -> void:
 	_clear_children(_board_box)
 	var board := RunManager.get_board()
 	var any := false
-	for key in RunState.block_keys():
+	for key in RunState.block_keys_for(RunManager.get_board_rows()):
 		if not board.has(key):
 			continue
 		any = true
@@ -1046,7 +1046,7 @@ func _sim_units() -> Array[BattleUnit]:
 
 func _spawn_board_army() -> void:
 	var board := RunManager.get_board()
-	var army := CardLibrary.catalog.build_board_army(board, _lord)
+	var army := CardLibrary.catalog.build_board_army(board, _lord, RunManager.get_board_rows())
 	for unit in army:
 		_sim.add_unit(unit)
 		_spawn_visual(unit)
@@ -1062,7 +1062,7 @@ func _spawn_unit_for_board_key(block_key: String) -> void:
 		return
 	var single := {}
 	single[block_key] = board[block_key]
-	var army := CardLibrary.catalog.build_board_army(single, _lord)
+	var army := CardLibrary.catalog.build_board_army(single, _lord, RunManager.get_board_rows())
 	for unit in army:
 		_sim.add_unit(unit)
 		_spawn_visual(unit)
@@ -1364,6 +1364,7 @@ func _build_outcome_ui(win: bool) -> void:
 		box.add_child(_make_button("새 런", _restart_run))
 		return
 	var candidates := RunManager.reward_candidates(3)
+	_add_expand_reward_notice(box)
 	if candidates.is_empty():
 		var none := Label.new()
 		none.text = "획득 가능한 보상이 없습니다."
@@ -1378,6 +1379,20 @@ func _build_outcome_ui(win: bool) -> void:
 	for id in candidates:
 		var card := CardLibrary.get_card(id)
 		box.add_child(_make_button("%s (%d) — %s" % [card.display_name, card.cost, _card_brief(card)], _pick_reward.bind(id)))
+
+func _add_expand_reward_notice(box: VBoxContainer) -> void:
+	if not RunManager.is_expand_stage():
+		return
+	if RunManager.get_board_rows() >= RunState.BOARD_ROWS_MAX:
+		return
+	var before := RunManager.get_board_rows()
+	if RunManager.expand_board():
+		_hint_label.text = "보드 확장 — %d행" % RunManager.get_board_rows()
+		var got := Label.new()
+		got.text = "보드 확장 — %d→%d행" % [before, RunManager.get_board_rows()]
+		got.add_theme_font_size_override("font_size", 22)
+		got.modulate = Color(0.72, 1.0, 0.60)
+		box.add_child(got)
 
 func _pick_reward(id: StringName) -> void:
 	RunManager.hand_add(id)

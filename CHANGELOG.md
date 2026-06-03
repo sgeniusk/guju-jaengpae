@@ -2,6 +2,19 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-04 — feat-020 땅 확장 (board 3→6행 · Codex · architect THOROUGH APPROVED)
+보스 격파 보상으로 보드를 3행→최대 6행(18칸) 확장. Claude 스펙(BattleSim static 유지 제약) → Codex 구현 → architect 검증.
+- **RunState** — `board_rows`(3..6) 동적, `block_keys()` static→instance(`block_keys_for(rows)` static + 인스턴스 래퍼), 용량/`board_full` 동적, `expand_board()`.
+- **BattleSim static 유지** — `ROW_COUNT` 3→6 const, `ROW_X` 6행 고정 `[360,240,120,480,600,720]`. 실제 사용 행은 RunState.board_rows가 제어(인스턴스화 안 함). 새 행(3~5)은 전방(적 쪽) 배치 — 성 공간(x40~120) 부족으로 후방 증설 불가, 확장=전열 전진(공세) 의도.
+- **호출부 정합** — card_catalog.build_board_army(board_rows 순회), RunManager(expand_board/get_board_rows), battle.gd(타일 board_rows 렌더 + 보스 보상 자동 +1행), board_economy(block_keys 의존 끊고 board.keys() 결정적 정렬 — 확장 행 건물 누락 방지).
+- **검증** — test_run_board(상한·동적 칸수·행밖 제외)·test_board_army·test_grid 확장. `./init.sh` 876 단언 green(795→+81), 결정성·feat-029·촉/위/오 회귀 없음.
+
+## 2026-06-04 — feat-029 위·오 진영 깊이 (trait + 장수 스킬 · Codex · architect APPROVED)
+위(호패)·오(수전) 군주 trait 실효과 + 위·오 장수 4종 고유 스킬. 촉 인덕·5스킬 패턴 확장.
+- **trait** — card_catalog.build_player_unit에서 호패(조조)=아군 기병 공격력 ×1.25, 수전(손권)=궁병·수군 ×1.20(from_card 후 attack 패치, 시그니처 불변).
+- **스킬 4종** — 조조 위압(반경 180px 45피해+약화)·하후돈 발돌(전방 240×130 75피해)·손권 결단(max_hp 최고 적 130피해, int tie-break)·주유 화공(최근접 중심 반경 200px 65피해). skill_system const+COOLDOWNS+cast 등록, general 4종 .tres skill_id/skill_text.
+- **검증** — test_skills/test_factions 확장(경계·수치 substantive). `./init.sh` 795 green. architect — 결정성 보존(tie-break 결정적)·촉 5스킬·인덕 회귀 없음. 커밋 ca6b816.
+
 ## 2026-06-04 — feat-027 마감: 촉 12종 + 주유 강화 (플레이 3진영 완료)
 agy 할당량 리셋 후 잔여 마감. 촉(shu) 12종 + 주유(`wu/general_zhouyu`) 1종 강화 → **촉·위·오 30종 전부 강화 완료**. 마계 등 적 진영은 원본 유지(QA상 대비 충분).
 - **촉 프롬프트** — 위·오와 달리 단일 진영색이 없어(유비 녹/금·조운 은백·장비 흑·제갈량 백) "기존 색 유지 + 채도·대비·림라이트, 단일 리컬러 금지"로. 각 캐릭터 원색 보존하며 강화됨.

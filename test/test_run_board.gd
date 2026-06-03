@@ -11,13 +11,13 @@ func before_each() -> void:
 	lord = cat.get_lord(&"lord_liubei")
 	run = RunState.new()
 
-func test_block_keys_are_nine_unique_3x3_keys() -> void:
-	var block_keys := Callable(RunState, "block_keys")
-	truthy(block_keys.is_valid(), "RunState.block_keys 존재")
-	if not block_keys.is_valid():
+func test_block_keys_are_nine_unique_3x3_keys_by_default() -> void:
+	truthy(run.has_method("block_keys"), "RunState.block_keys 존재")
+	if not run.has_method("block_keys"):
 		return
-	var keys: Array = block_keys.call()
-	eq(keys.size(), 9, "3x3 블록 9개")
+	var keys: Array = run.block_keys()
+	eq(run.board_rows, 3, "기본 보드 행은 3")
+	eq(keys.size(), 9, "기본 3x3 블록 9개")
 	var seen := {}
 	for key in keys:
 		falsy(seen.has(key), "블록 키는 유일")
@@ -27,6 +27,35 @@ func test_block_keys_are_nine_unique_3x3_keys() -> void:
 		if parts.size() == 2:
 			truthy(int(parts[0]) >= 0 and int(parts[0]) <= 2, "col 범위 0..2")
 			truthy(int(parts[1]) >= 0 and int(parts[1]) <= 2, "row 범위 0..2")
+
+func test_expand_board_grows_to_six_rows_and_caps() -> void:
+	truthy(run.has_method("expand_board"), "RunState.expand_board 존재")
+	if not run.has_method("expand_board"):
+		return
+	eq(run.board_rows, 3, "시작 보드 3행")
+	truthy(run.expand_board(), "3→4행 확장 성공")
+	eq(run.board_rows, 4, "4행")
+	truthy(run.expand_board(), "4→5행 확장 성공")
+	eq(run.board_rows, 5, "5행")
+	truthy(run.expand_board(), "5→6행 확장 성공")
+	eq(run.board_rows, 6, "6행")
+	falsy(run.expand_board(), "6행 상한에서는 확장 실패")
+	eq(run.board_rows, 6, "상한 실패 후 행 수 불변")
+
+func test_block_keys_follow_board_rows() -> void:
+	var expected_counts := {
+		3: 9,
+		4: 12,
+		5: 15,
+		6: 18,
+	}
+	for rows in [3, 4, 5, 6]:
+		run.board_rows = rows
+		var keys := run.block_keys()
+		eq(keys.size(), expected_counts[rows], "%d행 키 개수" % rows)
+		truthy(keys.has("0:0"), "%d행은 첫 키 포함" % rows)
+		truthy(keys.has("2:%d" % (rows - 1)), "%d행은 마지막 행 키 포함" % rows)
+		falsy(keys.has("0:%d" % rows), "%d행 밖 키 제외" % rows)
 
 func test_start_run_places_lord_deck_in_hand_and_resets_board_gold() -> void:
 	run.start_run(lord, cat)
@@ -70,6 +99,21 @@ func test_board_full_and_first_free_block_track_capacity() -> void:
 	is_null(run.first_free_block(), "가득 찬 보드는 빈 블록 없음")
 	run.hand_add(&"overflow")
 	falsy(run.place_from_hand(0, "9:9"), "잘못된 블록 키 배치 실패")
+
+func test_board_full_tracks_expanded_capacity() -> void:
+	if not _require_methods(["hand_add", "place_from_hand", "board_full", "first_free_block"]):
+		return
+	run.expand_board()
+	var keys := _block_keys()
+	eq(keys.size(), 12, "4행 보드는 12칸")
+	for idx in 11:
+		run.hand_add(StringName("card_%d" % idx))
+		truthy(run.place_from_hand(0, keys[idx]), "확장 보드 11칸 채우기 %d" % idx)
+	falsy(run.board_full(), "12칸 중 11칸은 가득 아님")
+	eq(run.first_free_block(), keys[11], "마지막 1칸이 빈 블록")
+	run.hand_add(&"last")
+	truthy(run.place_from_hand(0, keys[11]), "12번째 칸 배치")
+	truthy(run.board_full(), "4행 12칸을 채우면 가득 참")
 
 func test_discard_from_hand_removes_card_and_adds_well_gold() -> void:
 	if not _require_methods(["hand_add", "discard_from_hand"]):
@@ -141,12 +185,28 @@ func test_run_manager_delegates_hand_board_and_gold_operations() -> void:
 	eq(RunManager.get_gold(), 5, "RunManager.spend_gold 차감")
 	falsy(RunManager.spend_gold(6), "RunManager.spend_gold 부족 실패")
 	RunManager.state.hand_add(&"general_zhaoyun")
-	var block_key: String = RunState.block_keys()[0]
+	var block_key: String = RunManager.state.block_keys()[0]
 	truthy(RunManager.place_from_hand(0, block_key), "RunManager.place_from_hand 위임")
 	eq(RunManager.get_deck(), [&"general_zhaoyun"], "손패 배치 후 보드 브리지 반영")
 	RunManager.state.hand_add(&"general_huangzhong")
 	truthy(RunManager.discard_from_hand(0), "RunManager.discard_from_hand 위임")
 	eq(RunManager.get_gold(), 15, "우물 버리기 골드 반영")
+
+func test_run_manager_delegates_board_expansion() -> void:
+	RunManager.reset_run()
+	for method in ["get_board_rows", "get_board_capacity", "expand_board"]:
+		truthy(RunManager.has_method(method), "RunManager.%s 존재" % method)
+	if not RunManager.has_method("get_board_rows") or not RunManager.has_method("get_board_capacity") or not RunManager.has_method("expand_board"):
+		return
+	eq(RunManager.get_board_rows(), 3, "기본 보드 행 위임")
+	eq(RunManager.get_board_capacity(), 9, "기본 보드 용량 위임")
+	truthy(RunManager.expand_board(), "RunManager 확장 3→4")
+	eq(RunManager.get_board_rows(), 4, "확장 후 4행")
+	eq(RunManager.get_board_capacity(), 12, "확장 후 12칸")
+	truthy(RunManager.expand_board(), "RunManager 확장 4→5")
+	truthy(RunManager.expand_board(), "RunManager 확장 5→6")
+	falsy(RunManager.expand_board(), "RunManager 6행 상한")
+	eq(RunManager.get_board_rows(), 6, "상한 이후 6행 유지")
 
 func test_run_manager_starting_hand_place_and_well_flow() -> void:
 	RunManager.reset_run()
@@ -193,7 +253,7 @@ func _require_methods(methods: Array[String]) -> bool:
 	return ok
 
 func _block_keys() -> Array:
-	var block_keys := Callable(RunState, "block_keys")
+	var block_keys := Callable(run, "block_keys")
 	truthy(block_keys.is_valid(), "RunState.block_keys 존재")
 	if not block_keys.is_valid():
 		return []

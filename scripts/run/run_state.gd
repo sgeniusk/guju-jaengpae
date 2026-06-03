@@ -3,30 +3,41 @@ class_name RunState
 extends RefCounted
 
 const HAND_MAX := 3
-const BOARD_BLOCKS := 9
+const BOARD_COLS := 3
+const BOARD_ROWS_START := 3
+const BOARD_ROWS_MAX := 6
 const WELL_GOLD := 10
 
 var lord_id: StringName = &""
 var board: Dictionary = {}
 var hand: Array[StringName] = []
 var gold: int = 0
+var board_rows: int = BOARD_ROWS_START
 var stage_index: int = 1
 var wave_index: int = 0
 var started: bool = false
 var command_points: int = 12
 
-static func block_keys() -> Array[String]:
+static func block_keys_for(rows: int) -> Array[String]:
 	var keys: Array[String] = []
-	for row in 3:
-		for col in 3:
+	var clamped_rows := clampi(rows, BOARD_ROWS_START, BOARD_ROWS_MAX)
+	for row in clamped_rows:
+		for col in BOARD_COLS:
 			keys.append("%d:%d" % [col, row])
 	return keys
+
+func block_keys() -> Array[String]:
+	return block_keys_for(board_rows)
+
+func board_capacity() -> int:
+	return board_rows * BOARD_COLS
 
 func start_run(lord: LordData, catalog: CardCatalog) -> void:
 	lord_id = lord.id if lord != null else &""
 	board.clear()
 	hand.clear()
 	gold = 0
+	board_rows = BOARD_ROWS_START
 	stage_index = 1
 	var starting_cards := catalog.get_lord_deck(lord)
 	for card_id in starting_cards:
@@ -39,7 +50,7 @@ func is_block_free(key: String) -> bool:
 	return block_keys().has(key) and not board.has(key)
 
 func board_full() -> bool:
-	return board.size() >= BOARD_BLOCKS
+	return board.size() >= board_capacity()
 
 func first_free_block():
 	for key in block_keys():
@@ -97,6 +108,12 @@ func has_card(id: StringName) -> bool:
 
 func add_card(id: StringName) -> void:
 	hand_add(id)
+
+func expand_board() -> bool:
+	if board_rows >= BOARD_ROWS_MAX:
+		return false
+	board_rows += 1
+	return true
 
 func advance_stage() -> void:
 	stage_index += 1

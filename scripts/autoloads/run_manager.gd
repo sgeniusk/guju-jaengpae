@@ -53,6 +53,15 @@ func spend_gold(n: int) -> bool:
 func board_full() -> bool:
 	return state.board_full()
 
+func expand_board() -> bool:
+	return state.expand_board()
+
+func get_board_rows() -> int:
+	return state.board_rows
+
+func get_board_capacity() -> int:
+	return state.board_capacity()
+
 func get_command_points() -> int:
 	return state.command_points if state != null else 12
 

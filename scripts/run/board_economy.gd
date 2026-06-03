@@ -6,7 +6,16 @@ static func buildings_on_board(board: Dictionary, catalog: CardCatalog) -> Array
 	var buildings := []
 	if catalog == null:
 		return buildings
-	for key in RunState.block_keys():
+	var keys := board.keys()
+	keys.sort_custom(func(a, b) -> bool:
+		var pa := _parse_key(String(a))
+		var pb := _parse_key(String(b))
+		if pa.y == pb.y:
+			return pa.x < pb.x
+		return pa.y < pb.y
+	)
+	for key_variant in keys:
+		var key := String(key_variant)
 		if not board.has(key):
 			continue
 		var parsed := _parse_key(key)

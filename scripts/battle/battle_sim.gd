@@ -5,14 +5,15 @@ extends RefCounted
 enum Result { ONGOING, PLAYER_WIN, PLAYER_LOSE }
 
 const COL_COUNT := 3
-const ROW_COUNT := 3
+const ROW_COUNT := 6
 const LANE_COUNT := COL_COUNT
 const FIELD_W := 1000.0
 const FIELD_H := 600.0
 const LANE_LENGTH := FIELD_W
 const CASTLE_X := 40.0
 const CASTLE_HP := 1200
-const ROW_X := [360.0, 240.0, 120.0]
+# row 0~2 = 기본 진형(성 앞 360~120), row 3~5 = 확장 행(480~720, 적 쪽 전방). 성 공간(x40~120)이 좁아 후방 증설은 타일이 겹쳐 불가 → 확장 = 전열 전진(공세) 의도(feat-020).
+const ROW_X := [360.0, 240.0, 120.0, 480.0, 600.0, 720.0]
 const COL_Y := [150.0, 300.0, 450.0]
 const MELEE_REACH := 36.0
 const RANGED_REACH := 280.0

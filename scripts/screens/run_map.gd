@@ -50,7 +50,7 @@ func _build_stage_panel() -> void:
 	var summary := Label.new()
 	summary.text = "보드 %d / %d · 손패 %d / %d · 골드 %d · 난이도 x%.2f" % [
 		RunManager.get_board().size(),
-		RunState.BOARD_BLOCKS,
+		RunManager.get_board_capacity(),
 		RunManager.get_hand().size(),
 		RunState.HAND_MAX,
 		RunManager.get_gold(),
@@ -224,7 +224,7 @@ func _add_board_summary(parent: VBoxContainer) -> void:
 		empty.add_theme_font_size_override("font_size", 22)
 		parent.add_child(empty)
 		return
-	for key in RunState.block_keys():
+	for key in RunState.block_keys_for(RunManager.get_board_rows()):
 		if not board.has(key):
 			continue
 		var card := CardLibrary.get_card(StringName(board[key]))
