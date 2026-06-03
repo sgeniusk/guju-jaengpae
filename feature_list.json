@@ -270,7 +270,7 @@
       "dependencies": ["feat-025", "feat-026"],
       "status": "done",
       "owner": "agy→Claude",
-      "evidence": "위·오 17종 agy image-to-image 강화(모양 유지·채도·대비·진영톤·림라이트, 리컬러 아님). 인게임 QA 약점 식별→agy 보정→PIL 키아웃→배치. ./init.sh 723 green(텍스처 재import·회귀 없음), 위·오 before/after 스크린샷 확인. 주유(general_zhouyu) 1종 agy 할당량 초과 미완(리셋 후 보정). 촉/마계 원본 유지. 후속 — 렌더 스케일업(Codex). CHANGELOG 2026-06-03."
+      "evidence": "촉·위·오 30종 agy image-to-image 강화(모양 유지·채도·대비·진영톤·림라이트, 리컬러 아님). 인게임 QA 약점 식별→agy 보정→PIL 키아웃→배치. 위·오 17종(06-03)+촉 12종·주유 1종(06-04, 할당량 리셋 후 마감). 렌더 스케일업 동반(battle.gd UNIT_W 108→140). ./init.sh 723 green·회귀 없음. before/after 스크린샷 확인. 마계 등 적 진영 원본 유지. 커밋 e858d95·c526f78. CHANGELOG 2026-06-03·04."
     },
     {
       "id": "feat-028",
