@@ -33,7 +33,8 @@
 - [x] **v0.5 feat-016 건물 경제** (Codex) — BuildingCardData + 둔전(골드/초)·망루(공격 오라) + 순수 BoardEconomy(BattleSim 불변) + 건물 정적 렌더·골드 적립. test_building_economy. 684 green(카드 12). **v0.5 핵심 완료.**
 - [x] **feat-015d 상점 이벤트** (Codex) — StageCadence.is_shop 스테이지에서 run_map 상점 모드(전투 대신), CardCatalog.purchasable_ids + RunManager.shop_purchase/is_shop_stage, 골드로 유닛·건물 구매→손패. 건물 둔전·망루 실획득 경로. test_shop. ./init.sh 701 green. 상점 화면 캡처 검증.
 - 애셋 — agy 생성+PIL 크로마키로 평원배경·성채·보스(마왕동탁)·촉5병종·촉장수5·마계3병종·건물2·아이소타일 배치. QA 스크린샷 docs/reports/v0.5-screens/.
-- [x] **feat-027 agy 그래픽 보정** (Claude QA→agy→Claude) — 위·오 17종 image-to-image 강화(모양 유지·채도·대비·진영톤·림라이트). 인게임 QA 약점 식별→agy 보정→PIL 키아웃→assets 배치. ./init.sh 723 green(회귀 없음). 주유 1종 할당량 미완·촉/마계 원본 유지. CHANGELOG 2026-06-03.
+- [x] **feat-027 agy 그래픽 보정** (Claude QA→agy→Claude) — 위·오 17종 image-to-image 강화(모양 유지·채도·대비·진영톤·림라이트). 인게임 QA 약점 식별→agy 보정→PIL 키아웃→assets 배치. ./init.sh 723 green(회귀 없음). 주유 1종 할당량 미완·촉/마계 원본 유지. 커밋 e858d95. CHANGELOG 2026-06-03.
+- [x] **렌더 스케일업** (Claude 직접) — battle.gd 뷰 상수 상향(UNIT_W 108→140·GENERAL 124→162·BOSS 182→204·성·건물), 강화 스프라이트 가독성·전장 밀도. BattleSim 불변. ./init.sh 723 green. 커밋 6cdffaf.
 ### 진행 중 (What's In Progress)
 - [ ] 없음
 ### 다음 (What's Next)
@@ -82,4 +83,4 @@
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh` 723단언 green. feat-027 done(위·오 17종 agy 강화 배치, 촉/마계 원본 유지). **잔여** — ① 주유(`wu/general_zhouyu`) agy 할당량 리셋(~4시간+) 후 동일 프롬프트로 강화 ② 렌더 스케일업(`battle.gd UNIT_W 108→~140·GENERAL_W↑`)은 Codex 위임 — 강화 스프라이트가 작은 스케일에서 빛나려면 필요. **⚠️ agy 함정** — `agy --add-dir <repo> --dangerously-skip-permissions` 호출 시 agy가 `feature_list.json`·`progress.md`를 자율 편집함(이번 발생, 원복함). 다음 배치는 프롬프트에 "이미지 생성만, repo 파일 수정 금지" 명시. 다음 후보 — feat-028 애니메이션·feat-029 위·오 trait/스킬·feat-020/021.
+`./init.sh` 723단언 green. **이번 세션 done** — feat-027 위·오 17종 agy 강화(커밋 e858d95) + 렌더 스케일업(`battle.gd UNIT_W 108→140`·GENERAL 124→162·BOSS↑·성·건물, 커밋 6cdffaf). **잔여(agy 할당량 `429`, ~3시간 대기)** — ① 주유(`wu/general_zhouyu`) 1종 강화하면 위·오 18종 완성 ② 촉 12종 강화(선택, 옥록 기조, QA상 우선순위 낮음). **⚠️ agy 함정** — `--add-dir <repo> --dangerously-skip-permissions` 시 agy가 repo 파일 자율편집(이번 발생·원복). **방지 검증됨** — `--add-dir`를 입력 이미지 디렉토리로 좁히고 프롬프트에 "이미지만 생성, repo 파일 수정 금지" 명시. 다음 후보 — feat-028 애니메이션·feat-029 위·오 trait/스킬·feat-020/021. 푸시는 사용자 확인 후(미푸시).

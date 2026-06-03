@@ -6,19 +6,22 @@
 - **v0.5 "구주 비주얼 전장" 완료** — 아이소 렌더·HUD·데미지·배경테마·건물경제. `./init.sh` **723 단언 green**.
 - **마누스 페인터리 풀세트** — 9세력 T0-T2, 93종. 아트 픽셀→페인터리. 발주서 `docs/asset-production-brief.md`.
 - **상점(015d)·3진영(촉/위/오, 026)** 플레이. 군주 선택(lord_select=main_scene), faction-aware 렌더.
-- **feat-027 agy 그래픽 보정 done (이번 세션)** — 위·오 **17종**을 agy image-to-image로 강화(모양 유지·채도·대비·진영톤·림라이트, 리컬러 아님). 인게임 QA 약점 식별→agy 보정→PIL 키아웃→배치. ./init.sh 723 green·회귀 없음. CHANGELOG 2026-06-03.
-- **GitHub** — `sgeniusk/guju-jaengpae`(public), main 추적. **feat-027 강화 17종 + 상태파일 미커밋**(working tree M 상태).
+- **feat-027 agy 그래픽 보정 done (이번 세션)** — 위·오 **17종** agy 강화(모양 유지·채도·대비·진영톤·림라이트). 인게임 QA 약점 식별→agy 보정→PIL 키아웃→배치.
+- **렌더 스케일업 done (이번 세션)** — `battle.gd` 뷰 상수 상향(UNIT_W 108→140·GENERAL 124→162·BOSS 182→204·성·건물), 한산함 해소·유닛 존재감↑. BattleSim 불변. `./init.sh` 723 green·회귀 없음.
+- **GitHub** — `sgeniusk/guju-jaengpae`(public), main 추적. **커밋됨** — e858d95(위·오 강화)·6cdffaf(렌더 스케일). 푸시는 사용자 확인 전(미푸시).
 
 ## 사용자 결정
 - 마누스 아트는 현 상태 유지, **부족분만 agy 보정**(feat-027에서 위·오 색·대비 강화 실행).
 - 부족분 보정·애니메이션화는 agy 배정.
 
-## feat-027 잔여 (다음 세션 우선)
-1. **주유 강화** — `wu/general_zhouyu` 1종이 agy 할당량 초과로 미완. 리셋(~4시간+) 후 나머지와 동일 프롬프트(오=주홍+청동·warm 림)로 강화→키잉→배치. 패턴은 CHANGELOG 2026-06-03·메모리 `agy-image-pipeline` 참조.
-2. **렌더 스케일업 (Codex 위임)** — 강화 스프라이트가 작은 스케일에서 빛나려면 `battle.gd UNIT_W 108→~140·GENERAL_W 124→~160` + 유닛 밀도. 유닛은 modulate WHITE라 색 안 죽임 — 작아서 한산한 게 핵심 약점. 편집장 스펙→Codex.
+## 잔여 (agy 할당량 대기 — ~3시간)
+agy 이미지 모델이 `429 RESOURCE_EXHAUSTED`(이번 세션 소진, ~3시간 후 리셋). 할당량 회복 후:
+1. **주유 강화** — `wu/general_zhouyu` 1종(위·오 중 유일 미강화). 오=주홍+청동·warm 림 프롬프트로 강화→키잉(`/tmp/agy_keyout.py`, h=256)→`assets/sprites/units/wu/general_zhouyu.png` 배치. 그러면 위·오 18종 완전 강화.
+2. **촉 진영 강화 (선택)** — 촉 12종(infantry·archer·cavalry·crossbow·navy·general 7)을 같은 방식으로. 촉=옥록 기조. QA상 촉은 방향 OK라 우선순위 낮음.
+패턴 — `/tmp/agy_enhance_batch.sh` 구조(진영톤 변수+agy 순차+경로 grep+키잉). **렌더 스케일업은 done**(커밋 6cdffaf).
 
 ## ⚠️ agy 자율편집 함정 (이번 세션 발견)
-`agy -p '...' --add-dir <repo> --dangerously-skip-permissions` 호출 시 agy가 이미지 생성만 하지 않고 **repo 파일(`feature_list.json`·`progress.md`)을 에이전트로서 자율 편집**한다(이번에 evidence·진행중 줄을 임의로 씀, 원복함). cache/ 부산물도 생김(.gitignore 추가됨). 다음 배치는 프롬프트에 "generate the image only, do NOT modify any repo files" 명시하거나 --add-dir 범위를 입력 이미지로 좁힌다.
+`agy -p '...' --add-dir <repo> --dangerously-skip-permissions` 호출 시 agy가 이미지 생성만 하지 않고 **repo 파일(`feature_list.json`·`progress.md`)을 에이전트로서 자율 편집**한다(이번에 evidence·진행중 줄을 임의로 씀, 원복함). cache/ 부산물도 생김(.gitignore 추가됨). 다음 배치는 프롬프트에 "generate the image only, do NOT modify any repo files" 명시하거나 --add-dir 범위를 입력 이미지로 좁힌다. **검증됨** — 주유 재시도 시 `--add-dir <repo>/assets/sprites/units`로 좁히고 프롬프트 명시 → agy가 "no other files were modified" 보고(방지 성공).
 
 ## 다음 후보 (feat-027 잔여 후)
 - feat-028 유닛 애니메이션 (agy 스프라이트 시트→Godot AnimatedSprite2D)
