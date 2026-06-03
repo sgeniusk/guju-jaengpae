@@ -2,6 +2,15 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-03 — feat-027 agy 그래픽 보정 (위·오 진영 강화 · Claude QA→agy→Claude)
+마누스 페인터리 풀세트 중 **위·오 진영 17종**을 agy image-to-image로 강화 — 포즈·실루엣·장비·화풍을 유지하고 채도·대비·진영톤·림라이트만 보강(리컬러 아님). "부족분만 보정" 결정의 실행.
+- **약점 식별** — 인게임 QA 4장(촉·위·오·보스) + 진영 콘택트시트. 결론 — 마누스 원본 자체는 양호. 인게임에서 약해 보이는 **주원인은 렌더 스케일**(유닛은 `modulate=WHITE`로 색 안 죽임, `_unit_size`로 축소). agy로 안전하게 얻는 이득은 진영 색·대비 일관성.
+- **보정** — `ImagePaths`로 원본 + "강철청(위)/주홍(오)·림라이트 강화, 순마젠타 배경, 모양 유지" 프롬프트. 위=강철청+금·cyan 림, 오=주홍+청동·warm 림. agy 출력(마젠타 PNG) → PIL 키아웃→autocrop→다운스케일(`/tmp/agy_keyout.py`) → `assets/sprites/units/{wei,wu}/` 배치.
+- **물량** — 위 9(infantry·archer·cavalry·crossbow·general 5) + 오 8(infantry·archer·cavalry·navy·general 4). **주유(general_zhouyu) 1종은 agy 할당량 초과로 미완**(리셋 후 보정). 촉·마계 등은 원본 유지.
+- **검증** — `./init.sh` 723 단언 green(텍스처 재import·회귀 없음). 위·오 인게임 before/after 스크린샷 — 진영색 분리·채도 개선 확인(작은 스케일이라 체감은 온건).
+- **후속(Codex)** — 강화가 빛나려면 렌더 스케일업 동반 권장 — `battle.gd UNIT_W 108→~140`·`GENERAL_W 124→~160` + 유닛 밀도. 작은 스케일에선 1px 림라이트 체감이 제한적.
+- **파이프라인 함정** — godot용 `export HOME=.godot/home`과 PIL python을 한 셸에서 섞으면 `ModuleNotFoundError: PIL`(user-site 의존). 키잉은 원 HOME, godot만 서브셸 격리.
+
 ## 2026-06-02 — 방향 결정: 마누스 아트 유지 + agy 보정/애니메이션 (v0.6 backlog)
 - **결정** — 마누스 페인터리 풀세트를 현 상태로 두고 부족분만 후속 보정. 전체 아트 방향 재변경 안 함.
 - **agy 역량 조사** — `generate_image`로 image-to-image 그래픽 수정 가능(`ImagePaths` 최대 3장 + 프롬프트, 리컬러·인페인트·보정·배경제거), 멀티프레임 **스프라이트 시트** 생성 가능(GIF/MP4 **영상은 불가**). → 그래픽 보정·애니메이션화를 agy에 배정.

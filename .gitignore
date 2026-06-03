@@ -21,3 +21,4 @@ out/
 # 에이전트 도구 로컬 상태
 .omc/
 .claude/settings.local.json
+cache/

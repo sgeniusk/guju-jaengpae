@@ -3,8 +3,8 @@
 이 파일은 재시작 상태용이다. 전체 이력이 아니다. 오래된 증거는 CHANGELOG·reports·docs로 옮긴다. (≤120줄)
 
 ## 현재 상태 (Current State)
-**마지막 갱신 (Last Updated)** — 2026-06-02
-**활성 피처 (Active Feature)** — 없음 (v0.5 "구주 비주얼 전장" 핵심 6피처 완료)
+**마지막 갱신 (Last Updated)** — 2026-06-03
+**활성 피처 (Active Feature)** — 없음 (feat-027 agy 그래픽 보정 done — 위·오 17종 강화)
 **현재 목표 (Current Objective)** — v0.5 완료 — feat-022/023/024/025/016 done, ./init.sh 684 단언 green. Nine Kings 풍 전투화면 + 건물 경제 + 교체형 배경 테마. **마누스 외주 페인터리 풀세트(9세력 T0-T2, 93종) 통합** — 아트 픽셀→페인터리 전환, demon=낙양마궁 매핑. 멀티 CLI(Claude 스펙·Codex 구현·agy/Manus 애셋·QA). **feat-015d 상점·위·오 진영 활성화·폴리시 done**(723 green). 촉/위/오 3진영 플레이(faction-aware 렌더). GitHub sgeniusk/guju-jaengpae 푸시됨. **결정 — 마누스 아트 현 상태 유지, 부족분만 agy 보정**(agy 역량 확인 — image-to-image 수정 가능·스프라이트 시트 가능·영상 불가). ▶ **v0.6 backlog** — feat-027 agy 그래픽 보정·feat-028 유닛 애니메이션(agy 시트→AnimatedSprite2D)·feat-029 위·오 trait/스킬·평원 배경 교체(사용자 미드저니)·feat-020 확장·feat-021 칙령. 다음 세션 시작 프롬프트·상세는 session-handoff.md. 정본 docs/render-architecture.md·assets/MANIFEST.md.
 
 ## 상태 (Status)
@@ -33,6 +33,7 @@
 - [x] **v0.5 feat-016 건물 경제** (Codex) — BuildingCardData + 둔전(골드/초)·망루(공격 오라) + 순수 BoardEconomy(BattleSim 불변) + 건물 정적 렌더·골드 적립. test_building_economy. 684 green(카드 12). **v0.5 핵심 완료.**
 - [x] **feat-015d 상점 이벤트** (Codex) — StageCadence.is_shop 스테이지에서 run_map 상점 모드(전투 대신), CardCatalog.purchasable_ids + RunManager.shop_purchase/is_shop_stage, 골드로 유닛·건물 구매→손패. 건물 둔전·망루 실획득 경로. test_shop. ./init.sh 701 green. 상점 화면 캡처 검증.
 - 애셋 — agy 생성+PIL 크로마키로 평원배경·성채·보스(마왕동탁)·촉5병종·촉장수5·마계3병종·건물2·아이소타일 배치. QA 스크린샷 docs/reports/v0.5-screens/.
+- [x] **feat-027 agy 그래픽 보정** (Claude QA→agy→Claude) — 위·오 17종 image-to-image 강화(모양 유지·채도·대비·진영톤·림라이트). 인게임 QA 약점 식별→agy 보정→PIL 키아웃→assets 배치. ./init.sh 723 green(회귀 없음). 주유 1종 할당량 미완·촉/마계 원본 유지. CHANGELOG 2026-06-03.
 ### 진행 중 (What's In Progress)
 - [ ] 없음
 ### 다음 (What's Next)
@@ -54,9 +55,8 @@
 - 전투 로직/표현 분리, 적은 카드 아님, trait_id, 오픈필드 이후 승=모든 파도 적전멸/패=아군 전멸 — 상세 CHANGELOG.
 
 ## 이번 세션 수정 파일 (Files Modified)
-- feat-019 — scripts/run/stage_cadence.gd, scripts/run/run_state.gd, scripts/autoloads/run_manager.gd, scripts/battle/wave_factory.gd, scripts/screens/run_map.gd, scripts/battle/battle.gd, scripts/run/run_map.gd 삭제
-- 테스트 — test/test_stage_cadence.gd, test/test_run_map.gd, test/test_map_nodes.gd 삭제
-- 상태 — feature_list.json·progress.md
+- feat-027 — assets/sprites/units/{wei,wu}/*.png 17종(agy image-to-image 강화 배치). 코드 불변.
+- 상태 — feature_list.json·progress.md·CHANGELOG.md
 
 ## 검증 증거
 - [x] `./init.sh` (2026-05-30, feat-013) → 카드검증(10·1) / sim default_waves 승리 28.7s·무배치 패배 0.1s / reward / run_map·battle 부팅 / 단위 12파일 **356 단언** 통과. 종료 0.
@@ -67,6 +67,7 @@
 - [x] `./init.sh` (2026-05-31, feat-015b) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward owned 7장·후보 3장 / run_map·battle 부팅 / 단위 17파일 **619 단언** 통과. 종료 0.
 - [x] `./init.sh` (2026-05-31, feat-015c) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward 시작 손패 6장·후보 4장·획득 후 owned 7장 / run_map·battle 부팅 / 단위 17파일 **605 단언** 통과. 종료 0.
 - [x] `./init.sh` (2026-06-01, feat-019) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward 시작 손패 6장·후보 4장·획득 후 owned 7장 / run_map·battle 부팅 / 단위 17파일 **618 단언** 통과. 종료 0.
+- [x] `./init.sh` (2026-06-03, feat-027) → 강화본 17종 배치 후 **723 단언** green, 텍스처 재import·회귀 없음. 위·오 before/after 인게임 스크린샷 확인. 종료 0.
 - [x] feat-013 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙) 미수정.
 - [x] feat-014 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙) 미수정.
 - [x] feat-017 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙, WaveFactory) 미수정.
@@ -81,4 +82,4 @@
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh`로 feat-019 완료 상태(618단언) 확인. RunState는 `stage_index` 1부터 시작해 승리 보상 후 `advance_stage()`로 선형 증가한다. `StageCadence`는 상점4·보스5·확장5·난이도 배율 예측자만 제공하고, 상점·확장 화면 흐름에는 아직 연결하지 않는다. `RunMap` 분기맵은 삭제됐다. 다음 큰 덩어리는 feat-015d 상점 이벤트이며, 단위 테스트는 `res://test/runner.gd`가 `test/test_*.gd` 수집.
+`./init.sh` 723단언 green. feat-027 done(위·오 17종 agy 강화 배치, 촉/마계 원본 유지). **잔여** — ① 주유(`wu/general_zhouyu`) agy 할당량 리셋(~4시간+) 후 동일 프롬프트로 강화 ② 렌더 스케일업(`battle.gd UNIT_W 108→~140·GENERAL_W↑`)은 Codex 위임 — 강화 스프라이트가 작은 스케일에서 빛나려면 필요. **⚠️ agy 함정** — `agy --add-dir <repo> --dangerously-skip-permissions` 호출 시 agy가 `feature_list.json`·`progress.md`를 자율 편집함(이번 발생, 원복함). 다음 배치는 프롬프트에 "이미지 생성만, repo 파일 수정 금지" 명시. 다음 후보 — feat-028 애니메이션·feat-029 위·오 trait/스킬·feat-020/021.

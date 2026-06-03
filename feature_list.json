@@ -268,9 +268,9 @@
       "name": "agy 그래픽 보정 패스",
       "description": "마누스 페인터리 풀세트의 약한 스프라이트를 agy image-to-image로 보정 — 전체 모양은 유지, 부족분만. agy generate_image(ImagePaths=원본 절대경로 최대 3장 + 수정 프롬프트)로 리컬러·인페인트·방향/품질/일관성 터치업·배경제거. Claude가 수거→PIL 다운스케일→매니페스트 경로 배치. 대상 선별은 인게임 스크린샷으로 약점 식별 후. 마누스 판 유지 결정의 후속.",
       "dependencies": ["feat-025", "feat-026"],
-      "status": "not-started",
+      "status": "done",
       "owner": "agy→Claude",
-      "evidence": ""
+      "evidence": "위·오 17종 agy image-to-image 강화(모양 유지·채도·대비·진영톤·림라이트, 리컬러 아님). 인게임 QA 약점 식별→agy 보정→PIL 키아웃→배치. ./init.sh 723 green(텍스처 재import·회귀 없음), 위·오 before/after 스크린샷 확인. 주유(general_zhouyu) 1종 agy 할당량 초과 미완(리셋 후 보정). 촉/마계 원본 유지. 후속 — 렌더 스케일업(Codex). CHANGELOG 2026-06-03."
     },
     {
       "id": "feat-028",
