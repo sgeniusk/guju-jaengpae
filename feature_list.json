@@ -286,9 +286,9 @@
       "name": "위·오 진영 깊이 (trait 효과 + 장수 스킬)",
       "description": "feat-026(1차 컷) 후속 — 위(호패)·오(수전) trait를 실제 전투 효과로 구현(인덕 패턴 참고, card_catalog 빌드/경제 수정자) + 위·오 장수 4종(조조·하후돈·손권·주유)에 고유 스킬 부여(SkillSystem 확장). 위=물량/기병·법치, 오=수전/궁병 결. v0.6 진영 데이터화. 카드 밸런스는 편집장 설계.",
       "dependencies": ["feat-026"],
-      "status": "not-started",
+      "status": "done",
       "owner": "Claude(설계)→Codex",
-      "evidence": ""
+      "evidence": "호패 기병 atk+25%, 수전 궁병/수군 atk+20% build_player_unit 적용 + 조조/하후돈/손권/주유 4스킬(skill_wei_oppress/charge, skill_wu_decree/firewall)과 카드 skill_text 배선. test_skills/test_factions 확장. ./init.sh 795 단언 green."
     }
   ]
 }

@@ -79,7 +79,7 @@ func get_lord_deck(lord: LordData) -> Array[StringName]:
 		deck.append(StringName(t))
 	return deck
 
-# 군주 특성을 반영해 아군 유닛을 생성한다. (인덕 = 병종 시작 체력 +15%)
+# 군주 특성을 반영해 아군 유닛을 생성한다.
 func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData) -> BattleUnit:
 	var card := get_card(card_id)
 	if card == null or not (card is UnitCardData):
@@ -87,7 +87,12 @@ func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData)
 	var hp_mult := 1.0
 	if lord != null and lord.trait_id == &"trait_rende" and card.card_type == "troop":
 		hp_mult = 1.15
-	return BattleUnit.from_card(card, BattleUnit.Team.PLAYER, lane, x, hp_mult)
+	var unit := BattleUnit.from_card(card, BattleUnit.Team.PLAYER, lane, x, hp_mult)
+	if lord != null and lord.trait_id == &"trait_hopae" and card.troop_type == "cavalry":
+		unit.attack = int(round(unit.attack * 1.25))
+	if lord != null and lord.trait_id == &"trait_suseon" and (card.troop_type == "archer" or card.troop_type == "navy"):
+		unit.attack = int(round(unit.attack * 1.20))
+	return unit
 
 # 영속 보드 블록을 전투 시작 위치의 아군 군세로 변환한다.
 func build_board_army(board: Dictionary, lord: LordData) -> Array[BattleUnit]:

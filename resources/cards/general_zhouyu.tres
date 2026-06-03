@@ -19,5 +19,5 @@ attack = 46
 attack_interval = 1.1
 attack_range = "ranged"
 move_speed = 40.0
-skill_id = &""
-skill_text = ""
+skill_id = &"skill_wu_firewall"
+skill_text = "화공 — 적진에 불을 놓아 광역 피해."

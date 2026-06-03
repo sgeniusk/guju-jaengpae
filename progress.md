@@ -3,9 +3,9 @@
 이 파일은 재시작 상태용이다. 전체 이력이 아니다. 오래된 증거는 CHANGELOG·reports·docs로 옮긴다. (≤120줄)
 
 ## 현재 상태 (Current State)
-**마지막 갱신 (Last Updated)** — 2026-06-03
-**활성 피처 (Active Feature)** — 없음 (feat-027 agy 그래픽 보정 done — 위·오 17종 강화)
-**현재 목표 (Current Objective)** — v0.5 완료 — feat-022/023/024/025/016 done, ./init.sh 684 단언 green. Nine Kings 풍 전투화면 + 건물 경제 + 교체형 배경 테마. **마누스 외주 페인터리 풀세트(9세력 T0-T2, 93종) 통합** — 아트 픽셀→페인터리 전환, demon=낙양마궁 매핑. 멀티 CLI(Claude 스펙·Codex 구현·agy/Manus 애셋·QA). **feat-015d 상점·위·오 진영 활성화·폴리시 done**(723 green). 촉/위/오 3진영 플레이(faction-aware 렌더). GitHub sgeniusk/guju-jaengpae 푸시됨. **결정 — 마누스 아트 현 상태 유지, 부족분만 agy 보정**(agy 역량 확인 — image-to-image 수정 가능·스프라이트 시트 가능·영상 불가). ▶ **v0.6 backlog** — feat-027 agy 그래픽 보정·feat-028 유닛 애니메이션(agy 시트→AnimatedSprite2D)·feat-029 위·오 trait/스킬·평원 배경 교체(사용자 미드저니)·feat-020 확장·feat-021 칙령. 다음 세션 시작 프롬프트·상세는 session-handoff.md. 정본 docs/render-architecture.md·assets/MANIFEST.md.
+**마지막 갱신 (Last Updated)** — 2026-06-04
+**활성 피처 (Active Feature)** — 없음 (feat-029 위·오 trait/스킬 done)
+**현재 목표 (Current Objective)** — v0.5 완료 — feat-022/023/024/025/016 done. 촉/위/오 3진영 플레이(faction-aware 렌더) + 상점(015d) + feat-027 그래픽 보정 + **feat-029 위·오 진영 깊이 done**. 조조 호패=기병 공격력 +25%, 손권 수전=궁병/수군 공격력 +20%, 조조/하후돈/손권/주유 4스킬 배선. `./init.sh` **795 단언 green**. ▶ 다음 후보 — feat-028 유닛 애니메이션, 평원 배경 교체(사용자 미드저니), feat-020 땅 확장, feat-021 칙령.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -35,11 +35,12 @@
 - 애셋 — agy 생성+PIL 크로마키로 평원배경·성채·보스(마왕동탁)·촉5병종·촉장수5·마계3병종·건물2·아이소타일 배치. QA 스크린샷 docs/reports/v0.5-screens/.
 - [x] **feat-027 agy 그래픽 보정 (완료)** — 촉·위·오 **30종** image-to-image 강화(모양 유지·채도·대비·진영톤·림라이트). 위·오 17종(06-03)+촉 12·주유 1(06-04). 인게임 QA→agy 보정→PIL 키아웃→배치. ./init.sh 723 green. 마계 등 적 원본 유지. 커밋 e858d95·c526f78. CHANGELOG 06-03·04.
 - [x] **렌더 스케일업** (Claude 직접) — battle.gd 뷰 상수 상향(UNIT_W 108→140·GENERAL 124→162·BOSS 182→204·성·건물), 강화 스프라이트 가독성·전장 밀도. BattleSim 불변. ./init.sh 723 green. 커밋 6cdffaf.
+- [x] **feat-029 위·오 진영 깊이** (Codex) — CardCatalog.build_player_unit에 호패 기병 atk+25%, 수전 궁병/수군 atk+20% 적용. SkillSystem에 조조 위압(반경 피해+약화), 하후돈 발돌(전방 직사각형), 손권 결단(max_hp 최고 단일), 주유 화공(최근접 중심 광역) 추가. 위·오 장수 4종 skill_id/skill_text 배선. test_skills/test_factions 확장. ./init.sh 795 단언 green.
 ### 진행 중 (What's In Progress)
 - [ ] 없음
 ### 다음 (What's Next)
-1. feat-015d 상점 — 골드 구매(건물 카드 둔전·망루 등장 wiring 포함)로 실제 런에서 건물 획득.
-2. 시각 폴리시 — 아이소 타일 텍스처 적용 확인·유닛 밀도·데미지 숫자 가독성 미세 조정. 마계 노병/수군 스프라이트.
+1. feat-028 유닛 애니메이션 — agy 시트 산출 후 AnimatedSprite2D/SpriteFrames 배선.
+2. 평원 배경 교체 — 사용자 미드저니 배경 수령 후 battlefield theme 반영.
 3. feat-020 땅 확장·feat-021 왕의 칙령.
 
 ## 블로커 / 리스크 (Blockers / Risks)
@@ -56,8 +57,8 @@
 - 전투 로직/표현 분리, 적은 카드 아님, trait_id, 오픈필드 이후 승=모든 파도 적전멸/패=아군 전멸 — 상세 CHANGELOG.
 
 ## 이번 세션 수정 파일 (Files Modified)
-- feat-027 — assets/sprites/units/{wei,wu}/*.png 17종(agy image-to-image 강화 배치). 코드 불변.
-- 상태 — feature_list.json·progress.md·CHANGELOG.md
+- feat-029 — scripts/resources/card_catalog.gd, scripts/battle/skill_system.gd, resources/cards/general_{caocao,xiahoudun,sunquan,zhouyu}.tres, test/test_skills.gd, test/test_factions.gd.
+- 상태 — feature_list.json·progress.md.
 
 ## 검증 증거
 - [x] `./init.sh` (2026-05-30, feat-013) → 카드검증(10·1) / sim default_waves 승리 28.7s·무배치 패배 0.1s / reward / run_map·battle 부팅 / 단위 12파일 **356 단언** 통과. 종료 0.
@@ -69,6 +70,7 @@
 - [x] `./init.sh` (2026-05-31, feat-015c) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward 시작 손패 6장·후보 4장·획득 후 owned 7장 / run_map·battle 부팅 / 단위 17파일 **605 단언** 통과. 종료 0.
 - [x] `./init.sh` (2026-06-01, feat-019) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward 시작 손패 6장·후보 4장·획득 후 owned 7장 / run_map·battle 부팅 / 단위 17파일 **618 단언** 통과. 종료 0.
 - [x] `./init.sh` (2026-06-03, feat-027) → 강화본 17종 배치 후 **723 단언** green, 텍스처 재import·회귀 없음. 위·오 before/after 인게임 스크린샷 확인. 종료 0.
+- [x] `./init.sh` (2026-06-04, feat-029) → 카드 16·군주 3 검증 OK / sim 성 방어 승리 25.5s·성 노출 패배 29.0s / run_map·battle 부팅 OK / 단위 테스트 **795 단언** green. 종료 0.
 - [x] feat-013 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙) 미수정.
 - [x] feat-014 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙) 미수정.
 - [x] feat-017 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙, WaveFactory) 미수정.
@@ -83,4 +85,4 @@
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh` 723단언 green. **feat-027 완전 done** — 촉·위·오 30종 agy 강화(위·오 17 `e858d95` / 촉12·주유1 `c526f78`) + 렌더 스케일업(`battle.gd UNIT_W 108→140`, `6cdffaf`). 마계 등 적 진영은 원본 유지(QA상 OK·강화는 선택). **⚠️ agy 함정(메모리 반영)** — ① `--add-dir <repo> --skip-permissions` 시 repo 파일 자율편집 → `--add-dir`를 입력 디렉토리로 좁히고 "이미지만 생성" 명시(방지 검증됨). ② 백그라운드 셸 `python3` 미발견 → 키잉은 `/usr/bin/python3` 절대경로. 다음 후보 — feat-028 애니메이션·feat-029 위·오 trait/스킬·feat-020/021. 푸시는 사용자 확인 후(미푸시 커밋 5개).
+`./init.sh` 795단언 green. **feat-029 done** — 위·오 trait 실효과와 장수 4스킬 배선 완료, BattleSim 본체 불변. 다음 후보 — feat-028 애니메이션·평원 배경 교체·feat-020/021. 푸시는 사용자 확인 후.

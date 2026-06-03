@@ -19,5 +19,5 @@ attack = 46
 attack_interval = 1.0
 attack_range = "melee"
 move_speed = 58.0
-skill_id = &""
-skill_text = ""
+skill_id = &"skill_wei_charge"
+skill_text = "발돌 — 전방으로 돌격해 적을 가른다."

@@ -50,3 +50,37 @@ func test_player_faction_matches_started_lord() -> void:
 func test_player_faction_falls_back_to_shu_when_unstarted() -> void:
 	RunManager.reset_run()
 	eq(RunManager.player_faction(), &"shu", "군주 미설정 시 shu 폴백")
+
+func test_hopae_trait_buffs_cavalry_attack_only() -> void:
+	var caocao := cat.get_lord(&"lord_caocao")
+	var cavalry := cat.build_player_unit(&"troop_cavalry", 0, 0.0, caocao)
+	var infantry := cat.build_player_unit(&"troop_infantry", 1, 0.0, caocao)
+	var xiahoudun := cat.build_player_unit(&"general_xiahoudun", 2, 0.0, caocao)
+	not_null(cavalry, "위 기병 생성")
+	not_null(infantry, "위 보병 생성")
+	not_null(xiahoudun, "위 기병 장수 생성")
+	eq(cavalry.attack, 38, "호패 기병 공격력 25% 증가")
+	eq(infantry.attack, 16, "호패 비기병 병종 공격력 불변")
+	eq(xiahoudun.attack, 58, "호패 기병 장수도 병종 기준 보정")
+
+func test_suseon_trait_buffs_archer_and_navy_attack_only() -> void:
+	var sunquan := cat.get_lord(&"lord_sunquan")
+	var archer := cat.build_player_unit(&"troop_archer", 0, 0.0, sunquan)
+	var navy := cat.build_player_unit(&"troop_navy", 1, 0.0, sunquan)
+	var infantry := cat.build_player_unit(&"troop_infantry", 2, 0.0, sunquan)
+	var zhouyu := cat.build_player_unit(&"general_zhouyu", 0, 0.0, sunquan)
+	not_null(archer, "오 궁병 생성")
+	not_null(navy, "오 수군 생성")
+	not_null(infantry, "오 보병 생성")
+	not_null(zhouyu, "오 궁병 장수 생성")
+	eq(archer.attack, 26, "수전 궁병 공격력 20% 증가")
+	eq(navy.attack, 24, "수전 수군 공격력 20% 증가")
+	eq(infantry.attack, 16, "수전 보병 공격력 불변")
+	eq(zhouyu.attack, 55, "수전 궁병 장수도 병종 기준 보정")
+
+func test_rende_hp_trait_still_applies_without_attack_buff() -> void:
+	var liubei := cat.get_lord(&"lord_liubei")
+	var infantry := cat.build_player_unit(&"troop_infantry", 0, 0.0, liubei)
+	not_null(infantry, "촉 보병 생성")
+	eq(infantry.max_hp, 161, "인덕 병종 체력 15% 증가 유지")
+	eq(infantry.attack, 16, "인덕은 공격력 보정 없음")
