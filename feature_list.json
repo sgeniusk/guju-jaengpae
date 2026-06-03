@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.5 — 구주 비주얼 전장. Nine Kings 풍 리치 픽셀 전투화면(아이소 기지·스프라이트 군세·대형 보스·데미지 숫자·3중 진행바·스테이지 사다리·속도 컨트롤) + 건물 경제 + 교체형 배경 테마. 멀티 CLI(Claude 스펙·Codex 구현·agy 애셋·QA). BattleSim 불변, 뷰 레이어만 오버홀. 정본 docs/render-architecture.md·assets/MANIFEST.md.",
+  "milestone": "v0.5 DONE — 구주 비주얼 전장(아이소·HUD·데미지·배경테마·건물경제) + 마누스 페인터리 풀세트(9세력 T0-T2 통합, 픽셀→페인터리) + 상점(015d) + 촉/위/오 3진영 플레이(군주 선택·faction-aware 렌더). GitHub sgeniusk/guju-jaengpae(public) 푸시됨. ▶ v0.6 — 진영 깊이(위·오 trait·장수 스킬), agy 그래픽 보정·유닛 애니메이션(스프라이트 시트), 평원 배경 교체(사용자 미드저니), 땅 확장(020)·칙령(021). 결정 — 마누스 아트는 현 상태 유지, 부족분만 agy로 보정. 멀티 CLI(Claude 스펙·Codex 구현·agy 애셋/보정/시트). 정본 docs/render-architecture.md·assets/MANIFEST.md·docs/asset-production-brief.md.",
   "features": [
     {
       "id": "feat-001",
@@ -253,6 +253,42 @@
       "status": "done",
       "owner": "agy→Claude",
       "evidence": "battlefield_theme.gd(plain 슬롯, 모드-레디) + field.png 배경 배선 + tile_grass 소형 타일(전투 시 페이드) + 성채/유닛/보스 스케일 + 반투명 배치패널. agy 생성→PIL 크로마키(tools/asset_pipeline.py)→배치 — 평원배경·성채·보스·잡병4·장수5·건물2·아이소타일. test_battlefield_theme. ./init.sh 646 green. 스크린샷 검증 — 평원 배경+풀 HUD 렌더 확인."
+    },
+    {
+      "id": "feat-026",
+      "name": "위·오 진영 활성화 + 군주 선택",
+      "description": "촉만 플레이 가능하던 것을 촉/위/오 3진영으로. faction-aware 렌더(RunManager.player_faction=군주 nation → 유닛 텍스처 faction, 병종은 기존 카드 재사용) + 군주 선택 화면(lord_select, main_scene) + 위·오 장수 4종·군주 2종(1차 컷, 스킬·trait 없음).",
+      "dependencies": ["feat-019", "feat-025"],
+      "status": "done",
+      "owner": "서브에이전트(opus)→Claude",
+      "evidence": "RunManager.player_faction + battle.gd faction 한 줄 + lord_select.tscn(main_scene) + general_caocao/xiahoudun/sunquan/zhouyu + lord_caocao/sunquan + card_data heroic 티어. test_factions 18단언. ./init.sh 723 green. 스크린샷 — 군주 선택·위(강철)·오(주홍) 전투 아트 렌더 확인. 커밋 cd676c3. 후속 trait·스킬은 feat-029."
+    },
+    {
+      "id": "feat-027",
+      "name": "agy 그래픽 보정 패스",
+      "description": "마누스 페인터리 풀세트의 약한 스프라이트를 agy image-to-image로 보정 — 전체 모양은 유지, 부족분만. agy generate_image(ImagePaths=원본 절대경로 최대 3장 + 수정 프롬프트)로 리컬러·인페인트·방향/품질/일관성 터치업·배경제거. Claude가 수거→PIL 다운스케일→매니페스트 경로 배치. 대상 선별은 인게임 스크린샷으로 약점 식별 후. 마누스 판 유지 결정의 후속.",
+      "dependencies": ["feat-025", "feat-026"],
+      "status": "not-started",
+      "owner": "agy→Claude",
+      "evidence": ""
+    },
+    {
+      "id": "feat-028",
+      "name": "유닛 애니메이션 (스프라이트 시트)",
+      "description": "정적 Sprite2D 빌보드 → 프레임 애니메이션. agy가 유닛별 멀티프레임 스프라이트 시트(idle/walk/attack 4~6프레임 그리드 PNG, agy는 영상 출력 불가하니 시트만) 생성 → Godot AnimatedSprite2D/SpriteFrames로 슬라이스·배선(battle.gd 렌더 레이어). 매니페스트에 시트 규격(프레임 수·셀 크기) 추가. 결정성 전투 로직 불변(뷰만).",
+      "dependencies": ["feat-022", "feat-025"],
+      "status": "not-started",
+      "owner": "agy(시트)→Codex(엔진 배선)",
+      "evidence": ""
+    },
+    {
+      "id": "feat-029",
+      "name": "위·오 진영 깊이 (trait 효과 + 장수 스킬)",
+      "description": "feat-026(1차 컷) 후속 — 위(호패)·오(수전) trait를 실제 전투 효과로 구현(인덕 패턴 참고, card_catalog 빌드/경제 수정자) + 위·오 장수 4종(조조·하후돈·손권·주유)에 고유 스킬 부여(SkillSystem 확장). 위=물량/기병·법치, 오=수전/궁병 결. v0.6 진영 데이터화. 카드 밸런스는 편집장 설계.",
+      "dependencies": ["feat-026"],
+      "status": "not-started",
+      "owner": "Claude(설계)→Codex",
+      "evidence": ""
     }
   ]
 }

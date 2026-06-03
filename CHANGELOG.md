@@ -2,6 +2,12 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-02 — 방향 결정: 마누스 아트 유지 + agy 보정/애니메이션 (v0.6 backlog)
+- **결정** — 마누스 페인터리 풀세트를 현 상태로 두고 부족분만 후속 보정. 전체 아트 방향 재변경 안 함.
+- **agy 역량 조사** — `generate_image`로 image-to-image 그래픽 수정 가능(`ImagePaths` 최대 3장 + 프롬프트, 리컬러·인페인트·보정·배경제거), 멀티프레임 **스프라이트 시트** 생성 가능(GIF/MP4 **영상은 불가**). → 그래픽 보정·애니메이션화를 agy에 배정.
+- **v0.6 backlog 확정** — feat-027 agy 그래픽 보정, feat-028 유닛 애니메이션(agy 시트→Godot AnimatedSprite2D), feat-029 위·오 trait 실효과·장수 스킬. + 평원 배경 사용자 미드저니 교체, feat-020 확장·021 칙령.
+- 다음 세션 핸드오프·시작 프롬프트 → `session-handoff.md`.
+
 ## 2026-06-02 — 위·오 진영 활성화 + 군주 선택 (서브에이전트 구현 · ⓐ)
 - **faction-aware 렌더링** — `battle.gd` 유닛 텍스처 faction을 플레이어 군주 nation으로(`RunManager.player_faction()`). 병종은 기존 카드 재사용 — 군주 nation이 art만 바꾼다(촉 옥록·위 강철·오 주홍).
 - **군주 선택 화면** — `scenes/screens/lord_select.tscn` 신설, `main_scene` 지정. 촉(유비)·위(조조)·오(손권) 선택 → `ensure_started`(멱등) → `run_map`.

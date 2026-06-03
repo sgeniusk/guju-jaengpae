@@ -5,7 +5,7 @@
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-06-02
 **활성 피처 (Active Feature)** — 없음 (v0.5 "구주 비주얼 전장" 핵심 6피처 완료)
-**현재 목표 (Current Objective)** — v0.5 완료 — feat-022/023/024/025/016 done, ./init.sh 684 단언 green. Nine Kings 풍 전투화면 + 건물 경제 + 교체형 배경 테마. **마누스 외주 페인터리 풀세트(9세력 T0-T2, 93종) 통합** — 아트 픽셀→페인터리 전환, demon=낙양마궁 매핑. 멀티 CLI(Claude 스펙·Codex 구현·agy/Manus 애셋·QA). **feat-015d 상점·위·오 진영 활성화(군주 선택)·전투/상점 폴리시 done**(723 green). 촉/위/오 3진영 플레이 가능(faction-aware 렌더). 다음 — 평원 배경 사용자 미드저니 교체·위·오 trait·장수 스킬(v0.6 데이터화)·천계 진영(T3)·feat-020 확장·feat-021 칙령. 정본 docs/render-architecture.md·assets/MANIFEST.md.
+**현재 목표 (Current Objective)** — v0.5 완료 — feat-022/023/024/025/016 done, ./init.sh 684 단언 green. Nine Kings 풍 전투화면 + 건물 경제 + 교체형 배경 테마. **마누스 외주 페인터리 풀세트(9세력 T0-T2, 93종) 통합** — 아트 픽셀→페인터리 전환, demon=낙양마궁 매핑. 멀티 CLI(Claude 스펙·Codex 구현·agy/Manus 애셋·QA). **feat-015d 상점·위·오 진영 활성화·폴리시 done**(723 green). 촉/위/오 3진영 플레이(faction-aware 렌더). GitHub sgeniusk/guju-jaengpae 푸시됨. **결정 — 마누스 아트 현 상태 유지, 부족분만 agy 보정**(agy 역량 확인 — image-to-image 수정 가능·스프라이트 시트 가능·영상 불가). ▶ **v0.6 backlog** — feat-027 agy 그래픽 보정·feat-028 유닛 애니메이션(agy 시트→AnimatedSprite2D)·feat-029 위·오 trait/스킬·평원 배경 교체(사용자 미드저니)·feat-020 확장·feat-021 칙령. 다음 세션 시작 프롬프트·상세는 session-handoff.md. 정본 docs/render-architecture.md·assets/MANIFEST.md.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
