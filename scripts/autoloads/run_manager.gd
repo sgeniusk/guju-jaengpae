@@ -2,6 +2,7 @@
 extends Node
 
 const _StageCadence := preload("res://scripts/run/stage_cadence.gd")
+const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 
 var state := RunState.new()
 
@@ -73,6 +74,21 @@ func is_boss_stage() -> bool:
 
 func is_shop_stage() -> bool:
 	return _StageCadence.is_shop(state.stage_index)
+
+func is_edict_stage() -> bool:
+	return _StageCadence.is_edict(state.stage_index)
+
+func add_edict(id: StringName) -> bool:
+	if not _EdictCatalog.EDICTS.has(id):
+		return false
+	state.add_edict(id)
+	return true
+
+func get_edicts() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for id in state.edicts:
+		out.append(id)
+	return out
 
 func shop_card_ids() -> Array[StringName]:
 	return CardLibrary.catalog.purchasable_ids()

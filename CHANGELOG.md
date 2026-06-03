@@ -2,6 +2,14 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-04 — feat-021 왕의 칙령 (전역 perk · Codex · architect THOROUGH APPROVED)
+3스테이지마다 칙령 드래프트 — 전역 perk 3중1을 골라 런 전체에 누적 적용. EdictCatalog 코드 레지스트리(skill_system 패턴).
+- **EdictCatalog** — 군세(edict_might, 전 아군 공격력 +12%)·재정(economy, 골드 +25%)·축성(fortify, 성HP +20%), pct 합산 헬퍼·고정 all_ids(결정성).
+- **캐이던스** — EDICT_INTERVAL=3, node_kind 우선순위 boss>edict>shop>expand>combat. stage 12=칙령(상점 위), 15=보스(칙령 스킵).
+- **전역 수정자** — card_catalog.build_player_unit edicts 파라미터(trait 후 곱셈 체인, 누적 합산), battle.gd 둔전 골드 +25%·성HP +20%. 우물 골드는 제외(설계 명문화). RunState.edicts 누적, RunManager is_edict_stage/add_edict/get_edicts.
+- **드래프트 UI** — run_map `_build_edict_panel`(상점 패턴, 3택 무료).
+- **검증** — test_stage_cadence(캐이던스 충돌 12·15)·test_run_board(trait×edict 곱셈 47·스택 +24%·immutability) substantive. `./init.sh` 914 단언 green(876→+38). architect — 곱셈 순서·결정성·회귀 없음 코드 확인.
+
 ## 2026-06-04 — feat-020 땅 확장 (board 3→6행 · Codex · architect THOROUGH APPROVED)
 보스 격파 보상으로 보드를 3행→최대 6행(18칸) 확장. Claude 스펙(BattleSim static 유지 제약) → Codex 구현 → architect 검증.
 - **RunState** — `board_rows`(3..6) 동적, `block_keys()` static→instance(`block_keys_for(rows)` static + 인스턴스 래퍼), 용량/`board_full` 동적, `expand_board()`.

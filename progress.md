@@ -4,8 +4,8 @@
 
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-06-04
-**활성 피처 (Active Feature)** — 없음 (feat-020 땅 확장 done)
-**현재 목표 (Current Objective)** — v0.5 완료 — feat-022/023/024/025/016 done. 촉/위/오 3진영 플레이(faction-aware 렌더) + 상점(015d) + feat-027 그래픽 보정 + feat-029 위·오 진영 깊이 + **feat-020 땅 확장 done**. 보스 승리 보상으로 보드 3→6행 확장, 타일/스폰/요약은 RunState.board_rows 연동. `./init.sh` **876 단언 green**. ▶ 다음 후보 — feat-028 유닛 애니메이션, 평원 배경 교체(사용자 미드저니), feat-021 칙령.
+**활성 피처 (Active Feature)** — 없음 (feat-021 왕의 칙령 done)
+**현재 목표 (Current Objective)** — v0.5 완료 — feat-022/023/024/025/016 done. 촉/위/오 3진영 플레이(faction-aware 렌더) + 상점(015d) + feat-027 그래픽 보정 + feat-029 위·오 진영 깊이 + feat-020 땅 확장 + **feat-021 왕의 칙령 done**. 3스테이지마다 칙령 3택, 런 누적 전역 보정(공격·골드·성HP) 적용. `./init.sh` **914 단언 green**. ▶ 다음 후보 — feat-028 유닛 애니메이션, 평원 배경 교체(사용자 미드저니).
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -37,12 +37,12 @@
 - [x] **렌더 스케일업** (Claude 직접) — battle.gd 뷰 상수 상향(UNIT_W 108→140·GENERAL 124→162·BOSS 182→204·성·건물), 강화 스프라이트 가독성·전장 밀도. BattleSim 불변. ./init.sh 723 green. 커밋 6cdffaf.
 - [x] **feat-029 위·오 진영 깊이** (Codex) — CardCatalog.build_player_unit에 호패 기병 atk+25%, 수전 궁병/수군 atk+20% 적용. SkillSystem에 조조 위압(반경 피해+약화), 하후돈 발돌(전방 직사각형), 손권 결단(max_hp 최고 단일), 주유 화공(최근접 중심 광역) 추가. 위·오 장수 4종 skill_id/skill_text 배선. test_skills/test_factions 확장. ./init.sh 795 단언 green.
 - [x] **feat-020 땅 확장** (Codex) — RunState board_rows 3→6/동적 block_keys·board_full, BattleSim static 6행 ROW_X, board_rows 기반 build_board_army·타일 렌더·런맵 요약, 보스 승리 보상 자동 +1행 확장. test_run_board/test_board_army/test_grid 확장. ./init.sh 876 단언 green.
+- [x] **feat-021 왕의 칙령** (Codex) — EdictCatalog 코드 레지스트리(군세/재정/축성) + StageCadence EDICT_INTERVAL=3/node_kind 우선순위 + RunState.edicts/RunManager API + run_map 3택 칙령 UI + 전투 공격/골드/성HP 전역 보정. test_stage_cadence/test_run_board 확장. ./init.sh 914 단언 green.
 ### 진행 중 (What's In Progress)
 - [ ] 없음
 ### 다음 (What's Next)
 1. feat-028 유닛 애니메이션 — agy 시트 산출 후 AnimatedSprite2D/SpriteFrames 배선.
 2. 평원 배경 교체 — 사용자 미드저니 배경 수령 후 battlefield theme 반영.
-3. feat-021 왕의 칙령.
 
 ## 블로커 / 리스크 (Blockers / Risks)
 - [ ] 시각 QA 부채 누적 — feat-003/004/006/007/008 화면·상호작용과 feat-017 전투 중 표적 지정 체감은 헤드리스로 미확인. 사람 플레이 필요.
@@ -59,6 +59,7 @@
 
 ## 이번 세션 수정 파일 (Files Modified)
 - feat-020 — scripts/run/run_state.gd, scripts/battle/battle_sim.gd, scripts/resources/card_catalog.gd, scripts/autoloads/run_manager.gd, scripts/battle/battle.gd, scripts/screens/run_map.gd, scripts/run/board_economy.gd, test/test_run_board.gd, test/test_board_army.gd, test/test_grid.gd.
+- feat-021 — scripts/run/edict_catalog.gd, scripts/run/edict_catalog.gd.uid, scripts/run/stage_cadence.gd, scripts/run/run_state.gd, scripts/autoloads/run_manager.gd, scripts/resources/card_catalog.gd, scripts/autoloads/card_library.gd, scripts/battle/battle.gd, scripts/screens/run_map.gd, test/test_stage_cadence.gd, test/test_run_board.gd.
 - 상태 — feature_list.json·progress.md.
 
 ## 검증 증거
@@ -73,6 +74,7 @@
 - [x] `./init.sh` (2026-06-03, feat-027) → 강화본 17종 배치 후 **723 단언** green, 텍스처 재import·회귀 없음. 위·오 before/after 인게임 스크린샷 확인. 종료 0.
 - [x] `./init.sh` (2026-06-04, feat-029) → 카드 16·군주 3 검증 OK / sim 성 방어 승리 25.5s·성 노출 패배 29.0s / run_map·battle 부팅 OK / 단위 테스트 **795 단언** green. 종료 0.
 - [x] `./init.sh` (2026-06-04, feat-020) → 카드 16·군주 3 검증 OK / sim 성 방어 승리 25.5s·성 노출 패배 29.0s / run_map·battle 부팅 OK / 단위 테스트 **876 단언** green. 종료 0.
+- [x] `./init.sh` (2026-06-04, feat-021) → 카드 16·군주 3 검증 OK / sim 성 방어 승리 25.5s·성 노출 패배 29.0s / run_map·battle 부팅 OK / 단위 테스트 **914 단언** green. 종료 0.
 - [x] feat-013 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙) 미수정.
 - [x] feat-014 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙) 미수정.
 - [x] feat-017 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙, WaveFactory) 미수정.
@@ -87,4 +89,4 @@
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh` 876단언 green. **feat-020 done** — 보스 승리 보상 보드 +1행 확장, 최대 6행. BattleSim은 static 유지(ROW_COUNT/ROW_X 6행), 실제 사용 행은 RunState.board_rows가 제어. 다음 후보 — feat-028 애니메이션·평원 배경 교체·feat-021. 푸시는 사용자 확인 후.
+`./init.sh` 914단언 green. **feat-021 done** — stage 3·6·9 칙령, stage 12는 칙령 우선, stage 15는 보스 우선. 칙령은 RunState.edicts에 누적되고 군세/재정/축성이 공격력·전투 종료 골드·성 HP에 결정적으로 적용된다. 다음 후보 — feat-028 애니메이션·평원 배경 교체. 푸시는 사용자 확인 후.

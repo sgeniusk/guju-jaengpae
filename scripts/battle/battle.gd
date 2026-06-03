@@ -9,6 +9,7 @@ const _StageCadence := preload("res://scripts/run/stage_cadence.gd")
 const _BattleHudState := preload("res://scripts/battle/hud_state.gd")
 const _BattlefieldTheme := preload("res://scripts/battle/battlefield_theme.gd")
 const _BoardEconomy := preload("res://scripts/run/board_economy.gd")
+const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 
 const VIEW_ORIGIN := Vector2(520.0, 225.0)
 const VIEW_SCALE_X := 1.28
@@ -1046,7 +1047,7 @@ func _sim_units() -> Array[BattleUnit]:
 
 func _spawn_board_army() -> void:
 	var board := RunManager.get_board()
-	var army := CardLibrary.catalog.build_board_army(board, _lord, RunManager.get_board_rows())
+	var army := CardLibrary.catalog.build_board_army(board, _lord, RunManager.get_board_rows(), RunManager.get_edicts())
 	for unit in army:
 		_sim.add_unit(unit)
 		_spawn_visual(unit)
@@ -1062,7 +1063,7 @@ func _spawn_unit_for_board_key(block_key: String) -> void:
 		return
 	var single := {}
 	single[block_key] = board[block_key]
-	var army := CardLibrary.catalog.build_board_army(single, _lord, RunManager.get_board_rows())
+	var army := CardLibrary.catalog.build_board_army(single, _lord, RunManager.get_board_rows(), RunManager.get_edicts())
 	for unit in army:
 		_sim.add_unit(unit)
 		_spawn_visual(unit)
@@ -1161,7 +1162,8 @@ func _update_building_gold_labels() -> void:
 			label.text = "+%d" % total
 
 func _ensure_castle() -> void:
-	var castle := _sim.add_castle()
+	var hp := int(round(BattleSim.CASTLE_HP * (1.0 + _EdictCatalog.castle_hp_pct(RunManager.get_edicts()))))
+	var castle := _sim.add_castle(hp)
 	if not _vis.has(castle):
 		_spawn_visual(castle)
 
@@ -1332,9 +1334,11 @@ func _update_wave_label() -> void:
 # ── 종료 · 전리(보상) ───────────────────────────────────────
 func _end_battle() -> void:
 	_phase = Phase.DONE
+	# 재정(財政) 칙령은 둔전 생산 골드(_battle_gold_accum)에만 적용 — 우물 골드(discard 보상)는 제외(feat-021 설계).
 	var produced_gold := int(floor(_battle_gold_accum))
 	if produced_gold > 0:
-		RunManager.add_gold(produced_gold)
+		var gold := int(round(produced_gold * (1.0 + _EdictCatalog.gold_pct(RunManager.get_edicts()))))
+		RunManager.add_gold(gold)
 		_update_building_gold_labels()
 		_sync_hud()
 	_sync_deploy_panel_visibility()

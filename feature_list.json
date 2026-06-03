@@ -214,9 +214,9 @@
       "name": "왕의 칙령 (King's Edict / 전역 perk)",
       "description": "StageCadence.is_edict(3마다, EDICT_INTERVAL=3 knob) 스테이지에 칙령 드래프트 — 전역 런 혜택 perk 3중1(전 유닛 공격력 +%·골드 획득 +%·성 HP +%·지원 건물 효과 2배 등). RunState.edicts 누적, 전투 빌드·경제에 전역 수정자 적용. 건물 관련 칙령은 feat-016 후(경제·전투 칙령은 먼저 가능). feat-019 캐이던스 위.",
       "dependencies": ["feat-019"],
-      "status": "not-started",
+      "status": "done",
       "owner": "Codex",
-      "evidence": ""
+      "evidence": "EdictCatalog 3종(군세/재정/축성) + StageCadence 3마다 칙령(node_kind boss>edict>shop>expand>combat) + RunState/RunManager 누적 + 전투 공격/골드/성HP 전역 보정 + run_map 3택 UI. test_stage_cadence/test_run_board 확장. ./init.sh 914 단언 green."
     },
     {
       "id": "feat-022",

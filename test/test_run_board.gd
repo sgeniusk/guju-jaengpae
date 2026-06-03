@@ -1,6 +1,8 @@
 # RunState의 영속 보드·손패·골드 상태 모델과 RunManager 브리지를 검증한다.
 extends TestCase
 
+const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
+
 var cat: CardCatalog
 var lord: LordData
 var run: RunState
@@ -58,6 +60,7 @@ func test_block_keys_follow_board_rows() -> void:
 		falsy(keys.has("0:%d" % rows), "%d행 밖 키 제외" % rows)
 
 func test_start_run_places_lord_deck_in_hand_and_resets_board_gold() -> void:
+	run.edicts.append(&"edict_might")
 	run.start_run(lord, cat)
 	truthy(_has_property(run, "board"), "RunState.board 존재")
 	truthy(_has_property(run, "hand"), "RunState.hand 존재")
@@ -69,6 +72,32 @@ func test_start_run_places_lord_deck_in_hand_and_resets_board_gold() -> void:
 	eq(run.hand, cat.get_lord_deck(lord), "유비 시작 카드 6장은 손패에 들어감")
 	eq(run.gold, 0, "시작 골드는 0")
 	eq(run.board_card_ids(), [], "시작 보드 카드 없음")
+	eq(run.edicts, [], "시작 시 칙령 누적 초기화")
+
+func test_edict_catalog_sums_stacked_modifiers() -> void:
+	var edicts := [&"edict_might", &"edict_might", &"edict_economy", &"edict_fortify", &"missing"]
+	almost(_EdictCatalog.attack_pct(edicts), 0.24, 0.0001, "군세 2회는 공격력 +24%")
+	almost(_EdictCatalog.gold_pct(edicts), 0.25, 0.0001, "재정 1회는 골드 +25%")
+	almost(_EdictCatalog.castle_hp_pct(edicts), 0.20, 0.0001, "축성 1회는 성 HP +20%")
+	eq(_EdictCatalog.all_ids(), [&"edict_might", &"edict_economy", &"edict_fortify"], "칙령 후보 3종 고정")
+	eq(_EdictCatalog.info(&"edict_might").get("name", ""), "군세(軍勢)", "칙령 info 조회")
+
+func test_edict_might_applies_after_lord_traits_and_stacks() -> void:
+	var might_twice := [&"edict_might", &"edict_might"]
+	var infantry := cat.build_player_unit(&"troop_infantry", 0, 0.0, lord, might_twice)
+	not_null(infantry, "촉 보병 생성")
+	eq(infantry.attack, 20, "군세 2회는 기본 공격력 16을 +24%로 보정")
+
+	var caocao := cat.get_lord(&"lord_caocao")
+	var cavalry := cat.build_player_unit(&"troop_cavalry", 0, 0.0, caocao, might_twice)
+	not_null(cavalry, "호패 기병 생성")
+	eq(cavalry.attack, 47, "호패 25% 적용 뒤 군세 24%를 곱셈 적용")
+
+	var board := {"0:0": &"troop_infantry"}
+	var army: Array = cat.build_board_army(board, lord, RunState.BOARD_ROWS_START, might_twice)
+	eq(army.size(), 1, "build_board_army가 칙령 배열 전달")
+	if army.size() == 1:
+		eq(army[0].attack, 20, "보드 군세도 군세 칙령 공격력 반영")
 
 func test_place_from_hand_moves_card_to_free_block_only() -> void:
 	if not _require_methods(["hand_add", "place_from_hand"]):
@@ -207,6 +236,24 @@ func test_run_manager_delegates_board_expansion() -> void:
 	truthy(RunManager.expand_board(), "RunManager 확장 5→6")
 	falsy(RunManager.expand_board(), "RunManager 6행 상한")
 	eq(RunManager.get_board_rows(), 6, "상한 이후 6행 유지")
+
+func test_run_manager_delegates_edicts() -> void:
+	RunManager.reset_run()
+	for method in ["is_edict_stage", "add_edict", "get_edicts"]:
+		truthy(RunManager.has_method(method), "RunManager.%s 존재" % method)
+	if not RunManager.has_method("is_edict_stage") or not RunManager.has_method("add_edict") or not RunManager.has_method("get_edicts"):
+		return
+	falsy(RunManager.is_edict_stage(), "stage 1은 칙령 아님")
+	RunManager.state.stage_index = 3
+	truthy(RunManager.is_edict_stage(), "stage 3은 칙령")
+	eq(RunManager.get_edicts(), [], "초기 칙령 없음")
+	truthy(RunManager.add_edict(&"edict_might"), "유효 칙령 추가 성공")
+	truthy(RunManager.add_edict(&"edict_economy"), "두 번째 칙령 누적")
+	falsy(RunManager.add_edict(&"missing_edict"), "없는 칙령은 추가 실패")
+	eq(RunManager.get_edicts(), [&"edict_might", &"edict_economy"], "칙령 누적 순서 유지")
+	var copy := RunManager.get_edicts()
+	copy.append(&"edict_fortify")
+	eq(RunManager.get_edicts(), [&"edict_might", &"edict_economy"], "반환 배열 수정은 상태 불변")
 
 func test_run_manager_starting_hand_place_and_well_flow() -> void:
 	RunManager.reset_run()

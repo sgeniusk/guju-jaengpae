@@ -5,6 +5,7 @@ extends RefCounted
 const SHOP_INTERVAL := 4
 const BOSS_INTERVAL := 5
 const EXPAND_INTERVAL := 5
+const EDICT_INTERVAL := 3
 const DIFFICULTY_STEP := 0.12
 
 static func is_boss(stage: int) -> bool:
@@ -16,9 +17,14 @@ static func is_shop(stage: int) -> bool:
 static func is_expand(stage: int) -> bool:
 	return _is_interval(stage, EXPAND_INTERVAL)
 
+static func is_edict(stage: int) -> bool:
+	return _is_interval(stage, EDICT_INTERVAL)
+
 static func node_kind(stage: int) -> String:
 	if is_boss(stage):
 		return "boss"
+	if is_edict(stage):
+		return "edict"
 	if is_shop(stage):
 		return "shop"
 	if is_expand(stage):

@@ -4,6 +4,7 @@ extends RefCounted
 
 const CARDS_DIR := "res://resources/cards"
 const LORDS_DIR := "res://resources/lords"
+const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 
 var cards: Dictionary = {}   # StringName -> CardData
 var building_cards: Dictionary = {}   # StringName -> BuildingCardData
@@ -80,7 +81,7 @@ func get_lord_deck(lord: LordData) -> Array[StringName]:
 	return deck
 
 # 군주 특성을 반영해 아군 유닛을 생성한다.
-func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData) -> BattleUnit:
+func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData, edicts: Array = []) -> BattleUnit:
 	var card := get_card(card_id)
 	if card == null or not (card is UnitCardData):
 		return null
@@ -92,10 +93,13 @@ func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData)
 		unit.attack = int(round(unit.attack * 1.25))
 	if lord != null and lord.trait_id == &"trait_suseon" and (card.troop_type == "archer" or card.troop_type == "navy"):
 		unit.attack = int(round(unit.attack * 1.20))
+	var edict_attack_pct := _EdictCatalog.attack_pct(edicts)
+	if edict_attack_pct > 0.0:
+		unit.attack = int(round(unit.attack * (1.0 + edict_attack_pct)))
 	return unit
 
 # 영속 보드 블록을 전투 시작 위치의 아군 군세로 변환한다.
-func build_board_army(board: Dictionary, lord: LordData, run_board_rows: int = RunState.BOARD_ROWS_START) -> Array[BattleUnit]:
+func build_board_army(board: Dictionary, lord: LordData, run_board_rows: int = RunState.BOARD_ROWS_START, edicts: Array = []) -> Array[BattleUnit]:
 	var army: Array[BattleUnit] = []
 	var rows := clampi(run_board_rows, RunState.BOARD_ROWS_START, RunState.BOARD_ROWS_MAX)
 	for row in rows:
@@ -104,7 +108,7 @@ func build_board_army(board: Dictionary, lord: LordData, run_board_rows: int = R
 			if not board.has(key):
 				continue
 			var start := BattleSim.position_for_tile(col, row)
-			var unit := build_player_unit(StringName(board[key]), col, start.x, lord)
+			var unit := build_player_unit(StringName(board[key]), col, start.x, lord, edicts)
 			if unit == null:
 				continue
 			unit.row = row

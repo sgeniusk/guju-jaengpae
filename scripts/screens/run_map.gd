@@ -4,6 +4,7 @@ extends Control
 const LORD_ID := &"lord_liubei"
 const BATTLE_SCENE := "res://scenes/battle/battle.tscn"
 const _StageCadence := preload("res://scripts/run/stage_cadence.gd")
+const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 
 var _root: VBoxContainer
 
@@ -43,6 +44,8 @@ func _build_stage_panel() -> void:
 	stage_label.add_theme_font_size_override("font_size", 44)
 	if RunManager.is_boss_stage():
 		stage_label.modulate = Color(1.0, 0.55, 0.35)
+	elif RunManager.is_edict_stage():
+		stage_label.modulate = Color(0.70, 0.90, 1.0)
 	elif RunManager.is_shop_stage():
 		stage_label.modulate = Color(0.95, 0.78, 0.36)
 	_root.add_child(stage_label)
@@ -62,7 +65,7 @@ func _build_stage_panel() -> void:
 	var boss_note := Label.new()
 	boss_note.text = _stage_note()
 	boss_note.add_theme_font_size_override("font_size", 24)
-	boss_note.modulate = Color(1.0, 0.75, 0.45) if (RunManager.is_boss_stage() or RunManager.is_shop_stage()) else Color(0.78, 0.82, 0.78)
+	boss_note.modulate = Color(1.0, 0.75, 0.45) if (RunManager.is_boss_stage() or RunManager.is_shop_stage() or RunManager.is_edict_stage()) else Color(0.78, 0.82, 0.78)
 	_root.add_child(boss_note)
 
 	var board_box := VBoxContainer.new()
@@ -70,7 +73,12 @@ func _build_stage_panel() -> void:
 	_root.add_child(board_box)
 	_add_board_summary(board_box)
 
-	if RunManager.is_shop_stage():
+	if RunManager.is_boss_stage():
+		pass
+	elif RunManager.is_edict_stage():
+		_build_edict_panel()
+		return
+	elif RunManager.is_shop_stage():
 		_build_shop_panel()
 		return
 
@@ -216,6 +224,26 @@ func _build_shop_panel() -> void:
 	leave.pressed.connect(_on_shop_leave_pressed)
 	_root.add_child(leave)
 
+func _build_edict_panel() -> void:
+	var status := Label.new()
+	status.text = "누적 칙령 %d개 — 하나를 골라 런 전체에 적용합니다." % RunManager.get_edicts().size()
+	status.add_theme_font_size_override("font_size", 28)
+	status.modulate = Color(0.72, 0.90, 1.0)
+	_root.add_child(status)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 20)
+	_root.add_child(row)
+
+	for id in _EdictCatalog.all_ids():
+		var info := _EdictCatalog.info(id)
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(320.0, 160.0)
+		btn.text = "%s\n%s" % [String(info.get("name", id)), String(info.get("desc", ""))]
+		btn.add_theme_font_size_override("font_size", 24)
+		btn.pressed.connect(_on_edict_pressed.bind(id))
+		row.add_child(btn)
+
 func _add_board_summary(parent: VBoxContainer) -> void:
 	var board := RunManager.get_board()
 	if board.is_empty():
@@ -245,16 +273,27 @@ func _on_shop_leave_pressed() -> void:
 	RunManager.advance_stage()
 	_render()
 
+func _on_edict_pressed(id: StringName) -> void:
+	RunManager.add_edict(id)
+	RunManager.advance_stage()
+	_render()
+
 func _stage_label(stage: int) -> String:
+	if RunManager.is_boss_stage():
+		return _StageCadence.stage_label(stage)
+	if RunManager.is_edict_stage():
+		return "스테이지 %d — 왕의 칙령" % stage
 	if RunManager.is_shop_stage():
 		return "스테이지 %d — 상점" % stage
 	return _StageCadence.stage_label(stage)
 
 func _stage_note() -> String:
-	if RunManager.is_shop_stage():
-		return "전투 전 군자금으로 카드를 구매합니다."
 	if RunManager.is_boss_stage():
 		return "강적 출현"
+	if RunManager.is_edict_stage():
+		return "왕명이 내려 런 전체 보정을 선택합니다."
+	if RunManager.is_shop_stage():
+		return "전투 전 군자금으로 카드를 구매합니다."
 	return "적 군세가 성을 향해 진군합니다."
 
 func _block_label(block_key: String) -> String:

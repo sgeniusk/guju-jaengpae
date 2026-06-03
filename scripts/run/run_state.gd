@@ -17,6 +17,7 @@ var stage_index: int = 1
 var wave_index: int = 0
 var started: bool = false
 var command_points: int = 12
+var edicts: Array[StringName] = []
 
 static func block_keys_for(rows: int) -> Array[String]:
 	var keys: Array[String] = []
@@ -44,6 +45,7 @@ func start_run(lord: LordData, catalog: CardCatalog) -> void:
 		hand.append(card_id)
 	wave_index = 0
 	command_points = 12
+	edicts.clear()
 	started = true
 
 func is_block_free(key: String) -> bool:
@@ -108,6 +110,9 @@ func has_card(id: StringName) -> bool:
 
 func add_card(id: StringName) -> void:
 	hand_add(id)
+
+func add_edict(id: StringName) -> void:
+	edicts.append(id)
 
 func expand_board() -> bool:
 	if board_rows >= BOARD_ROWS_MAX:

@@ -8,6 +8,7 @@ func test_interval_predictors_ignore_non_positive_stages() -> void:
 		falsy(_StageCadence.is_boss(stage), "비양수 stage는 보스 아님")
 		falsy(_StageCadence.is_shop(stage), "비양수 stage는 상점 아님")
 		falsy(_StageCadence.is_expand(stage), "비양수 stage는 확장 아님")
+		falsy(_StageCadence.is_edict(stage), "비양수 stage는 칙령 아님")
 
 func test_interval_predictors_match_cadence() -> void:
 	falsy(_StageCadence.is_shop(3), "3스테이지는 상점 아님")
@@ -19,6 +20,20 @@ func test_interval_predictors_match_cadence() -> void:
 	falsy(_StageCadence.is_expand(4), "4스테이지는 확장 아님")
 	truthy(_StageCadence.is_expand(5), "5스테이지는 확장")
 	truthy(_StageCadence.is_expand(10), "10스테이지는 확장")
+	truthy(_StageCadence.is_edict(3), "3스테이지는 칙령")
+	truthy(_StageCadence.is_edict(6), "6스테이지는 칙령")
+	truthy(_StageCadence.is_edict(9), "9스테이지는 칙령")
+	falsy(_StageCadence.is_edict(4), "4스테이지는 칙령 아님")
+	falsy(_StageCadence.is_edict(5), "5스테이지는 칙령 아님")
+
+func test_node_kind_prioritizes_boss_edict_shop_expand_combat() -> void:
+	eq(_StageCadence.node_kind(1), "combat", "일반 stage는 combat")
+	eq(_StageCadence.node_kind(3), "edict", "3스테이지는 칙령")
+	eq(_StageCadence.node_kind(4), "shop", "4스테이지는 상점")
+	eq(_StageCadence.node_kind(5), "boss", "5스테이지는 보스")
+	eq(_StageCadence.node_kind(10), "boss", "보스가 확장보다 우선")
+	eq(_StageCadence.node_kind(12), "edict", "칙령이 상점보다 우선")
+	eq(_StageCadence.node_kind(15), "boss", "보스가 칙령보다 우선")
 
 func test_difficulty_scale_is_linear_and_deterministic() -> void:
 	almost(_StageCadence.difficulty_scale(-1), 1.0, 0.0001, "음수 stage는 기본 배율")

@@ -15,5 +15,5 @@ func get_lord(id: StringName) -> LordData:
 func get_lord_deck(lord: LordData) -> Array[StringName]:
 	return catalog.get_lord_deck(lord)
 
-func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData) -> BattleUnit:
-	return catalog.build_player_unit(card_id, lane, x, lord)
+func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData, edicts: Array = []) -> BattleUnit:
+	return catalog.build_player_unit(card_id, lane, x, lord, edicts)
