@@ -285,3 +285,31 @@
 - Lore Commit Protocol 위반이나 누락된 검증 trailer가 있으면 지적되어 있다.
 - push/tag 명령은 사용자 확인 후 실행할 수 있을 만큼 구체적으로 준비되어 있다.
 - 실행하지 않은 외부 작업은 “안 함”으로 증거에 남아 있다.
+
+## G095 — ultragoal
+
+`$ultragoal`은 Phase 0부터 v1.0까지 긴 순차 목표를 durable ledger로 밀고 갈 때 기본 경로다.
+
+### 쓸 때
+- 완료까지 여러 story가 있고, 각 story의 증거를 `.omx/ultragoal/ledger.jsonl`에 남겨야 할 때.
+- 한 번에 한 피처 원칙을 지키면서도 긴 제품 완성 계획을 끊기지 않게 이어가야 할 때.
+- Codex aggregate goal 하나 아래에서 G001, G002 같은 repo-native story를 차례대로 닫을 때.
+- 나중에 추가되거나 수정된 story도 원래 brief constraints 안에서 추적해야 할 때.
+
+### 산출물
+- `.omx/ultragoal/goals.json`의 story 상태와 active goal id.
+- 각 story 완료 후 fresh `get_goal` snapshot을 포함한 checkpoint.
+- 검증 명령, 커밋, worktree 상태, push/tag 보류 여부가 들어간 evidence.
+- failed, blocked, needs-user-decision 상태의 명확한 사유.
+
+### 경계
+- 중간 story에서는 Codex aggregate goal을 `update_goal`로 complete 처리하지 않는다.
+- 숨은 Codex goal state를 shell에서 바꾸지 않고, active objective가 다르면 멈춰서 정리한다.
+- 각 story는 현재 피처 하나만 닫고, 큰 범위 변경은 steering이나 새 story로 분리한다.
+- 최종 story만 mandatory final cleanup/review gate를 통과한 뒤 aggregate goal을 complete 처리한다.
+
+### 완료 기준
+- `omx ultragoal complete-goals --json`으로 받은 현재 story만 완료되어 있다.
+- checkpoint evidence가 실제 파일, 커밋, 검증 출력, clean/dirty 상태를 포함한다.
+- ledger와 Codex goal snapshot의 objective와 status가 서로 모순되지 않는다.
+- 다음 story가 같은 절차로 재개될 수 있다.
