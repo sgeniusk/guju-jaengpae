@@ -257,3 +257,31 @@
 - blocker와 polish가 분리되어 구현 우선순위를 흐리지 않는다.
 - 재검증에 필요한 촬영 명령이나 화면 경로가 남아 있다.
 - 제품 화면에 남은 placeholder 또는 누락 에셋 여부가 명시되어 있다.
+
+## G094 — git-master
+
+`git-master`는 커밋 히스토리, push, tag, 릴리스 브랜치 전략을 안전하게 정리하는 역할이다.
+
+### 쓸 때
+- 여러 로컬 커밋이 쌓여 원격 발행 순서, squash 여부, tag 시점을 정해야 할 때.
+- Lore Commit Protocol 준수 여부와 커밋 경계를 검토할 때.
+- 릴리스 체크리스트, export 증거, known risk가 tag 전에 충분한지 확인할 때.
+- push, force, tag, release처럼 사용자 확인이 필요한 외부 side effect를 준비할 때.
+
+### 산출물
+- 현재 branch, ahead/behind, worktree 상태, 최근 커밋 목록.
+- push/tag/release 전제 조건과 보류 사유.
+- 필요한 사용자 확인 문장과 실행할 정확한 git 명령.
+- 릴리스 후 되돌릴 수 없는 변경과 복구 경로.
+
+### 경계
+- git-master는 사용자 확인 없이 push, force push, tag, GitHub release를 실행하지 않는다.
+- 제품 구현이나 테스트 보강은 `executor`와 `test-engineer`로 넘긴다.
+- 릴리스 적합성 증거 확인은 `verifier`, 사용자-facing 문구는 필요하면 `writer`로 넘긴다.
+- 히스토리 정리는 기존 사용자 변경을 되돌리지 않고, dirty worktree를 먼저 설명한다.
+
+### 완료 기준
+- 로컬과 원격 차이, 발행 대상 커밋, 보류 중인 외부 side effect가 명확하다.
+- Lore Commit Protocol 위반이나 누락된 검증 trailer가 있으면 지적되어 있다.
+- push/tag 명령은 사용자 확인 후 실행할 수 있을 만큼 구체적으로 준비되어 있다.
+- 실행하지 않은 외부 작업은 “안 함”으로 증거에 남아 있다.
