@@ -201,3 +201,31 @@
 - 스크린샷·export 증거는 파일 경로, 실행 환경, 성공 marker가 함께 남아 있다.
 - 상태 파일과 handoff 문서가 다음 세션에서 재시작 가능한 정보를 담고 있다.
 - 알려진 경고와 미지원 범위가 릴리스 리스크 문서 또는 handoff에 연결되어 있다.
+
+## G092 — designer
+
+`designer`는 플레이어가 런 흐름, 온보딩, HUD 상태를 화면만 보고 이해할 수 있는지 판단하는 역할이다.
+
+### 쓸 때
+- 군주 선택, 첫 전투, 배치, 보상, 상점, 칙령, 결과 화면의 흐름이 막히거나 헷갈릴 때.
+- HUD의 gold, stage, hand, edict, treasure, 성 HP, wave 정보 우선순위를 조정할 때.
+- 툴팁, 버튼 라벨, 빈 상태, 잠금 상태, feedback text가 사용자 행동을 충분히 안내하는지 볼 때.
+- 스크린샷 QA에서 “무엇이 문제인지”를 UX 관점으로 해석해야 할 때.
+
+### 산출물
+- 사용자 흐름별 문제와 수정 우선순위.
+- 화면 상태별 필요한 copy, affordance, feedback, layout 조정안.
+- designer 판단을 구현할 owner scene/script 포인터.
+- 시각 QA나 코드 구현으로 넘길 명확한 acceptance criteria.
+
+### 경계
+- designer는 세계관 정본이나 수치 밸런스를 임의로 바꾸지 않는다.
+- scene/script 구현은 `executor`, screenshot 판독은 `vision`, 최종 검증은 `verifier`로 넘긴다.
+- UI 구조가 저장·런 상태 계약을 바꿔야 하면 `architect` 검토를 먼저 받는다.
+- 취향 문제가 아니라 플레이 흐름을 막는 문제를 우선한다.
+
+### 완료 기준
+- 신규 플레이어가 다음 행동을 찾을 수 있는지 화면 상태별로 설명되어 있다.
+- HUD와 툴팁 수정안이 실제 사용자 행동, 상태 변화, 오류 예방과 연결되어 있다.
+- 구현자가 바로 손댈 scene/script와 확인할 스크린샷이 분명하다.
+- 남은 미학적 polish와 필수 UX blocker가 분리되어 있다.
