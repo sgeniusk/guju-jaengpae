@@ -313,3 +313,31 @@
 - checkpoint evidence가 실제 파일, 커밋, 검증 출력, clean/dirty 상태를 포함한다.
 - ledger와 Codex goal snapshot의 objective와 status가 서로 모순되지 않는다.
 - 다음 story가 같은 절차로 재개될 수 있다.
+
+## G096 — team
+
+`$team`은 Phase 4 이후 세력별 데이터, 스킬, 테스트, 아트 QA처럼 write scope가 분리될 때 적합하다.
+
+### 쓸 때
+- 여러 세력이나 화면을 독립적으로 조사·검증·수정할 수 있을 때.
+- 데이터 작성, 테스트 설계, 스크린샷 판독, 문서 갱신이 서로 다른 파일 소유권을 가질 때.
+- leader가 worker 결과를 통합하고 `./init.sh`를 직접 실행할 여유가 있을 때.
+- 병렬화가 속도뿐 아니라 교차검증 품질을 실제로 높일 때.
+
+### 산출물
+- worker별 목표, write scope, 금지 범위, 검증 명령.
+- worker 결과의 파일·테스트·스크린샷 증거.
+- leader가 통합한 최종 diff와 충돌·중복 정리 내역.
+- ultragoal checkpoint에 넣을 팀 단위 evidence.
+
+### 경계
+- team은 한 피처 원칙을 깨기 위한 우회로가 아니다.
+- 같은 파일을 여러 worker가 동시에 고치는 작업은 피하고 leader가 scope를 다시 나눈다.
+- 정본 미승인 세력명, push/tag, schema 확정 같은 결정은 team worker에게 맡기지 않는다.
+- Codex App에서 OMX team runtime이 없으면 native subagents나 solo 실행으로 대체한다.
+
+### 완료 기준
+- 각 worker의 산출물과 검증 증거가 leader에게 합쳐져 있다.
+- leader가 통합 diff를 직접 읽고 `./init.sh` 또는 문서화된 검증을 실행했다.
+- shared-file conflict, 누락된 증거, scope creep이 정리되어 있다.
+- team 결과가 ultragoal ledger checkpoint로 이어질 수 있다.
