@@ -36,6 +36,7 @@ const VFX_FLOATING_Z := 4095
 const WALK_FRAME_COUNT := 4
 const WALK_FPS := 8.0
 const WALK_MOVE_EPSILON := 0.01
+const TILE_CLICK_MARGIN := 1.35
 const BOSS_TEXTURE_PATHS := {
 	"마왕 동탁": "res://assets/sprites/units/luoyang/boss_dongzhuo.png",
 	"천공 장각": "res://assets/sprites/units/huangtian/boss_zhangjue.png",
@@ -102,6 +103,7 @@ var _result_label: Label
 var _overlay: Control            # 승리 보상 / 패배 재시도 패널
 
 func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_lord = CardLibrary.get_lord(LORD_ID)
 	RunManager.ensure_started(LORD_ID)
 	AudioManager.play_music(&"battle")
@@ -143,6 +145,20 @@ func _input(event: InputEvent) -> void:
 		if _command_toggle_active and mouse_button.pressed:
 			_apply_hero_command_at(mouse_button.position)
 			get_viewport().set_input_as_handled()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _phase != Phase.DEPLOY:
+		return
+	if not (event is InputEventMouseButton):
+		return
+	var mouse_button := event as InputEventMouseButton
+	if mouse_button.button_index != MOUSE_BUTTON_LEFT or not mouse_button.pressed:
+		return
+	var block_key := _tile_key_at_screen_position(mouse_button.position)
+	if block_key == "":
+		return
+	_on_tile_pressed(block_key)
+	get_viewport().set_input_as_handled()
 
 # ── 화면 구성 ───────────────────────────────────────────────
 func _bind_scene_nodes() -> void:
@@ -774,6 +790,22 @@ func _on_tile_area_input(_viewport: Node, event: InputEvent, _shape_idx: int, bl
 		return
 	_on_tile_pressed(block_key)
 	get_viewport().set_input_as_handled()
+
+func _tile_key_at_screen_position(screen_pos: Vector2) -> String:
+	for col in BattleSim.COL_COUNT:
+		for row in RunManager.get_board_rows():
+			var block_key := _tile_key(col, row)
+			if not _tile_buttons.is_empty() and not _tile_buttons.has(block_key):
+				continue
+			var center := field_to_screen_position(BattleSim.position_for_tile(col, row))
+			if _is_screen_position_on_tile(screen_pos, center):
+				return block_key
+	return ""
+
+func _is_screen_position_on_tile(screen_pos: Vector2, center: Vector2) -> bool:
+	var local := screen_pos - center
+	var normalized := absf(local.x) / ISO_HALF_W + absf(local.y) / ISO_HALF_H
+	return normalized <= TILE_CLICK_MARGIN
 
 func _on_tile_pressed(block_key: String) -> void:
 	if _phase != Phase.DEPLOY:

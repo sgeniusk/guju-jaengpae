@@ -121,6 +121,25 @@ func test_ability_buttons_use_texture_icons_when_available() -> void:
 	button.free()
 	view.free()
 
+func test_battle_root_does_not_swallow_tile_mouse_input() -> void:
+	var scene := load("res://scenes/battle/battle.tscn") as PackedScene
+	var battle := scene.instantiate() as Control
+
+	eq(battle.mouse_filter, Control.MOUSE_FILTER_IGNORE, "전투 루트 Control은 타일 클릭을 먹지 않음")
+	battle.free()
+
+func test_deploy_click_maps_visible_tile_to_board_key() -> void:
+	RunManager.reset_run()
+	RunManager.ensure_started(&"lord_liubei")
+	var view := BattleView.new()
+	var center := view.field_to_screen_position(BattleSim.position_for_tile(1, 0))
+
+	eq(view._tile_key_at_screen_position(center), "1:0", "타일 중심 클릭은 해당 보드 키")
+	eq(view._tile_key_at_screen_position(center + Vector2(40.0, 0.0)), "1:0", "가로 가장자리 클릭 허용")
+	eq(view._tile_key_at_screen_position(center + Vector2(0.0, 30.0)), "1:0", "세로 가장자리 클릭 허용")
+	eq(view._tile_key_at_screen_position(Vector2(10.0, 10.0)), "", "전장 밖 클릭은 배치 타일 아님")
+	view.free()
+
 func _player_unit(troop_type: String) -> BattleUnit:
 	return BattleUnit.make(BattleUnit.Team.PLAYER, 0, 300.0, "검증", 100, 1, 1.0, "melee", 0.0, &"", &"", troop_type, -1, 300.0)
 
