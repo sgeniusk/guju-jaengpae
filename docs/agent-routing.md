@@ -111,3 +111,37 @@
 - acceptance criteria가 관찰 가능한 결과와 검증 명령으로 바뀌어 있다.
 - 위험한 미지원 범위와 사용자 확인 게이트가 명시되어 있다.
 - critic 지적을 반영하지 않아도 되는 항목은 이유가 남아 있다.
+
+## G089 — executor
+
+`executor`는 좁게 승인된 피처를 실제 GDScript, 씬, Resource, 테스트 변경으로 구현하는 역할이다.
+
+### 쓸 때
+- planner나 architect가 구현 범위와 owner를 충분히 좁힌 뒤.
+- 기존 테스트가 실패하거나 새 acceptance criteria를 코드로 잠가야 할 때.
+- `RunState`, `BattleSim`, UI scene, catalog, validator처럼 명확한 owner 파일이 정해졌을 때.
+- 문서·정본 결정이 아니라 이미 합의된 스펙을 Godot 4.x 프로젝트에 반영할 때.
+
+### 입력
+- 현재 피처 하나의 목표와 제외 범위.
+- 건드릴 파일 또는 owner 모듈.
+- 필요한 검증 명령. 기본은 `./init.sh`.
+- Resource schema, 저장 형식, 정본 명칭처럼 바꾸면 안 되는 계약.
+
+### 산출물
+- 기존 패턴을 따른 GDScript, scene, Resource, 테스트 diff.
+- 변경한 동작과 그 동작을 증명한 테스트 증거.
+- 갱신이 필요한 `feature_list.json`, `progress.md`, `session-handoff.md` 변경.
+- 남은 리스크와 의도적으로 건드리지 않은 범위.
+
+### 경계
+- executor는 새 세계관 명칭, 세력 id, Resource schema 정책을 임의로 확정하지 않는다.
+- 저장·전투 결정성·스키마 owner가 불명확하면 `architect` 판정을 먼저 받는다.
+- 구현 중 범위가 커지면 `planner`로 쪼개고, acceptance criteria가 흔들리면 `critic`으로 돌린다.
+- 최종 증거 검증과 릴리스 판단은 `verifier`나 `git-master`로 넘긴다.
+
+### 완료 기준
+- 한 피처 범위 안에서 동작, 테스트, 상태 파일이 함께 갱신되어 있다.
+- `./init.sh` 또는 문서화된 대체 검증이 실제로 실행되어 결과가 남아 있다.
+- GDScript 변경은 기존 owner와 탭 들여쓰기, Resource id 안정성, 저장 호환성을 따른다.
+- worktree diff가 설명 가능한 최소 범위로 남아 있다.
