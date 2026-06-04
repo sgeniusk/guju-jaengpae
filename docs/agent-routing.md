@@ -611,3 +611,25 @@ leader가 `feature_list.json`, `progress.md`, 필요 시 `session-handoff.md`를
 - 다음 세션이 `AGENTS.md` → `session-handoff.md` → `./init.sh` 순서로 재시작할 수 있다.
 - push/tag/canon approval 같은 미실행 외부 작업이 숨지 않는다.
 - 상태 파일 갱신 여부를 verifier가 확인할 수 있다.
+
+## G109 — Lore commits
+
+커밋 메시지는 Lore Commit Protocol을 따른다.
+
+### 포함할 것
+- 첫 줄은 무엇을 바꿨는지보다 왜 바꿨는지를 쓴다.
+- `Constraint:`에는 외부 계약, 정본 gate, 검증 gate처럼 변경을 제한한 조건을 쓴다.
+- `Rejected:`에는 다음 agent가 다시 검토하지 않아야 할 대안과 이유를 쓴다.
+- `Tested:`와 `Not-tested:`에는 실제 실행한 검증과 남은 공백을 분리한다.
+
+### 운영 원칙
+- 단순 문서 변경도 검증 evidence와 scope-risk를 남긴다.
+- push, tag, release, canon approval처럼 실행하지 않은 외부 작업은 commit body나 checkpoint에 드러낸다.
+- commit message에 workflow trigger처럼 오해될 문구를 불필요하게 넣지 않는다.
+- 여러 독립 story는 한 커밋에 뭉치지 않고 story별로 닫는다.
+
+### 완료 기준
+- commit이 변경의 이유, 제약, 거절한 대안, 검증, 미검증 범위를 설명한다.
+- future agent가 같은 결정을 반복 조사하지 않아도 된다.
+- checkpoint evidence와 commit trailers가 서로 모순되지 않는다.
+- 커밋 단위가 되돌리기 쉽고 story objective 하나에 대응한다.
