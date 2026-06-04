@@ -699,3 +699,25 @@ leader가 `feature_list.json`, `progress.md`, 필요 시 `session-handoff.md`를
 - 성능 개선이 결정성, 저장 호환성, Resource schema를 깨지 않는다.
 - `./init.sh`와 필요한 표적 perf/smoke가 함께 통과한다.
 - 남은 성능 부채가 v1.0 blocker인지 polish인지 분리되어 있다.
+
+## G113 — autoresearch for references
+
+`$autoresearch-goal`은 Nine Kings 분석이나 장르 레퍼런스 조사처럼 연구 산출물이 중심일 때만 쓴다.
+
+### 쓸 때
+- Nine Kings, 덱빌딩 로그라이크, 필드 전략 오토배틀러의 구조를 source-backed로 비교할 때.
+- UI flow, run cadence, reward/shop rhythm, faction identity 같은 reference pattern을 조사할 때.
+- 조사 결과가 바로 코드 변경이 아니라 design memo, risk list, benchmark table로 끝날 때.
+- 외부 최신 정보나 정확한 출처가 제품 판단에 의미 있게 영향을 줄 때.
+
+### 쓰지 않을 때
+- 이미 구현할 피처와 acceptance criteria가 정해져 있을 때.
+- repo-local 사실을 찾는 작업이면 `explore`나 직접 `rg` 확인으로 충분할 때.
+- 조사 결과를 정본 승인 없이 세력명, card id, lore, scope 변경으로 바로 반영하려 할 때.
+- 밸런스 수치나 테스트 실패처럼 로컬 실험과 검증이 먼저인 문제일 때.
+
+### 완료 기준
+- 조사 산출물에 출처, 관찰, 구주쟁패 적용 가능성, 제외할 모방 요소가 분리되어 있다.
+- 연구 결론과 구현 결정이 별도 story 또는 정본 승인 gate로 이어진다.
+- 외부 reference가 현 프로젝트 invariant를 깨지 않는다.
+- 조사만으로 완료되는 목표와 구현이 필요한 follow-up이 명확히 갈라져 있다.
