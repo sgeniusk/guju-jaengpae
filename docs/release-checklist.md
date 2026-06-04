@@ -1,6 +1,6 @@
 # 릴리스 체크리스트 — 구주쟁패
 
-이 문서는 G081 기준 태그와 릴리스 준비 절차다. 실제 `git tag`, `git push`, GitHub release 생성은 사용자 확인 후에만 실행한다.
+이 문서는 G082 기준 태그와 릴리스 준비 절차다. 실제 `git tag`, `git push`, GitHub release 생성은 사용자 확인 후에만 실행한다.
 
 ## 릴리스 후보
 - 앱 버전: `0.7.0`
@@ -14,6 +14,8 @@
 - G078 밸런스 계약 완료: 난이도 0.10 step, 칙령 10/20/15%, 둔전·망루·징발·보패 수치 계약.
 - G079 export preset 완료: `export_presets.cfg` 추적, credential-free macOS preset, pack export 성공.
 - G080 릴리스 문서 동기화 완료: README, CHANGELOG, worldview, asset manifest, handoff/status 문서 갱신.
+- G081 릴리스 체크리스트 완료: `v0.7.0-rc1`/`v0.7.0` 태그 후보와 사용자 확인 게이트 문서화.
+- G082 fresh clone 검증 완료: 로컬 임시 클론에서 `./init.sh` 카드 22개 / 2349 단언 green.
 
 ## 태그 전 게이트
 - [ ] `git status --short`로 의도하지 않은 변경을 분리한다.
@@ -23,7 +25,7 @@
 - [ ] `git diff --check`.
 - [ ] `./init.sh` 카드 22개와 2349 단언 green.
 - [ ] `godot --headless --path . --export-pack "macOS Desktop" build/macos/guju-jaengpae.pck`.
-- [ ] G082 fresh clone 검증 완료.
+- [x] G082 fresh clone 검증 완료.
 - [ ] G083 full app export 실행과 첫 전투 도달 완료.
 - [ ] G084 알려진 리스크와 미지원 범위 문서화 완료.
 

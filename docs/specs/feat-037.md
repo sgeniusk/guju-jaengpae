@@ -31,6 +31,12 @@ Phase 7은 제품 루프가 끝까지 돈 뒤 최종 릴리스 전에 수치와 
 - 실제 `git tag`, `git push`, GitHub release 생성은 사용자 확인 전 실행하지 않는다.
 - 체크리스트에는 `jq`, `progress.md` 줄 수, `git diff --check`, `./init.sh`, pack export, fresh clone, full app export, known risk 게이트가 있어야 한다.
 
+## G082 세부 기준
+- G082 fresh clone 검증은 원격 push 없이 로컬 `main` HEAD를 별도 임시 디렉터리에 `git clone --no-hardlinks`로 복제해 수행한다.
+- 검증 대상 클론은 clean checkout 상태여야 하며, 원본 작업트리의 `.godot/` import cache나 dirty file에 의존하지 않는다.
+- fresh clone 안에서 `./init.sh`를 실행해 Godot import, 카드/군주 validator, 부팅 스모크, UI 피드백 스모크, 단위 테스트가 green임을 확인한다.
+- 성공 증거는 clone 경로, HEAD short hash, 카드 수, 단언 수로 남긴다.
+
 ## 비범위
 - G078 범위에서는 export preset 생성과 실제 export 실행을 하지 않는다.
 - G079 범위에서는 playable `.app`/`.zip` full export 실행을 하지 않는다.
@@ -46,4 +52,5 @@ Phase 7은 제품 루프가 끝까지 돈 뒤 최종 릴리스 전에 수치와 
 - `test_export_preset.gd`는 macOS preset 이름, platform, export path, resource filter, docs/test/tools 제외, bundle id, credential-free signing/notarization fields를 검증한다.
 - `godot --headless --path . --export-pack "macOS Desktop" build/macos/guju-jaengpae.pck`는 preset을 사용해 pack export 경로가 동작하는지 확인한다.
 - `docs/release-checklist.md`는 태그 후보, 사용자 확인 게이트, preflight 명령, G082~G084 선행 조건을 문서화한다.
+- fresh clone 검증은 로컬 임시 클론에서 `./init.sh` 전체 green을 확인한다.
 - `./init.sh` 전체 green으로 카드 validator, 부팅 스모크, UI 피드백 스모크, 보스/결과 스모크, 단위 테스트를 함께 확인한다.

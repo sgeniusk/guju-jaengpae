@@ -17,8 +17,8 @@
 - **Phase 4 진행** — G054에서 9세력 확장은 명칭 승인 → `docs/worldview.md` 정본 갱신 → `CardVocab.NATIONS`/validator 확장 → Resource 추가 → lord_select 해금 UI 순서를 지키도록 스펙과 테스트를 추가했다. G055/G056은 사용자 승인 전 canon 확정 위험 때문에 Ultragoal에서 blocked로 남겼고, G057에서 `lord_select`를 3군주 고정 배열 대신 `CardCatalog`/`CardLibrary` 기반 unlock-aware 목록으로 바꿨다. G063에서 현재 Resource schema와 validator가 승인 정본(`wei`/`shu`/`wu`)과 일치함을 ledger로 닫았다.
 - **Phase 5 완료** — G064에서 `WaveFactory.stage_waves`를 5스테이지 단위 act-aware 템플릿으로 확장했다. G065에서 stage 5 동탁, stage 10 장각, stage 15+ 여포 보스를 서로 다른 target_rule·스킬·호위 파도 구성으로 분리했다. G066~G070에서 정예/사건 node_kind, stage 15 최종 보스 승리 조건, 첫 15스테이지 런 믹스 회귀, 보스별 순수 시뮬레이션과 battle.tscn 부팅 스모크, 패배/최종 승리 결과 화면 스모크를 추가했다.
 - **Phase 6 완료** — G071에서 군주 선택, 런맵, 상점, 칙령, 사건, 전투 배치 손패/우물/계략/보드 tooltip과 피드백을 추가하고 `tools/ui_feedback_smoke.gd`를 `init.sh`에 연결했다. G072에서 주요 병종·장수·보스 walk 시트 26개와 보스별 렌더 매핑을 추가했다. G073에서 realm/stage별 전장 배경과 테마별 아이소 타일을 연결했다. G074에서 최소 BGM/SFX와 AudioManager 재생 경로를 추가했다. G075에서 첫 전투 시작과 일반 승리 보상 선택 안내를 실제 화면 문구와 smoke 검증으로 잠갔다. G076에서 누락되던 칙령/정예/사건 HUD 노드 아이콘과 능력 버튼 아이콘 경로를 채웠다. G077에서 `docs/reports/phase6-ui-screens/`에 제품 화면 26 PNG 묶음과 검증 도구를 남겼다.
-- **Phase 7 진행** — G078에서 `docs/specs/feat-037.md`와 `test_balance.gd`를 추가하고, 난이도 step 0.10, 칙령 10/20/15%, 둔전·망루·징발·보패 값을 하나의 수치 계약으로 잠갔다. G079에서 credential-free `macOS Desktop` export preset과 pack export 검증을 추가했고, G080에서 릴리스 기준 문서를 동기화했으며, G081에서 태그 후보와 릴리스 체크리스트를 준비했다.
-- **제품 간극** — 9세력 정본 확정, 장기런/전투 중 표적 지정 체감 QA, fresh clone 검증과 full app export가 남아 있다.
+- **Phase 7 진행** — G078에서 `docs/specs/feat-037.md`와 `test_balance.gd`를 추가하고, 난이도 step 0.10, 칙령 10/20/15%, 둔전·망루·징발·보패 값을 하나의 수치 계약으로 잠갔다. G079에서 credential-free `macOS Desktop` export preset과 pack export 검증을 추가했고, G080에서 릴리스 기준 문서를 동기화했으며, G081에서 태그 후보와 릴리스 체크리스트를 준비했고, G082에서 로컬 fresh clone `./init.sh` green을 확인했다.
+- **제품 간극** — 9세력 정본 확정, 장기런/전투 중 표적 지정 체감 QA, full app export와 리스크 문서화가 남아 있다.
 
 ## 마일스톤 개요
 | 단계 | 테마 | 핵심 | 종료 조건 |
@@ -35,7 +35,7 @@
 ## 단계별 상세
 
 ### Phase 0 — 이관 안정화와 발행 준비
-- `git log origin/main..main`으로 미푸시 6커밋을 확인한다.
+- `git log origin/main..main`으로 미푸시 커밋을 확인한다.
 - `git push origin main`은 사용자 확인 후에만 실행한다.
 - 실제 게임 에셋 `.import`는 추적하고, `docs/reports/` 스크린샷 `.import`는 ignore한다.
 - README, roadmap, session-handoff, progress, feature_list를 v0.6 기준으로 맞춘다.
@@ -116,6 +116,7 @@
 - G079에서 `export_presets.cfg`의 `macOS Desktop` preset을 추가했다. 비밀값은 비워 두고 `.godot/export_credentials.cfg` 경계로 분리했으며, `godot --headless --path . --export-pack "macOS Desktop" build/macos/guju-jaengpae.pck`로 pack export를 검증했다.
 - G080에서 README, CHANGELOG, world docs, asset manifest, session-handoff를 릴리스 기준으로 갱신했다.
 - G081에서 `docs/release-checklist.md`를 추가하고 `v0.7.0-rc1`/`v0.7.0` 태그 후보, 사용자 확인 게이트, G082~G084 선행 조건을 정리했다.
+- G082에서 로컬 임시 클론을 만들고 `./init.sh` 카드 22개 / 2349 단언 green을 확인했다.
 
 ## 횡단 관심사 (계속)
 - **검증** — 피처마다 헤드리스 테스트 추가, `./init.sh` green 유지.
@@ -130,6 +131,6 @@
 4. 아트·오디오·밸런스 잠금은 제품 루프가 끝까지 돈 뒤에 한다.
 
 ## 즉시 다음 (actionable)
-1. 사용자 확인이 오면 `git push origin main`으로 미푸시 6커밋을 발행한다.
+1. 사용자 확인이 오면 `git push origin main`으로 미푸시 커밋을 발행한다.
 2. 사용자 승인으로 천계·마계 명칭이 canon이 되면 G055/G056을 재개한다.
-3. 승인 전에는 fresh clone 검증이나 full app export처럼 nation id 확정이 필요 없는 작업을 먼저 진행한다.
+3. 승인 전에는 full app export나 리스크 문서화처럼 nation id 확정이 필요 없는 작업을 먼저 진행한다.
