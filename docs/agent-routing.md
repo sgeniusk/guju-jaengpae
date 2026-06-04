@@ -341,3 +341,31 @@
 - leader가 통합 diff를 직접 읽고 `./init.sh` 또는 문서화된 검증을 실행했다.
 - shared-file conflict, 누락된 증거, scope creep이 정리되어 있다.
 - team 결과가 ultragoal ledger checkpoint로 이어질 수 있다.
+
+## G097 — ralph
+
+`$ralph`는 단일 소유자가 한 피처를 끝까지 밀어붙이는 fallback이며, 기본 durable tracking은 `$ultragoal`이 낫다.
+
+### 쓸 때
+- story가 하나의 피처로 좁고, 구현·검증·상태 갱신을 한 소유자가 계속 잡아야 할 때.
+- 긴 goal ledger보다 단일 피처의 persistent loop와 회복력이 더 중요한 때.
+- 다른 workflow가 과하고, 반복 수정과 검증만 남았을 때.
+- 중간에 끊겨도 같은 owner가 `progress.md`와 검증 증거로 재개할 수 있을 때.
+
+### 산출물
+- 현재 피처의 목표, 제외 범위, 검증 명령.
+- 반복 루프에서 고친 diff와 실패·성공 증거.
+- `progress.md`, `feature_list.json`, 필요 시 `session-handoff.md` 갱신.
+- 종료 시 clean restart 가능 상태.
+
+### 경계
+- 여러 story를 durable하게 추적해야 하면 `$ultragoal`을 쓴다.
+- 병렬화가 실제로 유리하면 `$team`이나 native subagents로 나눈다.
+- ralph 활성 중 계획 산출물이 없으면 먼저 planning gate를 닫는다.
+- 정본 승인, push/tag, schema 정책처럼 외부 결정이 필요한 항목은 묻거나 별도 story로 분리한다.
+
+### 완료 기준
+- 단일 피처가 Definition of Done을 만족하고 실제 검증 출력이 있다.
+- 상태 파일이 다음 세션에서 바로 재시작 가능한 내용을 담고 있다.
+- ralph loop가 불필요하게 열린 채 남아 있지 않다.
+- durable multi-story 추적이 필요한 경우 ultragoal ledger로 handoff되어 있다.
