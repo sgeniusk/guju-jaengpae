@@ -545,3 +545,25 @@ OMX CLI tmux가 없는 Codex App 표면에서는 native subagents로 read-only r
 - 테스트 증거가 leader의 통합 검증으로 재현 가능하다.
 - unresolved decision이 구현 diff 안에 숨지 않고 보고서에 남아 있다.
 - leader가 worker 결과를 읽고 merge, reject, follow-up 중 하나로 판정할 수 있다.
+
+## G106 — leader diff and init
+
+leader가 통합 diff를 읽고 `./init.sh`를 직접 실행한다.
+
+### 해야 할 일
+- worker 보고와 실제 `git diff`가 같은 범위를 말하는지 확인한다.
+- shared file 충돌, 상태 파일 누락, stale 문구, unintended Resource 변경을 찾는다.
+- 표적 테스트가 통과했더라도 마지막에는 leader가 직접 `./init.sh`를 실행한다.
+- 실패나 경고가 있으면 worker에게 되돌리기 전에 leader가 원인 범위를 좁힌다.
+
+### 운영 원칙
+- worker가 실행한 테스트는 증거지만 완료 판정의 대체물이 아니다.
+- leader는 `git diff --check`, `git status --short`, 관련 diff read를 최소 확인으로 둔다.
+- `./init.sh`의 known ObjectDB/resource warning은 기록하되 신규 script error나 assertion failure와 구분한다.
+- 검증 결과는 checkpoint, progress, handoff 중 필요한 곳에 같은 숫자로 남긴다.
+
+### 완료 기준
+- leader가 통합 diff를 직접 읽었다.
+- `./init.sh` 결과의 assertion 수, pass/fail, known warning이 기록되어 있다.
+- worktree 상태와 외부 side effect 실행 여부가 확인되어 있다.
+- 실패가 있으면 완료 처리 대신 owner와 다음 수정 범위가 정해져 있다.
