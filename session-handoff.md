@@ -46,6 +46,7 @@ feat-027 세션 커밋은 이미 push됨. 정확한 미푸시 수는 `git log or
 - 카드 데이터 — `resources/cards/*.tres`, `resources/lords/*.tres`. 카탈로그 `scripts/resources/card_catalog.gd`, 오토로드 wrapper `scripts/autoloads/card_library.gd`. `lord_select`는 `CardLibrary.lord_list()`로 군주 버튼을 만든다.
 - 테스트 — `test/test_*.gd`, 러너 `test/runner.gd`. `./init.sh`가 import+검증+스모크+테스트 일괄.
 - QA 스크린샷 — `SHOT_DIR=/tmp/guju-visual-qa ./tools/shoot_visual_qa.sh`가 lord_select 1장 + 위·촉·오 battle deploy/fight/shop 9장을 생성. `./tools/shoot_ui_bundle.sh`는 기본으로 `docs/reports/phase6-ui-screens/`에 군주 선택, run_map, 전투, 상점, 패배, 최종 승리 26 PNG를 남기고 `tools/validate_screenshot_bundle.py`로 핵심 24장을 검증한다. 개별 실행은 `tools/shoot_battle.gd`(`LORD`·`SHOOT_STAGE`·`SHOOT_FORCE_RESULT` env), `tools/shoot_shop.gd`(`LORD`·`SHOP_STAGE` env), `tools/shoot_scene.gd`(`SCENE`·`SHOT_KIND` env).
+- 운영 라우팅 — `docs/agent-routing.md`가 Codex 역할 경계를 기록한다. G085 기준 `explore`는 repo 파일·심볼·패턴 매핑 전용 read-only 역할이다.
 
 ## ⚠️ 운영 함정 (검증됨)
 - **Codex stdin hang** — `codex exec "..."` 백그라운드는 `< /dev/null`로 stdin 닫을 것(안 닫으면 EOF 대기 hang).

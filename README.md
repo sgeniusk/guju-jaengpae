@@ -31,6 +31,7 @@
 - `docs/reports/phase6-ui-screens/` — G077 제품 화면 스크린샷 묶음
 - `docs/release-checklist.md` — G081 태그·릴리스 체크리스트
 - `docs/release-risks.md` — G084 알려진 리스크와 미지원 범위
+- `docs/agent-routing.md` — G085 이후 Codex 역할 라우팅 노트
 - `docs/specs/feat-037.md` — Phase 7 밸런스·릴리스 준비 스펙
 - `export_presets.cfg` — G079 macOS Desktop export preset
 - `docs/worldview.md` — 세계관·카드 스키마 정본
