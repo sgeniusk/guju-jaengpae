@@ -655,3 +655,25 @@ leader가 `feature_list.json`, `progress.md`, 필요 시 `session-handoff.md`를
 - story completion과 Codex aggregate goal 상태가 서로 모순되지 않는다.
 - 다음 story가 같은 ledger에서 자동 재개된다.
 - 사용자가 push/tag/canon approval 같은 외부 결정을 내릴 때까지 gate가 보존된다.
+
+## G111 — team for separable phases
+
+`$team`은 9세력 확장, 애셋 생산, QA처럼 분리 가능한 phase에서 함께 쓰기 좋다.
+
+### 쓸 때
+- 세력별 데이터, 스킬, 테스트, 아트 QA가 파일과 책임으로 분리될 때.
+- sprite/import 검수, screenshot 판독, 문서 검토처럼 병렬 read-only 또는 asset lane이 독립적일 때.
+- 9세력 확장 중 정본 승인 범위가 realm 또는 faction 단위로 명확히 나뉘었을 때.
+- leader가 통합 diff와 최종 `./init.sh` 검증을 직접 닫을 수 있을 때.
+
+### 쓰지 않을 때
+- Resource schema, RunState 저장, BattleSim 결정성처럼 한 owner가 강한 shared core를 바꿀 때.
+- 천계·마계 명칭이나 playable nation id가 아직 승인되지 않았을 때.
+- worker write scope가 같은 shared file로 겹치고 순서를 나눌 수 없을 때.
+- 단일 피처를 한 사람이 끝까지 구현하는 편이 더 안전할 때.
+
+### 완료 기준
+- worker별 산출물과 leader 통합 산출물이 분리되어 있다.
+- 정본 gate와 금지 scope가 team prompt에 들어 있다.
+- screenshot/asset QA와 코드 테스트가 각자 evidence를 가진다.
+- team 결과를 leader가 commit, checkpoint, state-file 기준으로 닫았다.
