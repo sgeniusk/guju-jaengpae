@@ -567,3 +567,25 @@ leader가 통합 diff를 읽고 `./init.sh`를 직접 실행한다.
 - `./init.sh` 결과의 assertion 수, pass/fail, known warning이 기록되어 있다.
 - worktree 상태와 외부 side effect 실행 여부가 확인되어 있다.
 - 실패가 있으면 완료 처리 대신 owner와 다음 수정 범위가 정해져 있다.
+
+## G107 — verifier checklist
+
+verifier가 테스트 증거, 스크린샷, 상태 파일 갱신 여부를 확인한다.
+
+### 확인 항목
+- story objective와 acceptance criteria가 실제 diff로 충족되는지.
+- `./init.sh`, 표적 테스트, export smoke, screenshot QA 중 필요한 증거가 실행되었는지.
+- `feature_list.json`, `progress.md`, `session-handoff.md` 같은 상태 파일이 필요한 만큼 갱신되었는지.
+- known warning, skipped check, external side effect 미실행 여부가 명시되었는지.
+
+### 운영 원칙
+- verifier는 “테스트가 있다”가 아니라 테스트가 어떤 claim을 증명하는지 확인한다.
+- screenshot QA는 파일 경로, 촬영 화면, 판정 결과가 함께 있어야 증거로 인정한다.
+- 상태 파일 갱신이 필요 없을 때도 그 이유가 story 범위에서 설명되어야 한다.
+- verifier가 실패를 찾으면 완료 판정을 내리지 않고 owner와 재검증 조건을 지정한다.
+
+### 완료 기준
+- claim, diff, test output, 상태 파일 갱신 여부가 서로 맞다.
+- 스크린샷이 필요한 UI/visual story는 이미지 증거가 남아 있다.
+- known warning과 미지원 범위가 새 실패와 섞이지 않는다.
+- 다음 세션이 같은 evidence trail로 재시작할 수 있다.
