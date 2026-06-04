@@ -22,6 +22,20 @@ func test_new_lord_decks_are_non_empty() -> void:
 	truthy(cat.get_lord_deck(caocao).size() > 0, "조조 시작 덱 비어있지 않음")
 	truthy(cat.get_lord_deck(sunquan).size() > 0, "손권 시작 덱 비어있지 않음")
 
+func test_lord_trait_texts_describe_implemented_effects() -> void:
+	var expected_fragments := {
+		&"lord_liubei": ["체력 +15%"],
+		&"lord_caocao": ["기병 계열 공격력 +25%"],
+		&"lord_sunquan": ["궁병·수군 공격력 +20%"],
+	}
+	for lord_id in expected_fragments:
+		var lord := cat.get_lord(lord_id)
+		not_null(lord, "%s 군주 로드" % lord_id)
+		for fragment in expected_fragments[lord_id]:
+			truthy(lord.trait_text.contains(fragment), "%s trait_text가 구현 효과를 설명" % lord_id)
+		falsy(lord.trait_text.contains("후속"), "%s trait_text에 후속 구현 문구 없음" % lord_id)
+		falsy(lord.trait_text.contains("플레이버"), "%s trait_text에 플레이버 문구 없음" % lord_id)
+
 func test_new_general_cards_load_with_matching_nation() -> void:
 	var expected := {
 		&"general_caocao": &"wei",

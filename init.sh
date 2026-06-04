@@ -74,6 +74,24 @@ if [ -f scenes/battle/battle.tscn ]; then
   run_boot_smoke "전투 씬(battle.tscn)" "$PWD/.godot/init-boot-battle.log" "res://scenes/battle/battle.tscn"
 fi
 
+# 보스 스테이지 부팅 스모크 — stage 5/10/15 battle.tscn 컨텍스트 검증
+if [ -f tools/boss_stage_boot_smoke.gd ]; then
+  echo "=== 보스 스테이지 부팅 스모크 ==="
+  "$GODOT_BIN" --headless --path . --log-file "$PWD/.godot/init-boss-stage-boot-smoke.log" --script res://tools/boss_stage_boot_smoke.gd
+fi
+
+# 전투 결과 화면 스모크 — 패배/최종 승리 종료 경로 검증
+if [ -f tools/battle_result_smoke.gd ]; then
+  echo "=== 전투 결과 화면 스모크 ==="
+  "$GODOT_BIN" --headless --path . --log-file "$PWD/.godot/init-battle-result-smoke.log" --script res://tools/battle_result_smoke.gd
+fi
+
+# 핵심 UI 툴팁/피드백 스모크 — 군주 선택·런맵·전투 배치 안내문 검증
+if [ -f tools/ui_feedback_smoke.gd ]; then
+  echo "=== UI 툴팁/피드백 스모크 ==="
+  "$GODOT_BIN" --headless --path . --log-file "$PWD/.godot/init-ui-feedback-smoke.log" --script res://tools/ui_feedback_smoke.gd
+fi
+
 # 단위 테스트 — 리포 내장 러너
 if [ -d test ]; then
   echo "=== 단위 테스트 ==="

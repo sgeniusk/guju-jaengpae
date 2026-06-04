@@ -10,6 +10,9 @@ const CAOCAO := &"skill_wei_oppress"
 const XIAHOUDUN := &"skill_wei_charge"
 const SUNQUAN := &"skill_wu_decree"
 const ZHOUYU := &"skill_wu_firewall"
+const BOSS_TYRANT := &"skill_boss_tyrant_roar"
+const BOSS_THUNDER := &"skill_boss_sky_thunder"
+const BOSS_CLEAVE := &"skill_boss_war_god_cleave"
 const _SkillSystem := preload("res://scripts/battle/skill_system.gd")
 
 func test_has_skill_and_cooldowns_match_table() -> void:
@@ -22,9 +25,15 @@ func test_has_skill_and_cooldowns_match_table() -> void:
 	eq(_SkillSystem.cooldown_for(XIAHOUDUN), 5.5, "하후돈 쿨다운")
 	eq(_SkillSystem.cooldown_for(SUNQUAN), 7.0, "손권 쿨다운")
 	eq(_SkillSystem.cooldown_for(ZHOUYU), 6.5, "주유 쿨다운")
+	eq(_SkillSystem.cooldown_for(BOSS_TYRANT), 14.0, "동탁 보스 쿨다운")
+	eq(_SkillSystem.cooldown_for(BOSS_THUNDER), 7.5, "장각 보스 쿨다운")
+	eq(_SkillSystem.cooldown_for(BOSS_CLEAVE), 6.8, "여포 보스 쿨다운")
 	truthy(_SkillSystem.has_skill(GUANYU), "표에 있는 스킬 인식")
 	truthy(_SkillSystem.has_skill(CAOCAO), "위압 스킬 인식")
 	truthy(_SkillSystem.has_skill(ZHOUYU), "화공 스킬 인식")
+	truthy(_SkillSystem.has_skill(BOSS_TYRANT), "보스 폭군 포효 인식")
+	truthy(_SkillSystem.has_skill(BOSS_THUNDER), "보스 천뢰 인식")
+	truthy(_SkillSystem.has_skill(BOSS_CLEAVE), "보스 무신참 인식")
 	falsy(_SkillSystem.has_skill(&""), "빈 스킬 없음")
 	falsy(_SkillSystem.has_skill(&"missing_skill"), "모르는 스킬 없음")
 	eq(_SkillSystem.cooldown_for(&"missing_skill"), 0.0, "없는 스킬 쿨다운 0")
@@ -126,11 +135,13 @@ func test_caocao_oppress_hits_radius_enemies_and_applies_only_weaken() -> void:
 	var caster := _caster(CAOCAO, 300.0, 300.0)
 	var near_a := _enemy(0, 380.0, 300.0)
 	var near_b := _enemy(2, 430.0, 390.0)
-	var far := _enemy(1, 500.0, 300.0)
-	_add_ready(sim, caster, [near_a, near_b, far])
+	var edge := _enemy(1, 500.0, 300.0)
+	var far := _enemy(1, 560.0, 300.0)
+	_add_ready(sim, caster, [near_a, near_b, edge, far])
 	sim.step(0.05)
-	eq(near_a.hp, 9954, "위압 반경 내 적 A 피해")
-	eq(near_b.hp, 9954, "위압 반경 내 적 B 피해")
+	eq(near_a.hp, 9899, "위압 반경 내 적 A 피해")
+	eq(near_b.hp, 9899, "위압 반경 내 적 B 피해")
+	eq(edge.hp, 9899, "위압 확장 반경 내 적 피해")
 	eq(far.hp, 9999, "위압 반경 밖 적 불변")
 	truthy(near_a.has_status("weaken"), "반경 내 적 A 약화")
 	almost(float(near_a.get_status("weaken")["magnitude"]), 0.3, 0.001, "위압 약화 배율")
@@ -180,6 +191,50 @@ func test_zhouyu_firewall_hits_enemies_in_radius_around_nearest_target() -> void
 	eq(far.hp, 9999, "화공 반경 밖 적 불변")
 	_cast_recorded(sim, caster, ZHOUYU)
 
+func test_boss_tyrant_roar_hits_near_player_units_and_weakens() -> void:
+	var sim := BattleSim.new()
+	var caster := _boss_caster(BOSS_TYRANT, 500.0, 300.0)
+	var near := _player(0, 420.0, 300.0)
+	var edge := _player(1, 500.0, 460.0)
+	var far := _player(2, 260.0, 300.0)
+	_add_ready(sim, caster, [near, edge, far])
+	sim.step(0.05)
+	eq(near.hp, 9969, "폭군 포효 근접 피해")
+	eq(edge.hp, 9969, "폭군 포효 반경 경계 피해")
+	eq(far.hp, 9999, "폭군 포효 반경 밖 불변")
+	truthy(near.has_status("weaken"), "폭군 포효 약화")
+	almost(float(near.get_status("weaken")["magnitude"]), 0.1, 0.001, "폭군 포효 약화 배율")
+	falsy(far.has_status("weaken"), "반경 밖 약화 없음")
+	_cast_recorded(sim, caster, BOSS_TYRANT)
+
+func test_boss_sky_thunder_hits_cluster_around_farthest_player_unit() -> void:
+	var sim := BattleSim.new()
+	var caster := _boss_caster(BOSS_THUNDER, 900.0, 300.0)
+	var far := _player(0, 300.0, 300.0)
+	var cluster := _player(1, 330.0, 420.0)
+	var near := _player(2, 820.0, 300.0)
+	_add_ready(sim, caster, [far, cluster, near])
+	sim.step(0.05)
+	eq(far.hp, 9929, "천뢰 중심 피해")
+	eq(cluster.hp, 9929, "천뢰 반경 피해")
+	eq(near.hp, 9999, "천뢰 반경 밖 불변")
+	_cast_recorded(sim, caster, BOSS_THUNDER)
+
+func test_boss_war_god_cleave_hits_forward_enemy_rectangle() -> void:
+	var sim := BattleSim.new()
+	var caster := _boss_caster(BOSS_CLEAVE, 820.0, 300.0)
+	var on_path := _player(0, 650.0, 360.0)
+	var past_path := _player(1, 520.0, 300.0)
+	var side_path := _player(2, 650.0, 390.1)
+	var behind := _player(1, 900.0, 300.0)
+	_add_ready(sim, caster, [on_path, past_path, side_path, behind])
+	sim.step(0.05)
+	eq(on_path.hp, 9904, "무신참 전방 직사각형 피해")
+	eq(past_path.hp, 9999, "무신참 길이 밖 불변")
+	eq(side_path.hp, 9999, "무신참 폭 밖 불변")
+	eq(behind.hp, 9999, "무신참 후방 불변")
+	_cast_recorded(sim, caster, BOSS_CLEAVE)
+
 func test_cooldown_resets_and_blocks_recast_before_interval() -> void:
 	var sim := BattleSim.new()
 	var caster := _caster(GUANYU, 300.0, 300.0)
@@ -209,6 +264,12 @@ func test_wei_wu_general_cards_carry_skill_ids() -> void:
 
 func _caster(skill_id: StringName, px: float, py: float, hp := 9999) -> BattleUnit:
 	return BattleUnit.make(BattleUnit.Team.PLAYER, 0, px, "시전자", hp, 0, 999.0, "melee", 0.0, &"caster", skill_id, "infantry", -1, py)
+
+func _boss_caster(skill_id: StringName, px: float, py: float, hp := 9999) -> BattleUnit:
+	return BattleUnit.make(BattleUnit.Team.ENEMY, 1, px, "보스", hp, 0, 999.0, "melee", 0.0, &"", skill_id, "infantry", -1, py)
+
+func _player(lane: int, px: float, py: float, hp := 9999) -> BattleUnit:
+	return BattleUnit.make(BattleUnit.Team.PLAYER, lane, px, "아군", hp, 0, 999.0, "melee", 0.0, &"", &"", "infantry", -1, py)
 
 func _enemy(lane: int, px: float, py: float, hp := 9999) -> BattleUnit:
 	return BattleUnit.make(BattleUnit.Team.ENEMY, lane, px, "표적", hp, 0, 999.0, "melee", 0.0, &"", &"", "infantry", -1, py)

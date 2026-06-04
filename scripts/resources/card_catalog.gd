@@ -6,6 +6,17 @@ const CARDS_DIR := "res://resources/cards"
 const LORDS_DIR := "res://resources/lords"
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 
+const _REALM_SORT := {
+	"mortal": 0,
+	"heaven": 1,
+	"demon": 2,
+}
+const _NATION_SORT := {
+	"shu": 0,
+	"wei": 1,
+	"wu": 2,
+}
+
 var cards: Dictionary = {}   # StringName -> CardData
 var building_cards: Dictionary = {}   # StringName -> BuildingCardData
 var lords: Dictionary = {}   # StringName -> LordData
@@ -69,6 +80,23 @@ func purchasable_ids() -> Array[StringName]:
 func get_lord(id: StringName) -> LordData:
 	return lords.get(id, null)
 
+func lord_ids() -> Array[StringName]:
+	var ids: Array[StringName] = []
+	for id in lords.keys():
+		ids.append(StringName(id))
+	ids.sort_custom(func(a: StringName, b: StringName) -> bool:
+		return _lord_sort_less(a, b)
+	)
+	return ids
+
+func lord_list() -> Array[LordData]:
+	var out: Array[LordData] = []
+	for id in lord_ids():
+		var lord := get_lord(id)
+		if lord != null:
+			out.append(lord)
+	return out
+
 # 군주의 시작 덱을 카드 id 배열로 (장수 먼저, 병종 다음)
 func get_lord_deck(lord: LordData) -> Array[StringName]:
 	var deck: Array[StringName] = []
@@ -115,3 +143,26 @@ func build_board_army(board: Dictionary, lord: LordData, run_board_rows: int = R
 			unit.set_position(start.x, start.y)
 			army.append(unit)
 	return army
+
+func _lord_sort_less(a: StringName, b: StringName) -> bool:
+	var lord_a := get_lord(a)
+	var lord_b := get_lord(b)
+	var realm_a := _realm_sort_value(lord_a)
+	var realm_b := _realm_sort_value(lord_b)
+	if realm_a != realm_b:
+		return realm_a < realm_b
+	var nation_a := _nation_sort_value(lord_a)
+	var nation_b := _nation_sort_value(lord_b)
+	if nation_a != nation_b:
+		return nation_a < nation_b
+	return String(a) < String(b)
+
+func _realm_sort_value(lord: LordData) -> int:
+	if lord == null:
+		return 999
+	return int(_REALM_SORT.get(lord.realm, 999))
+
+func _nation_sort_value(lord: LordData) -> int:
+	if lord == null:
+		return 999
+	return int(_NATION_SORT.get(String(lord.nation), 999))

@@ -16,6 +16,7 @@ GameManager="*res://scripts/autoloads/game_manager.gd"
 EventBus="*res://scripts/autoloads/event_bus.gd"
 CardLibrary="*res://scripts/autoloads/card_library.gd"
 RunManager="*res://scripts/autoloads/run_manager.gd"
+AudioManager="*res://scripts/autoloads/audio_manager.gd"
 
 [display]
 

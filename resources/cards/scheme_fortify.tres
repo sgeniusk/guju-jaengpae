@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SchemeCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/scheme_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"scheme_fortify"
+display_name = "수축"
+realm = "mortal"
+nation = &"shu"
+card_type = "scheme"
+cost = 4
+fantasy_tier = "romance"
+description = "성벽을 급히 보강해 전투 중 성 체력을 회복하는 계략."
+effect_id = &"scheme_fortify_castle"
+target_policy = "none"
+value = 160
+secondary_value = 0
+duration_sec = 0.0

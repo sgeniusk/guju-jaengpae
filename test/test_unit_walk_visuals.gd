@@ -3,6 +3,9 @@ extends TestCase
 
 const BattleView := preload("res://scripts/battle/battle.gd")
 
+func before_each() -> void:
+	RunManager.reset_run()
+
 func test_shu_infantry_walk_sheet_builds_animated_sprite_frames() -> void:
 	var view := BattleView.new()
 	var unit := _player_unit("infantry")
@@ -25,10 +28,65 @@ func test_shu_infantry_walk_sheet_builds_animated_sprite_frames() -> void:
 	body.free()
 	view.free()
 
+func test_priority_general_walk_sheets_cover_three_factions() -> void:
+	var cases: Array[Dictionary] = [
+		{"lord": &"lord_liubei", "card_id": &"general_guanyu", "path": "res://assets/sprites/units/shu/general_guanyu.png"},
+		{"lord": &"lord_caocao", "card_id": &"general_caocao", "path": "res://assets/sprites/units/wei/general_caocao.png"},
+		{"lord": &"lord_sunquan", "card_id": &"general_sunquan", "path": "res://assets/sprites/units/wu/general_sunquan.png"},
+	]
+	for data in cases:
+		RunManager.reset_run()
+		RunManager.ensure_started(StringName(data["lord"]))
+		var view := BattleView.new()
+		var unit := _player_general(StringName(data["card_id"]))
+		var texture_path := view._unit_texture_path(unit)
+		eq(texture_path, String(data["path"]), "장수 정적 텍스처 경로")
+		var body := view._create_unit_body(unit, load(texture_path) as Texture2D, Vector2(162.0, 172.0))
+		truthy(body is AnimatedSprite2D, "%s walk 시트 사용" % String(data["card_id"]))
+		if body is AnimatedSprite2D:
+			eq((body as AnimatedSprite2D).sprite_frames.get_frame_count(&"walk"), 4, "장수 walk 4프레임")
+		body.free()
+		view.free()
+
+func test_boss_walk_sheets_use_boss_specific_assets() -> void:
+	var cases: Array[Dictionary] = [
+		{"name": "마왕 동탁", "path": "res://assets/sprites/units/luoyang/boss_dongzhuo.png"},
+		{"name": "천공 장각", "path": "res://assets/sprites/units/huangtian/boss_zhangjue.png"},
+		{"name": "귀신 여포", "path": "res://assets/sprites/units/wanyao/boss_lvbu.png"},
+	]
+	for data in cases:
+		var view := BattleView.new()
+		var unit := _enemy_boss(String(data["name"]))
+		var texture_path := view._unit_texture_path(unit)
+		eq(texture_path, String(data["path"]), "보스별 정적 텍스처 경로")
+		var body := view._create_unit_body(unit, load(texture_path) as Texture2D, Vector2(204.0, 244.0))
+		truthy(body is AnimatedSprite2D, "%s walk 시트 사용" % String(data["name"]))
+		if body is AnimatedSprite2D:
+			truthy((body as AnimatedSprite2D).flip_h, "적 보스 walk 좌우반전")
+			eq((body as AnimatedSprite2D).sprite_frames.get_frame_count(&"walk"), 4, "보스 walk 4프레임")
+		body.free()
+		view.free()
+
+func test_generated_walk_sheets_keep_four_frame_strip_contract() -> void:
+	for path in [
+		"res://assets/sprites/units/shu/general_guanyu_walk.png",
+		"res://assets/sprites/units/wei/general_caocao_walk.png",
+		"res://assets/sprites/units/wu/general_sunquan_walk.png",
+		"res://assets/sprites/units/luoyang/boss_dongzhuo_walk.png",
+		"res://assets/sprites/units/huangtian/boss_zhangjue_walk.png",
+		"res://assets/sprites/units/wanyao/boss_lvbu_walk.png",
+	]:
+		truthy(ResourceLoader.exists(path), "%s 존재" % path)
+		var texture := load(path) as Texture2D
+		not_null(texture, "%s 로드" % path)
+		if texture != null:
+			eq(int(texture.get_size().x) % 4, 0, "%s 가로 4분할 가능" % path)
+			truthy(texture.get_size().y > 0.0, "%s 높이 양수" % path)
+
 func test_unit_without_walk_sheet_keeps_static_sprite() -> void:
 	var view := BattleView.new()
-	var unit := _player_unit("archer")
-	var texture := load("res://assets/sprites/units/shu/archer.png") as Texture2D
+	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 0, 300.0, "검증", 100, 1, 1.0, "melee", 0.0, &"missing_card_probe", &"", "fantasy", -1, 300.0)
+	var texture := view._placeholder_texture(140, 130, Color(0.25, 0.70, 0.55))
 
 	var body := view._create_unit_body(unit, texture, Vector2(140.0, 130.0))
 
@@ -52,5 +110,30 @@ func test_enemy_static_sprite_keeps_flip_h() -> void:
 	body.free()
 	view.free()
 
+func test_ability_buttons_use_texture_icons_when_available() -> void:
+	var view := BattleView.new()
+	view._build_hud_theme()
+
+	var button := view._make_ability_button("우", "검증", "res://assets/sprites/ui/ability_well.png")
+
+	eq(button.text, "", "아이콘이 있으면 글자 fallback 제거")
+	truthy(_has_texture_icon(button), "능력 버튼에 TextureRect 아이콘")
+	button.free()
+	view.free()
+
 func _player_unit(troop_type: String) -> BattleUnit:
 	return BattleUnit.make(BattleUnit.Team.PLAYER, 0, 300.0, "검증", 100, 1, 1.0, "melee", 0.0, &"", &"", troop_type, -1, 300.0)
+
+func _player_general(card_id: StringName) -> BattleUnit:
+	return BattleUnit.make(BattleUnit.Team.PLAYER, 0, 300.0, "검증 장수", 200, 10, 1.0, "melee", 40.0, card_id, &"skill_probe", "infantry", -1, 300.0)
+
+func _enemy_boss(display_name: String) -> BattleUnit:
+	return BattleUnit.make(BattleUnit.Team.ENEMY, 0, 900.0, display_name, 800, 20, 1.0, "melee", 25.0, &"", &"skill_boss_probe", "infantry", -1, 300.0)
+
+func _has_texture_icon(node: Node) -> bool:
+	if node is TextureRect and (node as TextureRect).texture != null:
+		return true
+	for child in node.get_children():
+		if _has_texture_icon(child):
+			return true
+	return false

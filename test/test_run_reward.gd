@@ -30,7 +30,7 @@ func test_eligible_excludes_owned_and_is_deterministic() -> void:
 		return
 	var elig := RewardPool.eligible(cat, run.owned_card_ids())
 	var elig_again := RewardPool.eligible(cat, run.owned_card_ids())
-	eq(elig.size(), 8, "시작 보드 제외 후 후보 8장")
+	eq(elig.size(), 14, "시작 손패 제외 후 후보 14장")
 	eq(elig, elig_again, "같은 입력의 후보 순서 결정적")
 	for id in elig:
 		falsy(run.owned_card_ids().has(id), "owned에 있는 카드는 후보가 아님")
@@ -40,6 +40,68 @@ func test_roll_returns_requested_count_when_pool_has_enough() -> void:
 		return
 	var roll := RewardPool.roll(cat, run.owned_card_ids(), 3)
 	eq(roll.size(), 3, "3장 보상 후보")
+
+func test_reward_pool_uses_card_type_policy_and_owned_treasures() -> void:
+	if not _require_methods(["owned_card_ids", "add_treasure"]):
+		return
+	var scheme := _add_scheme(&"scheme_reward_policy")
+	var owned_treasure := _add_treasure(&"treasure_reward_owned", 1)
+	var stackable_treasure := _add_treasure(&"treasure_reward_stackable", 2)
+	var building := _add_building(&"building_reward_policy")
+	run.add_treasure(owned_treasure.id)
+	run.add_treasure(stackable_treasure.id)
+
+	var elig := RewardPool.eligible(cat, run.owned_card_ids())
+	truthy(elig.has(scheme.id), "기본 보상 풀은 계략 포함")
+	falsy(elig.has(owned_treasure.id), "stack_limit 1 보패는 owned면 후보 제외")
+	truthy(elig.has(stackable_treasure.id), "stack_limit 여유 보패는 후보 유지")
+	falsy(elig.has(building.id), "건물은 기본 전리 보상 풀에서 제외")
+
+	var grouped := RewardPool.by_type(cat, run.owned_card_ids())
+	truthy((grouped.get("scheme", []) as Array).has(scheme.id), "타입별 pool에 계략 bucket")
+	truthy((grouped.get("treasure", []) as Array).has(stackable_treasure.id), "타입별 pool에 보패 bucket")
+	falsy((grouped.get("treasure", []) as Array).has(owned_treasure.id), "타입별 pool도 stack_limit 반영")
+
+func test_reward_pool_filters_by_profile_lord_nation_and_card_unlocks() -> void:
+	var profile := ProfileState.new_default()
+	var shu_only := RewardPool.eligible_for_profile(cat, run.owned_card_ids(), profile)
+	truthy(shu_only.has(&"general_huangzhong"), "기본 프로필은 촉 보상 유지")
+	falsy(shu_only.has(&"general_caocao"), "조조 해금 전 위 장수 제외")
+	falsy(shu_only.has(&"general_sunquan"), "손권 해금 전 오 장수 제외")
+
+	truthy(profile.unlock_lord(&"lord_caocao"), "조조 군주 해금")
+	var with_wei := RewardPool.eligible_for_profile(cat, run.owned_card_ids(), profile)
+	truthy(with_wei.has(&"general_caocao"), "위 군주 해금 후 위 장수 포함")
+	truthy(with_wei.has(&"general_xiahoudun"), "위 nation 카드 포함")
+	falsy(with_wei.has(&"general_sunquan"), "오 군주 해금 전 오 장수 제외")
+
+	truthy(profile.unlock_card(&"general_sunquan"), "개별 카드 해금")
+	var with_card := RewardPool.eligible_for_profile(cat, run.owned_card_ids(), profile)
+	truthy(with_card.has(&"general_sunquan"), "개별 카드 해금은 nation 잠금과 별개로 포함")
+
+func test_reward_pool_can_request_building_policy_explicitly() -> void:
+	var building := _add_building(&"building_reward_explicit")
+	var scheme := _add_scheme(&"scheme_reward_not_building")
+
+	var buildings := RewardPool.eligible(cat, run.owned_card_ids(), ["building"])
+	truthy(buildings.has(building.id), "명시적 building pool은 건물 포함")
+	falsy(buildings.has(scheme.id), "building pool은 계략 제외")
+	for id in buildings:
+		var card := cat.get_card(id)
+		eq(String(card.get("card_type")), "building", "명시적 pool 결과는 모두 건물")
+
+func test_reward_roll_respects_requested_card_types() -> void:
+	var scheme := _add_scheme(&"scheme_reward_roll_only")
+	var treasure := _add_treasure(&"treasure_reward_roll_only", 1)
+
+	var schemes := RewardPool.roll(cat, run.owned_card_ids(), 99, ["scheme"])
+	truthy(schemes.has(scheme.id), "계략 roll에 synthetic 계략 포함")
+	for id in schemes:
+		eq(String(cat.get_card(id).get("card_type")), "scheme", "계략만 요청하면 계략 후보만 roll")
+	var treasures := RewardPool.roll(cat, run.owned_card_ids(), 99, ["treasure"])
+	truthy(treasures.has(treasure.id), "보패 roll에 synthetic 보패 포함")
+	for id in treasures:
+		eq(String(cat.get_card(id).get("card_type")), "treasure", "보패만 요청하면 보패 후보만 roll")
 
 func test_start_run_sets_initial_hand_and_started() -> void:
 	if not _require_methods(["board_card_ids"]):
@@ -56,3 +118,31 @@ func _require_methods(methods: Array[String]) -> bool:
 		truthy(has_it, "RunState.%s 존재" % method)
 		ok = ok and has_it
 	return ok
+
+func _add_scheme(id: StringName) -> SchemeCardData:
+	var card := SchemeCardData.new()
+	card.id = id
+	card.display_name = String(id)
+	card.effect_id = &"scheme_gain_gold"
+	card.value = 3
+	cat.cards[id] = card
+	return card
+
+func _add_treasure(id: StringName, stack_limit: int) -> TreasureCardData:
+	var card := TreasureCardData.new()
+	card.id = id
+	card.display_name = String(id)
+	card.effect_id = &"treasure_attack_pct"
+	card.value = 10
+	card.stack_limit = stack_limit
+	cat.cards[id] = card
+	return card
+
+func _add_building(id: StringName) -> BuildingCardData:
+	var card := BuildingCardData.new()
+	card.id = id
+	card.display_name = String(id)
+	card.cost = 2
+	card.gold_per_sec = 1
+	cat.building_cards[id] = card
+	return card

@@ -4,8 +4,8 @@
 
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-06-04
-**활성 피처 (Active Feature)** — 없음 (feat-028 유닛 애니메이션 done)
-**현재 목표 (Current Objective)** — v0.6 진행 — feat-029 위·오 진영 깊이 + feat-020 땅 확장 + feat-021 왕의 칙령 + **feat-028 유닛 애니메이션 done**. 촉 보병 walk 시트가 이동 중 AnimatedSprite2D로 재생되고, 시트 없는 유닛은 정적 Sprite2D를 유지한다. `./init.sh` **935 단언 green**. ▶ 다음 후보 — 평원 배경 교체(사용자 미드저니), 나머지 유닛 walk 시트 점진 추가.
+**활성 피처 (Active Feature)** — feat-037 Phase 7 밸런스·릴리스 준비 (in-progress)
+**현재 목표 (Current Objective)** — Phase 4는 G054/G063으로 9세력 정본 승인→CardVocab→validator→Resource→lord_select 게이트와 현재 Resource schema 정합성을 고정했고, G055/G056은 승인 대기 blocked다. Phase 5 G064~G070으로 act-aware WaveFactory, 보스 3종, 정예/사건 node_kind, 최종 승리 조건, 런 노드 믹스, 보스별 순수 sim/부팅 스모크, 결과 화면 스모크를 잠갔다. Phase 6 G071~G077은 핵심 UI 툴팁/피드백, walk 시트/보스 렌더, realm/stage 배경, 최소 BGM/SFX, 첫 전투·보상 온보딩, HUD placeholder 감소, UI 스크린샷 묶음을 추가했다. Phase 7 G078은 난이도·edict·건물·징발·보패 수치 계약을 잠갔고, G079는 macOS Desktop export preset과 pack export 경계를 잠갔으며, G080~G081은 릴리스 기준 문서와 태그 체크리스트를 준비했다. `./init.sh`는 카드 **22개 / 2349 단언 green**이다. push는 사용자 확인 대기.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -39,14 +39,24 @@
 - [x] **feat-020 땅 확장** (Codex) — RunState board_rows 3→6/동적 block_keys·board_full, BattleSim static 6행 ROW_X, board_rows 기반 build_board_army·타일 렌더·런맵 요약, 보스 승리 보상 자동 +1행 확장. test_run_board/test_board_army/test_grid 확장. ./init.sh 876 단언 green.
 - [x] **feat-021 왕의 칙령** (Codex) — EdictCatalog 코드 레지스트리(군세/재정/축성) + StageCadence EDICT_INTERVAL=3/node_kind 우선순위 + RunState.edicts/RunManager API + run_map 3택 칙령 UI + 전투 공격/골드/성HP 전역 보정. test_stage_cadence/test_run_board 확장. ./init.sh 914 단언 green.
 - [x] **feat-028 유닛 애니메이션** (Codex) — `<unit>_walk.png` 존재 시 battle.gd가 4 AtlasTexture SpriteFrames(`walk`, 8fps loop)로 AnimatedSprite2D 렌더, 이동 delta 시 재생·정지 시 frame0. 시트 없는 유닛은 Sprite2D 유지. test_unit_walk_visuals. ./init.sh 935 단언 green.
+- [x] **feat-031/G026~G027 3국 sanity pass 일부** (Codex) — StageCadence 첫 15스테이지 node_kind baseline을 테스트로 잠그고, SkillSystem 쿨다운·피해/trait 배수/edict 수치/상점 비용은 명백한 outlier가 없어 수치 보존. 조조·손권 trait_text의 후속/플레이버 문구를 실제 호패·수전 효과 설명으로 교체하고 test_factions에 설명 동기화 테스트 추가. ./init.sh 962 단언 green.
+- [x] **feat-031/G028 시각 QA 루틴** (Codex) — `tools/visual_qa_config.gd` + `tools/shoot_visual_qa.sh`로 lord select 1장과 위·촉·오 전투 배치/교전/상점 9장을 같은 SHOT_DIR에 생성. `tools/shoot_shop.gd`도 LORD env를 받도록 확장. `/tmp/guju-visual-qa-smoke` 10 PNG(1920×1080) 생성 확인. ./init.sh 967 단언 green.
+- [x] **feat-031/G029 첫 보스 런 플로우 sanity** (Codex) — `test_run_flow_sanity.gd`가 위·촉·오 stage 1 전투→보상→stage 2 전투→보상→stage 3 칙령→stage 4 상점→stage 5 보스→보드 확장→stage 6 도달을 검증한다. 검증 중 위·오 시작 덱 최소 6장 보강, 자동 배치 전열 우선, 보상/상점 전투 카드 우선 선택, 조조 `위압` 240px/100 피해 상향을 적용했다. ./init.sh 1028 단언 green.
+- [x] **feat-031/G030 첫 5스테이지 UI 흐름** (Codex) — `tools/shoot_run_map.gd` + `tools/shoot_run_flow.sh`가 위·촉·오 run_map stage 1/3/4/5 화면 12장을 생성한다. `/tmp/guju-run-flow-qa-smoke` 12 PNG(각 1920×1080) 생성 및 stage 3 칙령·stage 4 상점·stage 5 보스 샘플 확인. ./init.sh 1029 단언 green.
+- [x] **feat-031/G031~G033 증거 정리와 Phase 7 이월** (Codex) — 헤드리스 수치 회귀는 1029 green으로, 스크린샷 증거는 `/tmp/guju-visual-qa-smoke` 10 PNG + `/tmp/guju-run-flow-qa-smoke` 12 PNG로 닫았다. 최종 밸런스는 Phase 7로 이월했고 G078에서 수치 계약을 시작했다. 남은 시각 QA 부채는 장기런·전투 중 표적 지정 체감 등이다.
+- [x] **feat-032/G034~G044 계략·보패 카드 시스템** (Codex) — `SchemeCardData`/`TreasureCardData`, 계략 발동, `SchemeCatalog`, 보패 `RunState.treasures`, `TreasureCatalog`, 타입별 `RewardPool`, validator, 초기 3+3 Resource, 실제 효과, id/primitive, mixed-flow, UI 혼동 방지를 구현했다. ./init.sh 1270 단언 green.
+- [x] **feat-033/G045~G053 저장 포맷+payload+profile+result+resume+unlock+boundary** (Codex) — `PersistenceStore`, primitive payload, `save_version`, ProfileState API, 전투 결과 기록/해금/새 런 overlay, 런 autosave/이어하기, 신규/미래 버전 테스트, unlock-aware 보상/군주 선택, 프로필 저장/로드와 저장 I/O 경계를 구현했다. **feat-034/G054/G057/G063 + feat-035/G064~G070 + feat-036/G071~G077 + feat-037/G078~G081** — 9세력 게이트, act·보스 구조, 결과 화면, UI 툴팁/피드백, walk/배경/오디오/온보딩/HUD placeholder 감소, UI 스크린샷 묶음, Phase 7 밸런스 수치 계약, macOS export preset/pack export, 릴리스 문서·태그 체크리스트를 닫았다. ./init.sh 2349 단언 green.
 ### 진행 중 (What's In Progress)
-- [ ] 없음
+- [ ] Phase 7 fresh clone 검증과 full app export 준비. Phase 4/G055·G056 마계·천계 데이터 확장은 사용자 명칭 승인 전 blocked.
 ### 다음 (What's Next)
-1. 평원 배경 교체 — 사용자 미드저니 배경 수령 후 battlefield theme 반영.
-2. 나머지 유닛 walk 시트 추가 — `<unit>_walk.png`만 배치하면 자동 AnimatedSprite2D 적용.
+1. 사용자 승인으로 천계·마계 명칭이 canon이 되면 G055/G056을 재개한다.
+2. 승인 전에는 fresh clone 검증과 full app export처럼 nation id 확정이 필요 없는 작업을 먼저 고른다.
+3. 사용자 확인이 오면 `git push origin main`으로 미푸시 커밋을 발행한다.
 
 ## 블로커 / 리스크 (Blockers / Risks)
-- [ ] 시각 QA 부채 누적 — feat-003/004/006/007/008 화면·상호작용과 feat-017 전투 중 표적 지정 체감은 헤드리스로 미확인. 사람 플레이 필요.
+- [ ] `git push origin main`은 사용자 확인 전 실행 금지. 보류 사유는 session-handoff와 Ultragoal ledger에 기록됨.
+- [ ] 신규 walk/background/UI icon `.import`는 실제 게임 에셋 import 설정이므로 다음 커밋에 포함 필요.
+- [ ] 남은 시각 QA 부채 — Phase 1 22 PNG와 G077 제품 화면 26 PNG는 증거화됨. 장기런과 전투 중 표적 지정 체감은 후속 수동/agy QA 필요.
 - [ ] Godot 4.6.3 macOS headless `get_system_ca_certificates` 경고 — 무해(종료 0).
 
 ## 내린 결정
@@ -59,12 +69,27 @@
 - 전투 로직/표현 분리, 적은 카드 아님, trait_id, 오픈필드 이후 승=모든 파도 적전멸/패=아군 전멸 — 상세 CHANGELOG.
 
 ## 이번 세션 수정 파일 (Files Modified)
+- feat-030 — README.md, docs/roadmap.md, session-handoff.md, progress.md, feature_list.json, .gitignore, assets/MANIFEST.md.
+- feat-031/G026 — docs/specs/feat-031.md, test/test_stage_cadence.gd, feature_list.json, progress.md, session-handoff.md.
+- feat-031/G027 — resources/lords/lord_caocao.tres, resources/lords/lord_sunquan.tres, test/test_factions.gd, docs/specs/feat-031.md, feature_list.json, progress.md, session-handoff.md.
+- feat-031/G028 — tools/visual_qa_config.gd, tools/shoot_visual_qa.sh, tools/shoot_battle.gd, tools/shoot_shop.gd, tools/shoot_scene.gd, test/test_visual_qa_config.gd, docs/specs/feat-031.md, feature_list.json, progress.md, session-handoff.md.
+- feat-031/G029 — test/test_run_flow_sanity.gd, scripts/battle/skill_system.gd, test/test_skills.gd, resources/lords/lord_caocao.tres, resources/lords/lord_sunquan.tres, tools/validate_cards.gd, tools/shoot_battle.gd, docs/specs/feat-029.md, docs/specs/feat-031.md, feature_list.json, progress.md, session-handoff.md.
+- feat-031/G030 — tools/shoot_run_map.gd, tools/shoot_run_map.tscn, tools/shoot_run_flow.sh, tools/visual_qa_config.gd, test/test_visual_qa_config.gd, docs/specs/feat-031.md, feature_list.json, progress.md, session-handoff.md.
+- feat-031/G033~feat-037/G081 — README.md, CHANGELOG.md, docs/roadmap.md, docs/worldview.md, docs/specs/feat-031~037.md, docs/release-checklist.md, docs/reports/phase6-ui-screens/*, export_presets.cfg, .gitignore, assets/MANIFEST.md, resources/cards/scheme_*.tres, resources/cards/treasure_*.tres, scripts/resources/*catalog/data*.gd, scripts/run/*.gd, scripts/autoloads/*.gd, scripts/battle/*.gd, scripts/screens/lord_select.gd, scripts/screens/run_map.gd, scripts/ui/card_ui_text.gd, tools/validate_cards.gd, tools/shoot_*.gd, tools/generate_*.py, tools/*smoke.gd, test/test_*.gd, init.sh, feature_list.json, progress.md, session-handoff.md.
 - feat-020 — scripts/run/run_state.gd, scripts/battle/battle_sim.gd, scripts/resources/card_catalog.gd, scripts/autoloads/run_manager.gd, scripts/battle/battle.gd, scripts/screens/run_map.gd, scripts/run/board_economy.gd, test/test_run_board.gd, test/test_board_army.gd, test/test_grid.gd.
 - feat-021 — scripts/run/edict_catalog.gd, scripts/run/edict_catalog.gd.uid, scripts/run/stage_cadence.gd, scripts/run/run_state.gd, scripts/autoloads/run_manager.gd, scripts/resources/card_catalog.gd, scripts/autoloads/card_library.gd, scripts/battle/battle.gd, scripts/screens/run_map.gd, test/test_stage_cadence.gd, test/test_run_board.gd.
 - feat-028 — scripts/battle/battle.gd, assets/MANIFEST.md, assets/sprites/units/shu/infantry_walk.png, test/test_unit_walk_visuals.gd.
 - 상태 — feature_list.json·progress.md.
 
 ## 검증 증거
+- [x] `./init.sh` (2026-06-04, feat-030/G020) → 카드 16·군주 3 검증 OK / sim 성 방어 승리 25.5s·성 노출 패배 29.0s / run_map·battle 부팅 OK / 단위 테스트 **935 단언** green. 종료 0.
+- [x] `.import` 정책 검증 (2026-06-04) → `git check-ignore -v docs/reports/v0.5-screens/*.png.import`는 `.gitignore:docs/reports/**/*.import` 매칭, `git check-ignore -v assets/sprites/units/shu/infantry_walk.png.import`는 비매칭. `git diff --check` 통과.
+- [x] `./init.sh` (2026-06-04, feat-031/G026) → `test_stage_cadence` 첫 15스테이지 node_kind baseline 추가, 단위 테스트 **950 단언** green. 종료 0.
+- [x] `./init.sh` (2026-06-04, feat-031/G027) → 조조·손권 trait_text를 실제 구현 효과 설명으로 동기화하고 `test_factions` trait 설명 테스트 추가. 수치 조정 없음. 단위 테스트 **962 단언** green. 종료 0.
+- [x] `./init.sh` (2026-06-04, feat-031/G028) → `test_visual_qa_config` 5단언 포함 단위 테스트 **967 단언** green. `bash -n tools/shoot_visual_qa.sh` 통과. `SHOT_DIR=/tmp/guju-visual-qa-smoke ./tools/shoot_visual_qa.sh`로 10 PNG(각 1920×1080) 생성.
+- [x] `./init.sh` (2026-06-04, feat-031/G029) → `test_run_flow_sanity` 60단언 포함 단위 테스트 **1028 단언** green. 위·촉·오 모두 첫 보스 승리 후 보드 확장과 stage 6 도달 확인.
+- [x] `./init.sh` (2026-06-04, feat-031/G030) → `test_visual_qa_config` stage list 포함, 단위 테스트 **1029 단언** green. `SHOT_DIR=/tmp/guju-run-flow-qa-smoke ./tools/shoot_run_flow.sh` → 12 PNG(1920×1080) 생성.
+- [x] `./init.sh` (2026-06-04, feat-037/G079) → 카드 **22개** 검증 OK, Phase 5 act·보스/결과 화면 스모크 + Phase 6 UI 피드백/walk/배경/오디오/HUD 회귀 + Phase 7 밸런스/export preset 계약, 단위 테스트 **2349 단언** green. `godot --headless --path . --export-pack "macOS Desktop" build/macos/guju-jaengpae.pck` 성공, 산출물 33MB는 `build/` ignore 경계. 종료 0.
 - [x] `./init.sh` (2026-05-30, feat-013) → 카드검증(10·1) / sim default_waves 승리 28.7s·무배치 패배 0.1s / reward / run_map·battle 부팅 / 단위 12파일 **356 단언** 통과. 종료 0.
 - [x] `./init.sh` (2026-05-30, feat-014) → 카드검증(10·1) / sim 성 방어 승리 28.7s(성HP 1200)·성 노출 패배 29.0s / reward / run_map·battle 부팅 / 단위 13파일 **383 단언** 통과. 종료 0.
 - [x] `./init.sh` (2026-05-30, feat-017) → 카드검증(10·1) / sim 성 방어 승리 28.7s·성 노출 패배 29.0s / reward / run_map·battle 부팅 / 단위 14파일 **395 단언** 통과. 종료 0.
@@ -86,10 +111,10 @@
 - [x] feat-015b 스코프 — 수정 허용 파일만 변경(scripts/battle/battle.gd, scripts/resources/card_catalog.gd, scripts/autoloads/run_manager.gd, test/test_board_army.gd, 상태 파일). 금지 영역(`battle_sim.gd`, `battle_unit.gd`, `run_state.gd`, `reward_pool.gd`, scenes/screens, resources/.tres, RunMap, TypeChart/SkillSystem/TargetRules) 미수정.
 - [x] feat-015c 스코프 — 수정 허용 파일과 테스트/스모크/상태만 변경. 금지 영역(`battle_sim.gd`, `battle_unit.gd`, `card_catalog.gd`, TargetRules/SkillSystem/WaveFactory, scenes/screens, resources/.tres, RunMap, TypeChart) 미수정.
 - [x] feat-019 스코프 — 수정 허용 파일과 테스트/상태만 변경. 금지 영역(`battle_sim.gd`, `battle_unit.gd`, `card_catalog.gd`, `target_rules.gd`, `skill_system.gd`, `type_chart.gd`, resources, `.tres`, scene 구조) 미수정.
-- [ ] 시각 플레이(읽기 전용 보드 표시→전투+장수 표적 지정+스킬 플래시+전멸 승패→보상→지도 복귀) → 사람 또는 agy 확인 필요.
+- [x] Phase 1/G049 시각 증거 — lord_select, battle deploy/fight, shop, run_map stage 1/3/4/5는 기존 22 PNG, 결과 overlay loss/win은 `/tmp/guju-g049-result` PNG 2장으로 확인. 장수 표적 지정 체감은 후속 QA 범위.
 
 ## 아카이브 포인터
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh` 935단언 green. **feat-028 done** — 촉 보병 `infantry_walk.png`는 4프레임 AnimatedSprite2D walk로 이동 중 재생되고, 시트 없는 유닛은 정적 Sprite2D를 유지한다. 다음 후보 — 평원 배경 교체, 나머지 유닛 walk 시트 점진 추가. 푸시는 사용자 확인 후.
+`./init.sh` 2349단언 green. **feat-031 G026~G033, feat-032 G034~G044, feat-033 G045~G053, feat-034 G054/G057/G063, feat-035 G064~G070, feat-036 G071~G077, feat-037 G078~G081 done** — Phase 4 9세력 확장은 정본 승인→CardVocab→validator→Resource→lord_select 순서가 고정됐고 G055/G056은 명칭 승인 대기 blocked. 다음은 fresh clone 검증과 full app export 준비. 푸시는 사용자 확인 후.

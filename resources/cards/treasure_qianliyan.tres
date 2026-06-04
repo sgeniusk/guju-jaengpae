@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TreasureCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/treasure_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"treasure_qianliyan"
+display_name = "천리안"
+realm = "mortal"
+nation = &"shu"
+card_type = "treasure"
+cost = 4
+fantasy_tier = "mythic"
+description = "런 동안 더 넓은 전리 선택지를 보게 해 주는 신묘한 보패."
+effect_id = &"treasure_reward_bonus"
+value = 1
+secondary_value = 0
+stack_limit = 1

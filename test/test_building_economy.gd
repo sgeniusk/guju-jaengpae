@@ -20,7 +20,7 @@ func test_gold_per_sec_sums_buildings_on_board() -> void:
 		"1:0": &"general_guanyu",
 		"2:2": &"building_dunjeon",
 	}
-	eq(economy.gold_per_sec(board, cat), 10, "둔전 2개는 초당 10골드")
+	eq(economy.gold_per_sec(board, cat), 2, "둔전 2개는 초당 2골드")
 	var buildings: Array = economy.buildings_on_board(board, cat)
 	eq(buildings.size(), 2, "건물 카드만 보드 경제 대상")
 	if buildings.size() == 2:
@@ -42,8 +42,8 @@ func test_apply_auras_buffs_only_units_inside_radius() -> void:
 	var outside := _unit_at(&"troop_cavalry", 2, 2)
 	var army: Array[BattleUnit] = [nearby, diagonal, outside]
 	economy.apply_auras(army, board, cat)
-	eq(nearby.effective_attack(), 18, "망루 체비셰프 반경 1 안의 유닛 공격력 +12% 반올림")
-	eq(diagonal.effective_attack(), 25, "대각선 반경 1 안의 유닛 공격력 +12% 반올림")
+	eq(nearby.effective_attack(), 18, "망루 체비셰프 반경 1 안의 유닛 공격력 +10% 반올림")
+	eq(diagonal.effective_attack(), 24, "대각선 반경 1 안의 유닛 공격력 +10% 반올림")
 	eq(outside.effective_attack(), 30, "망루 반경 밖 유닛 공격력 불변")
 
 func test_build_board_army_excludes_buildings() -> void:

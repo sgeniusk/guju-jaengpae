@@ -12,6 +12,12 @@ func get_card(id: StringName) -> CardData:
 func get_lord(id: StringName) -> LordData:
 	return catalog.get_lord(id)
 
+func lord_ids() -> Array[StringName]:
+	return catalog.lord_ids()
+
+func lord_list() -> Array[LordData]:
+	return catalog.lord_list()
+
 func get_lord_deck(lord: LordData) -> Array[StringName]:
 	return catalog.get_lord_deck(lord)
 

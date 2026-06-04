@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SchemeCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/scheme_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"scheme_levy"
+display_name = "징발"
+realm = "mortal"
+nation = &"shu"
+card_type = "scheme"
+cost = 4
+fantasy_tier = "historical"
+description = "전장 주변의 군량과 세곡을 거두어 즉시 골드를 얻는 계략."
+effect_id = &"scheme_gain_gold"
+target_policy = "none"
+value = 6
+secondary_value = 0
+duration_sec = 0.0

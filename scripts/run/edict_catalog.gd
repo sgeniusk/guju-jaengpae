@@ -7,9 +7,9 @@ const ECONOMY := &"edict_economy"
 const FORTIFY := &"edict_fortify"
 
 const EDICTS := {
-	MIGHT: {"name": "군세(軍勢)", "desc": "전 아군 공격력 +12%", "attack_pct": 0.12},
-	ECONOMY: {"name": "재정(財政)", "desc": "골드 획득 +25%", "gold_pct": 0.25},
-	FORTIFY: {"name": "축성(築城)", "desc": "성 HP +20%", "castle_hp_pct": 0.20},
+	MIGHT: {"name": "군세(軍勢)", "desc": "전 아군 공격력 +10%", "attack_pct": 0.10},
+	ECONOMY: {"name": "재정(財政)", "desc": "골드 획득 +20%", "gold_pct": 0.20},
+	FORTIFY: {"name": "축성(築城)", "desc": "성 HP +15%", "castle_hp_pct": 0.15},
 }
 
 static func attack_pct(edicts: Array) -> float:

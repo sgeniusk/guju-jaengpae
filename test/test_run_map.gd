@@ -24,9 +24,12 @@ func test_run_state_no_longer_owns_branch_map() -> void:
 func test_run_manager_exposes_linear_stage_api() -> void:
 	RunManager.ensure_started(&"lord_liubei")
 	eq(RunManager.stage_index(), 1, "초기 stage")
+	eq(RunManager.stage_node_kind(), "combat", "stage 1 effective node_kind")
 	falsy(RunManager.is_boss_stage(), "stage 1은 보스 아님")
 	falsy(RunManager.is_shop_stage(), "stage 1은 상점 아님")
 	falsy(RunManager.is_expand_stage(), "stage 1은 확장 아님")
+	falsy(RunManager.is_elite_stage(), "stage 1은 정예 아님")
+	falsy(RunManager.is_event_stage(), "stage 1은 사건 아님")
 	almost(RunManager.difficulty_scale(), 1.0, 0.0001, "stage 1 배율")
 	truthy(not RunManager.current_waves().is_empty(), "현재 파도 제공")
 
@@ -36,12 +39,89 @@ func test_run_manager_exposes_linear_stage_api() -> void:
 	eq(RunManager.stage_index(), 4, "stage 4 도달")
 	truthy(RunManager.is_shop_stage(), "stage 4는 상점 예측자만 true")
 	falsy(RunManager.is_boss_stage(), "stage 4는 보스 아님")
+	eq(RunManager.stage_node_kind(), "shop", "stage 4 effective node_kind")
 
 	RunManager.advance_stage()
 	eq(RunManager.stage_index(), 5, "stage 5 도달")
 	truthy(RunManager.is_boss_stage(), "stage 5는 보스")
 	truthy(RunManager.is_expand_stage(), "stage 5는 확장 예측자")
-	almost(RunManager.difficulty_scale(), 1.48, 0.0001, "stage 5 배율")
+	eq(RunManager.stage_node_kind(), "boss", "stage 5는 보스가 확장보다 우선")
+	almost(RunManager.difficulty_scale(), 1.40, 0.0001, "stage 5 배율")
+
+	RunManager.advance_stage()
+	RunManager.advance_stage()
+	eq(RunManager.stage_index(), 7, "stage 7 도달")
+	truthy(RunManager.is_elite_stage(), "stage 7은 정예 예측자")
+	eq(RunManager.stage_node_kind(), "elite", "stage 7 effective node_kind")
+	truthy(not RunManager.current_waves().is_empty(), "정예도 전투 파도 경로를 유지")
+
+	for _i in range(4):
+		RunManager.advance_stage()
+	eq(RunManager.stage_index(), 11, "stage 11 도달")
+	truthy(RunManager.is_event_stage(), "stage 11은 사건 예측자")
+	eq(RunManager.stage_node_kind(), "event", "stage 11 effective node_kind")
+
+func test_first_fifteen_stages_mix_major_run_nodes() -> void:
+	RunManager.ensure_started(&"lord_liubei")
+	var sequence: Array[String] = []
+	var seen := {}
+	var expand_stages: Array[int] = []
+	var event_resolved := false
+	var shop_purchases := 0
+
+	for stage in range(1, 16):
+		eq(RunManager.stage_index(), stage, "stage 순회")
+		var kind := RunManager.stage_node_kind()
+		sequence.append(kind)
+		seen[kind] = true
+
+		if ["combat", "elite", "boss"].has(kind):
+			truthy(not RunManager.current_waves().is_empty(), "전투 node는 파도 존재")
+		if kind == "edict":
+			truthy(RunManager.add_edict(&"edict_might"), "칙령 node는 edict를 누적")
+		elif kind == "shop":
+			RunManager.add_gold(999)
+			truthy(_buy_first_shop_card(), "상점 node는 카드 구매 가능")
+			shop_purchases += 1
+		elif kind == "event":
+			var before_gold := RunManager.get_gold()
+			RunManager.add_gold(20)
+			eq(RunManager.get_gold(), before_gold + 20, "사건 node는 골드 보상")
+			event_resolved = true
+		elif kind == "boss":
+			truthy(RunManager.is_expand_stage(), "보스 stage는 확장 예측자")
+			if RunManager.get_board_rows() < RunState.BOARD_ROWS_MAX:
+				truthy(RunManager.expand_board(), "보스 node는 보드 확장 보상")
+				expand_stages.append(stage)
+
+		if stage < 15:
+			RunManager.advance_stage()
+
+	eq(sequence, [
+		"combat",
+		"combat",
+		"edict",
+		"shop",
+		"boss",
+		"edict",
+		"elite",
+		"shop",
+		"edict",
+		"boss",
+		"event",
+		"edict",
+		"combat",
+		"elite",
+		"boss",
+	], "첫 15스테이지 런 node mix")
+	for kind in ["combat", "shop", "edict", "boss", "elite", "event"]:
+		truthy(seen.has(kind), "%s node 포함" % kind)
+	eq(expand_stages, [5, 10, 15], "보스 3회가 확장 3회를 제공")
+	eq(RunManager.get_board_rows(), RunState.BOARD_ROWS_MAX, "stage 15까지 보드 최대 행")
+	eq(RunManager.get_edicts().size(), 4, "stage 3/6/9/12 칙령 누적")
+	eq(shop_purchases, 2, "stage 4/8 상점 구매")
+	truthy(event_resolved, "stage 11 사건 해결")
+	truthy(RunManager.is_final_boss_stage(), "stage 15는 최종 보스")
 
 func test_branch_run_manager_methods_are_removed() -> void:
 	for method in [
@@ -90,6 +170,12 @@ func _total_attack(waves: Array) -> int:
 		for unit in wave:
 			total += unit.attack
 	return total
+
+func _buy_first_shop_card() -> bool:
+	for id in RunManager.shop_card_ids():
+		if RunManager.shop_purchase(id):
+			return true
+	return false
 
 func _has_property(obj: Object, property_name: String) -> bool:
 	for property in obj.get_property_list():

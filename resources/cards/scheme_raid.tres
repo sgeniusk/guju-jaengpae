@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SchemeCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/scheme_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"scheme_raid"
+display_name = "기습"
+realm = "mortal"
+nation = &"shu"
+card_type = "scheme"
+cost = 3
+fantasy_tier = "romance"
+description = "적의 허를 찔러 전투 중 선택한 적에게 피해를 주는 계략."
+effect_id = &"scheme_damage_enemy"
+target_policy = "enemy"
+value = 80
+secondary_value = 0
+duration_sec = 0.0

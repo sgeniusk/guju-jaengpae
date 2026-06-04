@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TreasureCardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/treasure_card_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"treasure_bingfashu"
+display_name = "병법서"
+realm = "mortal"
+nation = &"shu"
+card_type = "treasure"
+cost = 5
+fantasy_tier = "romance"
+description = "런 동안 아군 전투력을 끌어올리는 병서."
+effect_id = &"treasure_attack_pct"
+value = 10
+secondary_value = 0
+stack_limit = 2

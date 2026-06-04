@@ -29,8 +29,14 @@ static func node_icon(kind: String) -> String:
 			return "♛"
 		"shop":
 			return "상"
+		"edict":
+			return "령"
 		"expand":
 			return "+"
+		"elite":
+			return "정"
+		"event":
+			return "?"
 		_:
 			return "전"
 
@@ -48,7 +54,7 @@ static func champion_state(enemy_units: Array) -> Dictionary:
 	var champion: BattleUnit = null
 	for unit in enemy_units:
 		var enemy := unit as BattleUnit
-		if enemy != null and enemy.is_alive() and enemy.display_name == "마왕 동탁":
+		if enemy != null and enemy.is_alive() and WaveFactory.is_boss_name(enemy.display_name):
 			champion = enemy
 			break
 	if champion == null:

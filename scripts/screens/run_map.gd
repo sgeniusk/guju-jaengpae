@@ -5,11 +5,16 @@ const LORD_ID := &"lord_liubei"
 const BATTLE_SCENE := "res://scenes/battle/battle.tscn"
 const _StageCadence := preload("res://scripts/run/stage_cadence.gd")
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
+const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
 
 var _root: VBoxContainer
+var _shop_status_message := ""
 
 func _ready() -> void:
+	if not RunManager.is_run_started() and RunManager.has_run_save():
+		RunManager.load_run()
 	RunManager.ensure_started(LORD_ID)
+	AudioManager.play_music(&"battle")
 	_render()
 
 func _render() -> void:
@@ -39,15 +44,20 @@ func _build_root() -> void:
 
 func _build_stage_panel() -> void:
 	var stage := RunManager.stage_index()
+	var kind := RunManager.stage_node_kind()
 	var stage_label := Label.new()
 	stage_label.text = _stage_label(stage)
 	stage_label.add_theme_font_size_override("font_size", 44)
-	if RunManager.is_boss_stage():
+	if kind == "boss":
 		stage_label.modulate = Color(1.0, 0.55, 0.35)
-	elif RunManager.is_edict_stage():
+	elif kind == "edict":
 		stage_label.modulate = Color(0.70, 0.90, 1.0)
-	elif RunManager.is_shop_stage():
+	elif kind == "shop":
 		stage_label.modulate = Color(0.95, 0.78, 0.36)
+	elif kind == "elite":
+		stage_label.modulate = Color(1.0, 0.68, 0.78)
+	elif kind == "event":
+		stage_label.modulate = Color(0.74, 1.0, 0.68)
 	_root.add_child(stage_label)
 
 	var summary := Label.new()
@@ -59,13 +69,14 @@ func _build_stage_panel() -> void:
 		RunManager.get_gold(),
 		RunManager.difficulty_scale(),
 	]
+	summary.tooltip_text = "현재 보드 배치, 손패 장수, 보유 골드, 이번 스테이지 난이도입니다."
 	summary.add_theme_font_size_override("font_size", 26)
 	_root.add_child(summary)
 
 	var boss_note := Label.new()
 	boss_note.text = _stage_note()
 	boss_note.add_theme_font_size_override("font_size", 24)
-	boss_note.modulate = Color(1.0, 0.75, 0.45) if (RunManager.is_boss_stage() or RunManager.is_shop_stage() or RunManager.is_edict_stage()) else Color(0.78, 0.82, 0.78)
+	boss_note.modulate = Color(1.0, 0.75, 0.45) if _has_accent_note(kind) else Color(0.78, 0.82, 0.78)
 	_root.add_child(boss_note)
 
 	var board_box := VBoxContainer.new()
@@ -73,17 +84,21 @@ func _build_stage_panel() -> void:
 	_root.add_child(board_box)
 	_add_board_summary(board_box)
 
-	if RunManager.is_boss_stage():
+	if kind == "boss":
 		pass
-	elif RunManager.is_edict_stage():
+	elif kind == "edict":
 		_build_edict_panel()
 		return
-	elif RunManager.is_shop_stage():
+	elif kind == "shop":
 		_build_shop_panel()
+		return
+	elif kind == "event":
+		_build_event_panel()
 		return
 
 	var start := Button.new()
 	start.text = "전투 시작"
+	start.tooltip_text = "전투 화면으로 들어가 손패를 배치하고 전투를 시작합니다." if RunManager.get_board().is_empty() else "현재 보드 군세로 전투를 시작합니다."
 	start.custom_minimum_size = Vector2(360.0, 64.0)
 	start.add_theme_font_size_override("font_size", 28)
 	start.pressed.connect(_on_battle_pressed)
@@ -115,9 +130,17 @@ func _build_shop_panel() -> void:
 	status.modulate = Color(0.96, 0.85, 0.50)
 	status_row.add_child(status)
 
+	if _shop_status_message != "":
+		var feedback := Label.new()
+		feedback.text = _shop_status_message
+		feedback.add_theme_font_size_override("font_size", 22)
+		feedback.modulate = Color(0.72, 1.0, 0.78)
+		_root.add_child(feedback)
+
 	if RunManager.get_hand().size() > RunState.HAND_MAX:
 		var hint := Label.new()
 		hint.text = "손패 초과분은 다음 전투 배치에서 보드로 정리하세요."
+		hint.tooltip_text = "손패 권장치는 %d장입니다. 전투 배치 단계에서 빈 타일 배치나 우물로 정리할 수 있습니다." % RunState.HAND_MAX
 		hint.add_theme_font_size_override("font_size", 22)
 		hint.modulate = Color(1.0, 0.82, 0.42)
 		_root.add_child(hint)
@@ -129,11 +152,27 @@ func _build_shop_panel() -> void:
 		"building": "res://assets/sprites/ui/card_frame_building.png",
 	}
 
+	var leave := Button.new()
+	leave.text = "상점 떠나기"
+	leave.tooltip_text = "구매를 마치고 다음 스테이지로 이동합니다."
+	leave.custom_minimum_size = Vector2(360.0, 56.0)
+	leave.add_theme_font_size_override("font_size", 26)
+	leave.pressed.connect(_on_shop_leave_pressed)
+	_root.add_child(leave)
+
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(1760.0, 300.0)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_root.add_child(scroll)
+
 	# 그리드 레이아웃 — HFlowContainer로 카드 자동 줄바꿈.
 	var grid := HFlowContainer.new()
+	grid.custom_minimum_size = Vector2(1720.0, 0.0)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 20)
 	grid.add_theme_constant_override("v_separation", 20)
-	_root.add_child(grid)
+	scroll.add_child(grid)
 
 	var gold := RunManager.get_gold()
 
@@ -148,6 +187,7 @@ func _build_shop_panel() -> void:
 		# 카드 컨테이너 버튼 — 프레임 이미지 위에 텍스트를 올린다.
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(220.0, 300.0)
+		btn.tooltip_text = _shop_card_tooltip(card, can_afford)
 		btn.disabled = not can_afford
 		if not can_afford:
 			btn.modulate = Color(0.55, 0.55, 0.55, 0.80)
@@ -181,6 +221,24 @@ func _build_shop_panel() -> void:
 		name_label.modulate = Color(0.96, 0.92, 0.78)
 		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		info_box.add_child(name_label)
+
+		var route_label := Label.new()
+		route_label.text = "%s · %s" % [_CardUiText.type_label(card), _CardUiText.shop_route_label(card)]
+		route_label.add_theme_font_size_override("font_size", 15)
+		route_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		route_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		route_label.modulate = Color(0.72, 0.92, 1.0)
+		route_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info_box.add_child(route_label)
+
+		var effect_label := Label.new()
+		effect_label.text = _CardUiText.battle_brief(card)
+		effect_label.add_theme_font_size_override("font_size", 16)
+		effect_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		effect_label.modulate = Color(0.88, 0.94, 0.82)
+		effect_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info_box.add_child(effect_label)
 
 		# 비용 행 — 골드 아이콘 + 숫자.
 		var cost_row := HBoxContainer.new()
@@ -217,13 +275,6 @@ func _build_shop_panel() -> void:
 
 		grid.add_child(btn)
 
-	var leave := Button.new()
-	leave.text = "상점 떠나기"
-	leave.custom_minimum_size = Vector2(360.0, 64.0)
-	leave.add_theme_font_size_override("font_size", 28)
-	leave.pressed.connect(_on_shop_leave_pressed)
-	_root.add_child(leave)
-
 func _build_edict_panel() -> void:
 	var status := Label.new()
 	status.text = "누적 칙령 %d개 — 하나를 골라 런 전체에 적용합니다." % RunManager.get_edicts().size()
@@ -240,15 +291,35 @@ func _build_edict_panel() -> void:
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(320.0, 160.0)
 		btn.text = "%s\n%s" % [String(info.get("name", id)), String(info.get("desc", ""))]
+		btn.tooltip_text = "%s\n%s\n선택하면 즉시 적용되고 다음 스테이지로 이동합니다." % [
+			String(info.get("name", id)),
+			String(info.get("desc", "")),
+		]
 		btn.add_theme_font_size_override("font_size", 24)
 		btn.pressed.connect(_on_edict_pressed.bind(id))
 		row.add_child(btn)
+
+func _build_event_panel() -> void:
+	var status := Label.new()
+	status.text = "길목 사건 — 군량을 확보합니다."
+	status.add_theme_font_size_override("font_size", 28)
+	status.modulate = Color(0.74, 1.0, 0.68)
+	_root.add_child(status)
+
+	var take := Button.new()
+	take.text = "군량 징발 +20금"
+	take.tooltip_text = "+20금을 획득하고 다음 스테이지로 이동합니다."
+	take.custom_minimum_size = Vector2(360.0, 64.0)
+	take.add_theme_font_size_override("font_size", 28)
+	take.pressed.connect(_on_event_gold_pressed.bind(20))
+	_root.add_child(take)
 
 func _add_board_summary(parent: VBoxContainer) -> void:
 	var board := RunManager.get_board()
 	if board.is_empty():
 		var empty := Label.new()
 		empty.text = "보드 군세 없음 — 전투 화면에서 손패를 배치하세요."
+		empty.tooltip_text = "전투 화면의 배치 단계에서 손패를 선택한 뒤 빈 타일을 클릭합니다."
 		empty.add_theme_font_size_override("font_size", 22)
 		parent.add_child(empty)
 		return
@@ -259,42 +330,73 @@ func _add_board_summary(parent: VBoxContainer) -> void:
 		var card_name := card.display_name if card != null else String(board[key])
 		var label := Label.new()
 		label.text = "%s — %s" % [_block_label(key), card_name]
+		label.tooltip_text = _CardUiText.tooltip(card) if card != null else String(board[key])
 		label.add_theme_font_size_override("font_size", 21)
 		parent.add_child(label)
 
+func _shop_card_tooltip(card: CardData, can_afford: bool) -> String:
+	var text := _CardUiText.tooltip(card)
+	if not can_afford:
+		text += "\n골드가 부족합니다."
+	else:
+		text += "\n구매하면 %s" % (_CardUiText.acquisition_hint(card, card.display_name) if card != null else "손패에 추가됩니다.")
+	return text
+
 func _on_battle_pressed() -> void:
+	AudioManager.play_sfx(&"start")
 	GameManager.change_scene(BATTLE_SCENE)
 
 func _on_shop_card_pressed(id: StringName) -> void:
-	RunManager.shop_purchase(id)
+	var card := CardLibrary.get_card(id)
+	var card_name := card.display_name if card != null else String(id)
+	if RunManager.shop_purchase(id):
+		_shop_status_message = _CardUiText.acquisition_hint(card, card_name)
+		AudioManager.play_sfx(&"gold")
+	else:
+		_shop_status_message = "구매 실패 — %s" % card_name
+		AudioManager.play_sfx(&"defeat")
 	_render()
 
 func _on_shop_leave_pressed() -> void:
+	AudioManager.play_sfx(&"ui")
+	_shop_status_message = ""
 	RunManager.advance_stage()
 	_render()
 
 func _on_edict_pressed(id: StringName) -> void:
+	AudioManager.play_sfx(&"ui")
 	RunManager.add_edict(id)
 	RunManager.advance_stage()
 	_render()
 
+func _on_event_gold_pressed(amount: int) -> void:
+	AudioManager.play_sfx(&"gold")
+	RunManager.add_gold(amount)
+	RunManager.advance_stage()
+	_render()
+
 func _stage_label(stage: int) -> String:
-	if RunManager.is_boss_stage():
-		return _StageCadence.stage_label(stage)
-	if RunManager.is_edict_stage():
-		return "스테이지 %d — 왕의 칙령" % stage
-	if RunManager.is_shop_stage():
-		return "스테이지 %d — 상점" % stage
 	return _StageCadence.stage_label(stage)
 
 func _stage_note() -> String:
-	if RunManager.is_boss_stage():
-		return "강적 출현"
-	if RunManager.is_edict_stage():
-		return "왕명이 내려 런 전체 보정을 선택합니다."
-	if RunManager.is_shop_stage():
-		return "전투 전 군자금으로 카드를 구매합니다."
-	return "적 군세가 성을 향해 진군합니다."
+	match RunManager.stage_node_kind():
+		"boss":
+			return "강적 출현"
+		"edict":
+			return "왕명이 내려 런 전체 보정을 선택합니다."
+		"shop":
+			return "전투 전 군자금으로 카드를 구매합니다."
+		"elite":
+			return "정예 군세가 진군합니다."
+		"event":
+			return "짧은 사건을 해결하고 다음 길로 나아갑니다."
+		_:
+			if RunManager.stage_index() == 1:
+				return "첫 전투입니다. 전투 화면에서 손패 카드를 고르고 빈 타일에 배치한 뒤 전투 시작을 누르세요."
+			return "적 군세가 성을 향해 진군합니다."
+
+func _has_accent_note(kind: String) -> bool:
+	return ["boss", "edict", "shop", "elite", "event"].has(kind)
 
 func _block_label(block_key: String) -> String:
 	var parts := block_key.split(":")

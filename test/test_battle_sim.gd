@@ -49,6 +49,31 @@ func test_unit_cooldown_limits_attacks_until_interval_passes() -> void:
 	eq(enemy.hp, 93, "공격 간격 전에는 추가 피해 없음")
 	truthy(player.cooldown > 0.0, "공격 간격이 아직 남아 있음")
 
+func test_apply_battle_effect_fortifies_castle_without_forcing_result() -> void:
+	var sim := BattleSim.new()
+	var castle := sim.add_castle(100)
+	castle.take_damage(40)
+	var applied := sim.apply_battle_effect({"castle_hp_delta": 25})
+	eq(applied.get("castle_hp_delta", 0), 25, "수축 계략 적용량 반환")
+	eq(castle.max_hp, 125, "성 최대 HP 증가")
+	eq(castle.hp, 85, "성 현재 HP도 같은 양 회복")
+	eq(sim.result, BattleSim.Result.ONGOING, "배치 단계 성 보강은 승패를 강제하지 않음")
+
+func test_apply_battle_effect_damage_enemy_updates_hp_events_and_result() -> void:
+	var sim := BattleSim.new()
+	var player := _unit(BattleUnit.Team.PLAYER, 0, 300.0, 300.0, "검병", 100, 0, 1.0, "melee", 0.0)
+	var enemy := _unit(BattleUnit.Team.ENEMY, 2, 320.0, 300.0, "기습 표적", 30, 0, 1.0, "melee", 0.0)
+	sim.add_unit(player)
+	sim.add_unit(enemy)
+	var applied := sim.apply_battle_effect({"damage_enemy": {"amount": 40, "target_policy": "enemy"}})
+	eq(applied.get("target", null), enemy, "계략 피해는 첫 생존 적을 대상으로 함")
+	eq(applied.get("damage_enemy", 0), 40, "계략 피해량 반환")
+	eq(sim.enemy_units.size(), 0, "계략 피해로 죽은 적 제거")
+	eq(sim.result, BattleSim.Result.PLAYER_WIN, "계략 피해도 승리 판정에 반영")
+	eq(sim.last_damage_events.size(), 1, "계략 피해 이벤트 기록")
+	if sim.last_damage_events.size() > 0:
+		eq(sim.last_damage_events[0].get("kind", ""), "scheme", "피해 이벤트 종류는 scheme")
+
 func _add_starting_deck(sim: BattleSim, cat: CardCatalog, lord: LordData) -> void:
 	var tile := 0
 	for card_id in cat.get_lord_deck(lord):

@@ -120,6 +120,37 @@ func step(delta: float) -> void:
 	_cleanup_dead()
 	_update_result()
 
+func apply_battle_effect(effect: Dictionary) -> Dictionary:
+	var applied := {
+		"castle_hp_delta": 0,
+		"damage_enemy": 0,
+		"target": null,
+	}
+	var castle_delta := maxi(0, int(effect.get("castle_hp_delta", 0)))
+	if castle_delta > 0 and castle != null and castle.is_alive():
+		castle.max_hp = maxi(1, castle.max_hp + castle_delta)
+		castle.hp = mini(castle.max_hp, castle.hp + castle_delta)
+		applied["castle_hp_delta"] = castle_delta
+	var damage: Dictionary = effect.get("damage_enemy", {})
+	var damage_amount := maxi(0, int(damage.get("amount", 0)))
+	var target := _first_alive_enemy()
+	if damage_amount > 0 and target != null:
+		target.take_damage(damage_amount)
+		last_damage_events.append({
+			"target": target,
+			"amount": damage_amount,
+			"px": target.px,
+			"py": target.py,
+			"team": target.team,
+			"is_crit": false,
+			"kind": "scheme",
+		})
+		applied["damage_enemy"] = damage_amount
+		applied["target"] = target
+		_cleanup_dead()
+		_update_result()
+	return applied
+
 func run_to_completion(dt: float = 0.1, max_time: float = 120.0) -> int:
 	var t := 0.0
 	while not is_over() and t < max_time:
@@ -134,6 +165,12 @@ func _spawn_next_wave() -> void:
 	for u in next_wave:
 		add_unit(u)
 	wave_index += 1
+
+func _first_alive_enemy() -> BattleUnit:
+	for enemy in enemy_units:
+		if enemy != null and enemy.is_alive():
+			return enemy
+	return null
 
 func _reach_of(u: BattleUnit) -> float:
 	return RANGED_REACH if u.attack_range == "ranged" else MELEE_REACH

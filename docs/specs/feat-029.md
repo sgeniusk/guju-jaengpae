@@ -27,14 +27,14 @@ return u
 
 | 장수 | skill_id | 효과 | 쿨다운 | 참고 패턴 |
 |---|---|---|---|---|
-| 조조 `general_caocao` | `skill_wei_oppress` (위압 威壓) | 시전자 주변 180px 반경 모든 적 45 피해 + weaken 0.3 / 2.5초 | 6.0 | 장비 호통(반경+weaken, taunt 제거) |
+| 조조 `general_caocao` | `skill_wei_oppress` (위압 威壓) | 시전자 주변 240px 반경 모든 적 100 피해 + weaken 0.3 / 2.5초 | 6.0 | 장비 호통(반경+weaken, taunt 제거), G029 런 플로우 검증 보정 |
 | 하후돈 `general_xiahoudun` | `skill_wei_charge` (발돌 拔突) | 전방 240×130 직사각형 적 75 피해 | 5.5 | 조운 단기필마(전방 직사각형) |
 | 손권 `general_sunquan` | `skill_wu_decree` (결단 決斷) | 적 중 max_hp 최고 1명 130 피해(참수) | 7.0 | 황충 백보천양(단일) + highest_hp 선택 |
 | 주유 `general_zhouyu` | `skill_wu_firewall` (화공 火攻) | 가장 가까운 적 중심 반경 200px 적 65 피해 | 6.5 | 제갈량 팔진도(반경 광역) |
 
 - weaken·반경·전방 직사각형 판정은 기존 헬퍼/로직을 재사용한다(중복 구현 금지).
 - 손권 결단의 "max_hp 최고 적" 선택은 적 목록을 순회해 max_hp 최대 유닛을 고른다(TargetRules의 highest_hp 로직 참고 가능).
-- 수치는 촉 기준(80/110/45/60/25 피해, 5~7초)과 균형을 맞춘 값이다. 그대로 사용한다.
+- 수치는 촉 기준(80/110/45/60/25 피해, 5~7초)과 균형을 맞춘 값이다. 단, 조조 `위압`은 G029 첫 보스 런 플로우 검증에서 위나라 초반 안정성이 부족해 240px/100 피해로 상향했다.
 
 ## 3. `.tres` 수정 (4개)
 `resources/cards/general_{caocao,xiahoudun,sunquan,zhouyu}.tres`에 `skill_id`·`skill_text`를 채운다.

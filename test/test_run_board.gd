@@ -2,6 +2,7 @@
 extends TestCase
 
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
+const _BoardEconomy := preload("res://scripts/run/board_economy.gd")
 
 var cat: CardCatalog
 var lord: LordData
@@ -61,24 +62,27 @@ func test_block_keys_follow_board_rows() -> void:
 
 func test_start_run_places_lord_deck_in_hand_and_resets_board_gold() -> void:
 	run.edicts.append(&"edict_might")
+	run.add_treasure(&"treasure_old")
 	run.start_run(lord, cat)
 	truthy(_has_property(run, "board"), "RunState.board 존재")
 	truthy(_has_property(run, "hand"), "RunState.hand 존재")
 	truthy(_has_property(run, "gold"), "RunState.gold 존재")
+	truthy(_has_property(run, "treasures"), "RunState.treasures 존재")
 	truthy(run.has_method("board_card_ids"), "RunState.board_card_ids 존재")
-	if not _has_property(run, "board") or not _has_property(run, "hand") or not _has_property(run, "gold") or not run.has_method("board_card_ids"):
+	if not _has_property(run, "board") or not _has_property(run, "hand") or not _has_property(run, "gold") or not _has_property(run, "treasures") or not run.has_method("board_card_ids"):
 		return
 	eq(run.board.size(), 0, "시작 보드는 비어 있음")
 	eq(run.hand, cat.get_lord_deck(lord), "유비 시작 카드 6장은 손패에 들어감")
 	eq(run.gold, 0, "시작 골드는 0")
 	eq(run.board_card_ids(), [], "시작 보드 카드 없음")
 	eq(run.edicts, [], "시작 시 칙령 누적 초기화")
+	eq(run.treasures, [], "시작 시 보패 초기화")
 
 func test_edict_catalog_sums_stacked_modifiers() -> void:
 	var edicts := [&"edict_might", &"edict_might", &"edict_economy", &"edict_fortify", &"missing"]
-	almost(_EdictCatalog.attack_pct(edicts), 0.24, 0.0001, "군세 2회는 공격력 +24%")
-	almost(_EdictCatalog.gold_pct(edicts), 0.25, 0.0001, "재정 1회는 골드 +25%")
-	almost(_EdictCatalog.castle_hp_pct(edicts), 0.20, 0.0001, "축성 1회는 성 HP +20%")
+	almost(_EdictCatalog.attack_pct(edicts), 0.20, 0.0001, "군세 2회는 공격력 +20%")
+	almost(_EdictCatalog.gold_pct(edicts), 0.20, 0.0001, "재정 1회는 골드 +20%")
+	almost(_EdictCatalog.castle_hp_pct(edicts), 0.15, 0.0001, "축성 1회는 성 HP +15%")
 	eq(_EdictCatalog.all_ids(), [&"edict_might", &"edict_economy", &"edict_fortify"], "칙령 후보 3종 고정")
 	eq(_EdictCatalog.info(&"edict_might").get("name", ""), "군세(軍勢)", "칙령 info 조회")
 
@@ -86,18 +90,18 @@ func test_edict_might_applies_after_lord_traits_and_stacks() -> void:
 	var might_twice := [&"edict_might", &"edict_might"]
 	var infantry := cat.build_player_unit(&"troop_infantry", 0, 0.0, lord, might_twice)
 	not_null(infantry, "촉 보병 생성")
-	eq(infantry.attack, 20, "군세 2회는 기본 공격력 16을 +24%로 보정")
+	eq(infantry.attack, 19, "군세 2회는 기본 공격력 16을 +20%로 보정")
 
 	var caocao := cat.get_lord(&"lord_caocao")
 	var cavalry := cat.build_player_unit(&"troop_cavalry", 0, 0.0, caocao, might_twice)
 	not_null(cavalry, "호패 기병 생성")
-	eq(cavalry.attack, 47, "호패 25% 적용 뒤 군세 24%를 곱셈 적용")
+	eq(cavalry.attack, 46, "호패 25% 적용 뒤 군세 20%를 곱셈 적용")
 
 	var board := {"0:0": &"troop_infantry"}
 	var army: Array = cat.build_board_army(board, lord, RunState.BOARD_ROWS_START, might_twice)
 	eq(army.size(), 1, "build_board_army가 칙령 배열 전달")
 	if army.size() == 1:
-		eq(army[0].attack, 20, "보드 군세도 군세 칙령 공격력 반영")
+		eq(army[0].attack, 19, "보드 군세도 군세 칙령 공격력 반영")
 
 func test_place_from_hand_moves_card_to_free_block_only() -> void:
 	if not _require_methods(["hand_add", "place_from_hand"]):
@@ -145,7 +149,7 @@ func test_board_full_tracks_expanded_capacity() -> void:
 	truthy(run.board_full(), "4행 12칸을 채우면 가득 참")
 
 func test_discard_from_hand_removes_card_and_adds_well_gold() -> void:
-	if not _require_methods(["hand_add", "discard_from_hand"]):
+	if not _require_methods(["hand_add", "discard_from_hand", "consume_from_hand"]):
 		return
 	run.hand_add(&"general_zhaoyun")
 	run.hand_add(&"troop_crossbow")
@@ -154,9 +158,13 @@ func test_discard_from_hand_removes_card_and_adds_well_gold() -> void:
 	eq(run.gold, 10, "우물 골드 +10")
 	falsy(run.discard_from_hand(5), "잘못된 index 버리기 실패")
 	eq(run.gold, 10, "실패한 버리기는 골드 불변")
+	run.hand_add(&"scheme_test")
+	eq(run.consume_from_hand(1), &"scheme_test", "소비는 선택한 손패 id 반환")
+	eq(run.hand, [&"general_zhaoyun"], "소비한 카드는 손패에서 제거")
+	eq(run.consume_from_hand(9), &"", "잘못된 index 소비는 빈 id")
 
 func test_owned_card_ids_and_gold_spend_rules() -> void:
-	if not _require_methods(["hand_add", "hand_over_limit", "owned_card_ids", "add_gold", "spend_gold"]):
+	if not _require_methods(["hand_add", "hand_over_limit", "owned_card_ids", "add_treasure", "treasure_ids", "add_gold", "spend_gold"]):
 		return
 	run.hand_add(&"general_zhaoyun")
 	falsy(run.hand_over_limit(), "손패 1장은 제한 이내")
@@ -165,15 +173,44 @@ func test_owned_card_ids_and_gold_spend_rules() -> void:
 	falsy(run.hand_over_limit(), "손패 3장은 제한 이내")
 	run.hand_add(&"troop_marine")
 	truthy(run.hand_over_limit(), "손패 4장은 제한 초과")
+	run.add_treasure(&"treasure_test")
 	var owned: Array = run.owned_card_ids()
-	eq(owned.size(), run.board.size() + run.hand.size(), "owned = board + hand")
+	eq(owned.size(), run.board.size() + run.hand.size() + run.treasures.size(), "owned = board + hand + treasures")
 	truthy(owned.has(&"general_zhaoyun"), "손패 카드도 owned")
+	truthy(owned.has(&"treasure_test"), "보패도 owned")
+	eq(run.treasure_ids(), [&"treasure_test"], "treasure_ids는 보패 id 복사")
+	var treasure_copy := run.treasure_ids()
+	treasure_copy.append(&"mutated")
+	eq(run.treasure_ids(), [&"treasure_test"], "treasure_ids 반환 배열 수정은 상태 불변")
 	run.add_gold(15)
 	eq(run.gold, 15, "골드 추가")
 	truthy(run.spend_gold(10), "보유 골드 이내 소비 성공")
 	eq(run.gold, 5, "소비 후 차감")
 	falsy(run.spend_gold(6), "부족한 골드 소비 실패")
 	eq(run.gold, 5, "실패한 소비는 골드 불변")
+
+func test_run_state_persistent_fields_remain_id_or_primitive_values() -> void:
+	run.start_run(lord, cat)
+	truthy(run.place_from_hand(0, "0:0"), "보드 배치 성공")
+	run.hand_add(&"scheme_raid")
+	run.add_edict(&"edict_might")
+	run.add_treasure(&"treasure_bingfashu")
+	run.add_gold(12)
+	run.expand_board()
+	run.advance_stage()
+
+	eq(typeof(run.lord_id), TYPE_STRING_NAME, "군주는 Resource가 아니라 id")
+	_assert_board_id_dictionary(run.board, "board")
+	_assert_id_array(run.hand, "hand")
+	_assert_id_array(run.edicts, "edicts")
+	_assert_id_array(run.treasures, "treasures")
+	_assert_id_array(run.owned_card_ids(), "owned_card_ids")
+	eq(typeof(run.gold), TYPE_INT, "gold는 primitive int")
+	eq(typeof(run.board_rows), TYPE_INT, "board_rows는 primitive int")
+	eq(typeof(run.stage_index), TYPE_INT, "stage_index는 primitive int")
+	eq(typeof(run.wave_index), TYPE_INT, "wave_index는 primitive int")
+	eq(typeof(run.command_points), TYPE_INT, "command_points는 primitive int")
+	eq(typeof(run.started), TYPE_BOOL, "started는 primitive bool")
 
 func test_starting_hand_can_exceed_soft_limit() -> void:
 	if not _require_methods(["hand_over_limit"]):
@@ -185,9 +222,9 @@ func test_starting_hand_can_exceed_soft_limit() -> void:
 func test_run_manager_deck_and_add_card_bridge_to_hand() -> void:
 	RunManager.reset_run()
 	RunManager.ensure_started(&"lord_liubei")
-	for method in ["get_deck", "add_card", "get_hand", "hand_add"]:
+	for method in ["get_deck", "add_card", "acquire_card", "get_hand", "hand_add", "get_treasures"]:
 		truthy(RunManager.has_method(method), "RunManager.%s 존재" % method)
-	if not RunManager.has_method("get_deck") or not RunManager.has_method("add_card") or not RunManager.has_method("get_hand") or not RunManager.has_method("hand_add"):
+	if not RunManager.has_method("get_deck") or not RunManager.has_method("add_card") or not RunManager.has_method("acquire_card") or not RunManager.has_method("get_hand") or not RunManager.has_method("hand_add") or not RunManager.has_method("get_treasures"):
 		return
 	if not RunManager.state.has_method("board_card_ids") or not RunManager.state.has_method("first_free_block") or not RunManager.state.has_method("board_full"):
 		truthy(false, "RunManager.state 보드 브리지 API 존재")
@@ -201,10 +238,12 @@ func test_run_manager_deck_and_add_card_bridge_to_hand() -> void:
 	eq(RunManager.get_deck(), [], "add_card는 보드 자동 배치 안 함")
 	RunManager.hand_add(&"troop_crossbow")
 	truthy(RunManager.get_hand().has(&"troop_crossbow"), "hand_add 직접 위임")
+	falsy(RunManager.acquire_card(&"missing_card"), "없는 카드는 획득 실패")
+	eq(RunManager.get_treasures(), [], "일반 카드 획득은 보패를 늘리지 않음")
 
 func test_run_manager_delegates_hand_board_and_gold_operations() -> void:
 	RunManager.reset_run()
-	for method in ["add_card", "get_gold", "add_gold", "spend_gold", "place_from_hand", "discard_from_hand", "board_full"]:
+	for method in ["add_card", "get_gold", "add_gold", "spend_gold", "place_from_hand", "discard_from_hand", "board_full", "hand_card_type", "can_place_hand_card", "can_cast_scheme_from_hand", "cast_scheme_from_hand"]:
 		truthy(RunManager.has_method(method), "RunManager.%s 존재" % method)
 	if not RunManager.has_method("get_gold") or not RunManager.has_method("add_gold") or not RunManager.has_method("spend_gold"):
 		return
@@ -220,6 +259,119 @@ func test_run_manager_delegates_hand_board_and_gold_operations() -> void:
 	RunManager.state.hand_add(&"general_huangzhong")
 	truthy(RunManager.discard_from_hand(0), "RunManager.discard_from_hand 위임")
 	eq(RunManager.get_gold(), 15, "우물 버리기 골드 반영")
+
+func test_run_manager_separates_scheme_casting_from_board_placement() -> void:
+	CardLibrary.catalog.load_all()
+	RunManager.reset_run()
+	var scheme := SchemeCardData.new()
+	scheme.id = &"scheme_test_order"
+	scheme.display_name = "군령 시험"
+	scheme.effect_id = &"scheme_gain_gold"
+	scheme.value = 7
+	CardLibrary.catalog.cards[scheme.id] = scheme
+	RunManager.state.hand_add(scheme.id)
+	RunManager.state.hand_add(&"troop_infantry")
+
+	eq(RunManager.hand_card_type(0), "scheme", "손패 0번은 계략")
+	truthy(RunManager.can_cast_scheme_from_hand(0), "계략은 발동 가능")
+	eq((RunManager.scheme_result_from_hand(0).get("run", {}) as Dictionary).get("gold_delta", 0), 7, "계략 결과는 run 변경 반환")
+	falsy(RunManager.can_place_hand_card(0), "계략은 보드 배치 불가")
+	falsy(RunManager.place_from_hand(0, "0:0"), "계략 배치 시도 실패")
+	eq(RunManager.get_board(), {}, "계략은 보드에 들어가지 않음")
+	truthy(RunManager.cast_scheme_from_hand(0), "계략 발동은 손패 소비")
+	eq((RunManager.get_last_scheme_result().get("run", {}) as Dictionary).get("gold_delta", 0), 7, "마지막 계략 결과 기록")
+	eq(RunManager.get_gold(), 7, "징발 계략은 런 골드를 즉시 올림")
+	eq(RunManager.get_hand(), [&"troop_infantry"], "계략 소비 후 유닛만 남음")
+	truthy(RunManager.can_place_hand_card(0), "남은 유닛은 배치 가능")
+	truthy(RunManager.place_from_hand(0, "0:0"), "유닛 배치 성공")
+	eq(RunManager.get_board().get("0:0"), &"troop_infantry", "유닛만 보드 배치")
+	CardLibrary.catalog.cards.erase(scheme.id)
+
+func test_run_manager_acquires_treasure_to_treasures_not_hand() -> void:
+	CardLibrary.catalog.load_all()
+	RunManager.reset_run()
+	var treasure := _register_test_treasure(&"treasure_test_attack_owner", &"treasure_attack_pct", 12, 3, 1)
+	var before_hand := RunManager.get_hand()
+
+	truthy(RunManager.acquire_card(treasure.id), "보패 획득 성공")
+	eq(RunManager.get_hand(), before_hand, "보패는 손패에 들어가지 않음")
+	eq(RunManager.get_treasures(), [treasure.id], "보패는 RunState.treasures에 장착")
+	var mods := RunManager.get_treasure_modifiers()
+	almost((mods.get("battle", {}) as Dictionary).get("attack_pct", 0.0), 0.12, 0.0001, "보패 공격 보정 집계")
+	falsy(RunManager.acquire_card(treasure.id), "stack_limit 1 보패 중복 획득 실패")
+	eq(RunManager.get_treasures(), [treasure.id], "중복 실패 후 보패 상태 불변")
+	CardLibrary.catalog.cards.erase(treasure.id)
+
+func test_shop_purchase_treasure_spends_gold_and_skips_hand() -> void:
+	CardLibrary.catalog.load_all()
+	RunManager.reset_run()
+	var treasure := _register_test_treasure(&"treasure_test_gold_shop", &"treasure_gold_pct", 25, 4, 1)
+	RunManager.add_gold(8)
+	var before_hand := RunManager.get_hand()
+
+	truthy(RunManager.shop_purchase(treasure.id), "상점 보패 구매 성공")
+	eq(RunManager.get_gold(), 4, "보패 비용만큼 골드 차감")
+	eq(RunManager.get_hand(), before_hand, "상점 보패도 손패에 들어가지 않음")
+	eq(RunManager.get_treasures(), [treasure.id], "상점 보패 장착")
+	almost((RunManager.get_treasure_modifiers().get("economy", {}) as Dictionary).get("gold_pct", 0.0), 0.25, 0.0001, "보패 골드 보정 집계")
+	falsy(RunManager.shop_purchase(treasure.id), "stack_limit 중복 보패 구매 실패")
+	eq(RunManager.get_gold(), 4, "중복 실패는 골드 불변")
+	eq(RunManager.get_treasures(), [treasure.id], "중복 실패는 보패 상태 불변")
+	CardLibrary.catalog.cards.erase(treasure.id)
+
+func test_run_manager_treasure_helpers_drive_runtime_modifiers() -> void:
+	CardLibrary.catalog.load_all()
+	RunManager.reset_run()
+	var attack := _register_test_treasure(&"treasure_test_runtime_attack", &"treasure_attack_pct", 10, 3, 1)
+	var gold := _register_test_treasure(&"treasure_test_runtime_gold", &"treasure_gold_pct", 25, 3, 1)
+	var reward := _register_test_treasure(&"treasure_test_runtime_reward", &"treasure_reward_bonus", 2, 3, 1)
+	truthy(RunManager.acquire_card(attack.id), "공격 보패 획득")
+	truthy(RunManager.acquire_card(gold.id), "골드 보패 획득")
+	truthy(RunManager.acquire_card(reward.id), "보상 보패 획득")
+	almost(RunManager.treasure_attack_pct(), 0.10, 0.0001, "전투 공격 보정 헬퍼")
+	almost(RunManager.gold_reward_pct(), 0.25, 0.0001, "전투 골드 보정 헬퍼")
+	eq(RunManager.reward_choice_count(3), 5, "보상 선택 수는 보패 보너스를 더함")
+
+	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 0, 100.0, "검병", 100, 20, 1.0, "melee", 0.0)
+	var castle := BattleUnit.make_castle(40.0, 300.0, 1200)
+	RunManager.apply_treasure_battle_modifiers([unit, castle])
+	eq(unit.attack, 22, "공격 보패는 일반 아군 공격력을 보정")
+	eq(castle.attack, 0, "성은 공격 보패 보정 대상이 아님")
+	CardLibrary.catalog.cards.erase(attack.id)
+	CardLibrary.catalog.cards.erase(gold.id)
+	CardLibrary.catalog.cards.erase(reward.id)
+
+func test_mixed_card_types_preserve_unit_troop_and_building_flow() -> void:
+	CardLibrary.catalog.load_all()
+	RunManager.reset_run()
+	RunManager.state.hand_add(&"general_zhaoyun")
+	RunManager.state.hand_add(&"troop_infantry")
+	RunManager.state.hand_add(&"building_dunjeon")
+	RunManager.state.hand_add(&"scheme_raid")
+
+	truthy(RunManager.can_place_hand_card(0), "장수는 기존처럼 배치 가능")
+	truthy(RunManager.can_place_hand_card(1), "병종은 기존처럼 배치 가능")
+	truthy(RunManager.can_place_hand_card(2), "건물은 기존처럼 배치 가능")
+	falsy(RunManager.can_place_hand_card(3), "계략은 보드 배치 흐름을 타지 않음")
+	truthy(RunManager.can_cast_scheme_from_hand(3), "계략은 발동 흐름을 유지")
+	truthy(RunManager.place_from_hand(0, "0:0"), "장수 배치")
+	truthy(RunManager.place_from_hand(0, "1:0"), "병종 배치")
+	truthy(RunManager.place_from_hand(0, "2:0"), "건물 배치")
+
+	eq(RunManager.get_hand(), [&"scheme_raid"], "배치 후 계략만 손패에 남음")
+	var board := RunManager.get_board()
+	eq(board.get("0:0"), &"general_zhaoyun", "장수 보드 id 유지")
+	eq(board.get("1:0"), &"troop_infantry", "병종 보드 id 유지")
+	eq(board.get("2:0"), &"building_dunjeon", "건물 보드 id 유지")
+	var army: Array = CardLibrary.catalog.build_board_army(board, CardLibrary.get_lord(&"lord_liubei"), RunManager.get_board_rows(), RunManager.get_edicts())
+	eq(army.size(), 2, "군세 변환은 장수·병종만 포함")
+	var army_ids: Array[StringName] = []
+	for unit in army:
+		army_ids.append(unit.card_id)
+	truthy(army_ids.has(&"general_zhaoyun"), "장수 군세 유지")
+	truthy(army_ids.has(&"troop_infantry"), "병종 군세 유지")
+	falsy(army_ids.has(&"building_dunjeon"), "건물은 군세 유닛으로 변환되지 않음")
+	eq(_BoardEconomy.gold_per_sec(board, CardLibrary.catalog), 1, "건물 경제 흐름 유지")
 
 func test_run_manager_delegates_board_expansion() -> void:
 	RunManager.reset_run()
@@ -305,3 +457,23 @@ func _block_keys() -> Array:
 	if not block_keys.is_valid():
 		return []
 	return block_keys.call()
+
+func _assert_id_array(ids: Array, label: String) -> void:
+	for id in ids:
+		eq(typeof(id), TYPE_STRING_NAME, "%s는 StringName id만 저장" % label)
+
+func _assert_board_id_dictionary(board: Dictionary, label: String) -> void:
+	for key in board.keys():
+		eq(typeof(key), TYPE_STRING, "%s key는 block string" % label)
+		eq(typeof(board[key]), TYPE_STRING_NAME, "%s value는 card id" % label)
+
+func _register_test_treasure(id: StringName, effect_id: StringName, value: int, cost: int, stack_limit: int) -> TreasureCardData:
+	var card := TreasureCardData.new()
+	card.id = id
+	card.display_name = String(id)
+	card.effect_id = effect_id
+	card.value = value
+	card.cost = cost
+	card.stack_limit = stack_limit
+	CardLibrary.catalog.cards[id] = card
+	return card

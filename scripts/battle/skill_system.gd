@@ -11,6 +11,9 @@ const WEI_OPPRESS := &"skill_wei_oppress"
 const WEI_CHARGE := &"skill_wei_charge"
 const WU_DECREE := &"skill_wu_decree"
 const WU_FIREWALL := &"skill_wu_firewall"
+const BOSS_TYRANT_ROAR := &"skill_boss_tyrant_roar"
+const BOSS_SKY_THUNDER := &"skill_boss_sky_thunder"
+const BOSS_WAR_GOD_CLEAVE := &"skill_boss_war_god_cleave"
 
 const COOLDOWNS := {
 	QINGLONG_STRIKE: 5.0,
@@ -22,6 +25,9 @@ const COOLDOWNS := {
 	WEI_CHARGE: 5.5,
 	WU_DECREE: 7.0,
 	WU_FIREWALL: 6.5,
+	BOSS_TYRANT_ROAR: 14.0,
+	BOSS_SKY_THUNDER: 7.5,
+	BOSS_WAR_GOD_CLEAVE: 6.8,
 }
 
 static func has_skill(skill_id: StringName) -> bool:
@@ -55,6 +61,12 @@ static func cast(caster: BattleUnit, sim: BattleSim) -> void:
 			_cast_wu_decree(caster, sim)
 		WU_FIREWALL:
 			_cast_wu_firewall(caster, sim)
+		BOSS_TYRANT_ROAR:
+			_cast_boss_tyrant_roar(caster, sim)
+		BOSS_SKY_THUNDER:
+			_cast_boss_sky_thunder(caster, sim)
+		BOSS_WAR_GOD_CLEAVE:
+			_cast_boss_war_god_cleave(caster, sim)
 
 static func _cast_qinglong_strike(caster: BattleUnit, sim: BattleSim) -> void:
 	var targets := _alive_enemies(caster, sim)
@@ -108,9 +120,9 @@ static func _cast_changban_roar(caster: BattleUnit, sim: BattleSim) -> void:
 
 static func _cast_wei_oppress(caster: BattleUnit, sim: BattleSim) -> void:
 	for target in _alive_enemies(caster, sim):
-		if caster.distance_to(target) <= 180.0:
-			target.take_damage(45)
-			_record_damage_event(sim, target, 45)
+		if caster.distance_to(target) <= 240.0:
+			target.take_damage(100)
+			_record_damage_event(sim, target, 100)
 			target.add_status("weaken", 2.5, 0.3, caster)
 
 static func _cast_wei_charge(caster: BattleUnit, sim: BattleSim) -> void:
@@ -145,6 +157,36 @@ static func _cast_wu_firewall(caster: BattleUnit, sim: BattleSim) -> void:
 		if target.position().distance_to(center) <= 200.0:
 			target.take_damage(65)
 			_record_damage_event(sim, target, 65)
+
+static func _cast_boss_tyrant_roar(caster: BattleUnit, sim: BattleSim) -> void:
+	for target in _alive_enemies(caster, sim):
+		if caster.distance_to(target) <= 170.0:
+			target.take_damage(30)
+			_record_damage_event(sim, target, 30)
+			target.add_status("weaken", 1.5, 0.1, caster)
+
+static func _cast_boss_sky_thunder(caster: BattleUnit, sim: BattleSim) -> void:
+	var targets := _alive_enemies(caster, sim)
+	if targets.is_empty():
+		return
+	targets.sort_custom(func(a: BattleUnit, b: BattleUnit) -> bool:
+		return caster.distance_to(a) > caster.distance_to(b)
+	)
+	var center := targets[0].position()
+	for target in targets:
+		if target.position().distance_to(center) <= 170.0:
+			target.take_damage(70)
+			_record_damage_event(sim, target, 70)
+
+static func _cast_boss_war_god_cleave(caster: BattleUnit, sim: BattleSim) -> void:
+	var forward := Vector2.RIGHT if caster.team == BattleUnit.Team.PLAYER else Vector2.LEFT
+	for target in _alive_enemies(caster, sim):
+		var offset := target.position() - caster.position()
+		var forward_distance := offset.dot(forward)
+		var side_distance := absf(offset.y)
+		if forward_distance >= 0.0 and forward_distance <= 260.0 and side_distance <= 85.0:
+			target.take_damage(95)
+			_record_damage_event(sim, target, 95)
 
 static func _record_damage_event(sim: BattleSim, target: BattleUnit, amount: int) -> void:
 	if sim == null or target == null:

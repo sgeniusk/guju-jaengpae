@@ -10,6 +10,8 @@ const _BattleHudState := preload("res://scripts/battle/hud_state.gd")
 const _BattlefieldTheme := preload("res://scripts/battle/battlefield_theme.gd")
 const _BoardEconomy := preload("res://scripts/run/board_economy.gd")
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
+const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
+const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
 
 const VIEW_ORIGIN := Vector2(520.0, 225.0)
 const VIEW_SCALE_X := 1.28
@@ -29,9 +31,15 @@ const BUILDING_W := 108.0
 const BUILDING_H := 104.0
 const COMMAND_PICK_RADIUS := 70.0
 const MAX_FLOATING_DAMAGE_LABELS := 40
+const VFX_FLOATING_Z := 4095
 const WALK_FRAME_COUNT := 4
 const WALK_FPS := 8.0
 const WALK_MOVE_EPSILON := 0.01
+const BOSS_TEXTURE_PATHS := {
+	"마왕 동탁": "res://assets/sprites/units/luoyang/boss_dongzhuo.png",
+	"천공 장각": "res://assets/sprites/units/huangtian/boss_zhangjue.png",
+	"귀신 여포": "res://assets/sprites/units/wanyao/boss_lvbu.png",
+}
 
 var _phase: int = Phase.DEPLOY
 var _sim := BattleSim.new()
@@ -52,6 +60,8 @@ var _enemy_force_max := 0
 var _last_ladder_stage := -1
 var _battle_gold_per_sec := 0
 var _battle_gold_accum := 0.0
+var _pending_scheme_battle_effects: Array[Dictionary] = []
+var _battle_outcome: Dictionary = {}
 
 var _world_root: Node2D
 var _camera: Camera2D
@@ -82,6 +92,7 @@ var _board_head: Label
 var _board_box: VBoxContainer
 var _hand_box: VBoxContainer
 var _gold_label: Label
+var _scheme_button: Button
 var _well_button: Button
 var _wave_label: Label
 var _hint_label: Label
@@ -92,7 +103,8 @@ var _overlay: Control            # 승리 보상 / 패배 재시도 패널
 func _ready() -> void:
 	_lord = CardLibrary.get_lord(LORD_ID)
 	RunManager.ensure_started(LORD_ID)
-	_theme = _BattlefieldTheme.theme_for_mode("plain")
+	AudioManager.play_music(&"battle")
+	_theme = _BattlefieldTheme.theme_for_stage(RunManager.stage_index(), _player_realm())
 	_bind_scene_nodes()
 	_build_hud_theme()
 	_build_field()
@@ -203,7 +215,7 @@ func _build_field() -> void:
 	_build_iso_base()
 	_result_label = Label.new()
 	_result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_result_label.position = Vector2(560.0, 32.0)
+	_result_label.position = Vector2(560.0, 108.0)
 	_result_label.size = Vector2(980.0, 70.0)
 	_result_label.add_theme_font_size_override("font_size", 56)
 	_result_label.visible = false
@@ -291,18 +303,21 @@ func _build_speed_controls() -> void:
 	_auto_button = Button.new()
 	_auto_button.toggle_mode = true
 	_auto_button.text = "auto"
+	_auto_button.tooltip_text = "전투 속도를 자동 진행 모드로 전환합니다."
 	_auto_button.custom_minimum_size = Vector2(70.0, 38.0)
 	_auto_button.pressed.connect(_on_auto_toggled)
 	row.add_child(_auto_button)
 	_pause_button = Button.new()
 	_pause_button.toggle_mode = true
 	_pause_button.text = "Ⅱ"
+	_pause_button.tooltip_text = "전투를 일시정지하거나 재개합니다."
 	_pause_button.custom_minimum_size = Vector2(48.0, 38.0)
 	_pause_button.pressed.connect(_on_pause_toggled)
 	row.add_child(_pause_button)
 	for value in [1.0, 2.0, 3.0]:
 		var b := Button.new()
 		b.text = "×%d" % int(value)
+		b.tooltip_text = "전투 속도를 ×%d로 바꿉니다." % int(value)
 		b.toggle_mode = true
 		b.custom_minimum_size = Vector2(58.0, 38.0)
 		b.pressed.connect(_set_speed.bind(value))
@@ -315,17 +330,20 @@ func _build_ability_bar() -> void:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 14)
 	_left_bar.add_child(box)
-	var well := _make_ability_button("우", "우물")
+	var well := _make_ability_button("우", "우물 — 선택한 손패 카드를 버리고 +%d골드를 얻습니다." % RunState.WELL_GOLD, "res://assets/sprites/ui/ability_well.png")
 	well.pressed.connect(_on_ability_well_pressed)
 	box.add_child(well)
 	_ability_buttons.append(well)
-	var focus := _make_ability_button("표", "집중표적")
+	var focus := _make_ability_button("표", "집중표적 — 전투 중 적을 클릭해 장수들의 표적을 지정합니다.", "res://assets/sprites/ui/ability_focus.png")
 	focus.toggle_mode = true
 	focus.pressed.connect(_on_focus_toggled)
 	box.add_child(focus)
 	_ability_buttons.append(focus)
-	for label in ["2", "3"]:
-		var disabled := _make_ability_button(label, "예약")
+	for data in [
+		{"label": "2", "icon": "res://assets/sprites/ui/ability_demon.png"},
+		{"label": "3", "icon": "res://assets/sprites/ui/ability_plague.png"},
+	]:
+		var disabled := _make_ability_button(String(data["label"]), "예약 — 후속 능력 슬롯입니다.", String(data["icon"]))
 		disabled.disabled = true
 		box.add_child(disabled)
 		_ability_buttons.append(disabled)
@@ -365,7 +383,7 @@ func _hud_icon(path: String, fallback: String, size: Vector2) -> Control:
 	label.add_theme_font_size_override("font_size", int(size.y * 0.72))
 	return label
 
-func _make_ability_button(fallback: String, tooltip: String) -> Button:
+func _make_ability_button(fallback: String, tooltip: String, icon_path: String = "") -> Button:
 	var button := Button.new()
 	button.theme = _hud_theme
 	button.text = fallback
@@ -378,6 +396,19 @@ func _make_ability_button(fallback: String, tooltip: String) -> Button:
 	button.add_theme_stylebox_override("hover", pressed)
 	button.add_theme_stylebox_override("pressed", pressed)
 	button.add_theme_stylebox_override("disabled", disabled)
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		button.text = ""
+		var icon := TextureRect.new()
+		icon.texture = load(icon_path) as Texture2D
+		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		icon.offset_left = 10.0
+		icon.offset_top = 10.0
+		icon.offset_right = -10.0
+		icon.offset_bottom = -10.0
+		icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.add_child(icon)
 	return button
 
 func _add_hud_bar(parent: VBoxContainer, id: String, label_text: String, fill_color: Color) -> void:
@@ -436,7 +467,7 @@ func _build_fallback_background() -> void:
 	_background_layer.add_child(ground)
 
 func _build_iso_base() -> void:
-	var tile_texture := _load_texture("res://assets/sprites/iso/tile_grass.png")
+	var tile_texture := _load_texture(_BattlefieldTheme.tile_path(_theme))
 	for col in BattleSim.COL_COUNT:
 		for row in RunManager.get_board_rows():
 			var block_key := _tile_key(col, row)
@@ -528,8 +559,9 @@ func _build_panel() -> void:
 	_update_wave_label()
 
 	var guide := Label.new()
-	guide.text = "배치 단계"
+	guide.text = "처음이라면 1. 손패 카드 선택 2. 빈 타일 클릭 3. 전투 시작. 승리하면 보상 한 장을 고르세요."
 	guide.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	guide.add_theme_font_size_override("font_size", 18)
 	_panel.add_child(guide)
 
 	_board_head = Label.new()
@@ -547,8 +579,17 @@ func _build_panel() -> void:
 	_gold_label = Label.new()
 	_panel.add_child(_gold_label)
 
+	_scheme_button = Button.new()
+	_scheme_button.theme = _hud_theme
+	_scheme_button.text = "계략 발동"
+	_scheme_button.tooltip_text = "선택한 계략 카드를 발동합니다."
+	_scheme_button.custom_minimum_size = Vector2(0.0, 40.0)
+	_scheme_button.pressed.connect(_on_scheme_pressed)
+	_panel.add_child(_scheme_button)
+
 	_well_button = Button.new()
 	_well_button.theme = _hud_theme
+	_well_button.tooltip_text = "선택한 손패 카드를 버리고 +%d골드를 얻습니다." % RunState.WELL_GOLD
 	_well_button.custom_minimum_size = Vector2(0.0, 40.0)
 	_well_button.pressed.connect(_on_well_pressed)
 	_panel.add_child(_well_button)
@@ -556,6 +597,7 @@ func _build_panel() -> void:
 	_start_button = Button.new()
 	_start_button.theme = _hud_theme
 	_start_button.text = "전투 시작"
+	_start_button.tooltip_text = "현재 보드 군세로 전투를 시작합니다."
 	_start_button.custom_minimum_size = Vector2(0.0, 44.0)
 	_start_button.pressed.connect(_on_start_pressed)
 	_panel.add_child(_start_button)
@@ -569,6 +611,7 @@ func _build_panel() -> void:
 func _make_board_row(block_key: String, card_id: StringName) -> Control:
 	var card := CardLibrary.get_card(card_id)
 	var row := HBoxContainer.new()
+	row.tooltip_text = _CardUiText.tooltip(card) if card != null else String(card_id)
 	var slot_label := Label.new()
 	slot_label.text = _block_label(block_key)
 	slot_label.custom_minimum_size = Vector2(92.0, 0.0)
@@ -576,8 +619,10 @@ func _make_board_row(block_key: String, card_id: StringName) -> Control:
 	var name_label := Label.new()
 	if card != null:
 		name_label.text = "%s (%d)" % [card.display_name, card.cost]
+		name_label.tooltip_text = _CardUiText.tooltip(card)
 	else:
 		name_label.text = String(card_id)
+		name_label.tooltip_text = String(card_id)
 	name_label.custom_minimum_size = Vector2(300.0, 0.0)
 	row.add_child(name_label)
 	return row
@@ -593,11 +638,16 @@ func _refresh_deploy_ui() -> void:
 		_gold_label.text = "골드 — %d" % RunManager.get_gold()
 	_rebuild_board_summary()
 	_rebuild_hand_list(hand)
+	if _scheme_button != null:
+		_scheme_button.disabled = _phase != Phase.DEPLOY or not RunManager.can_cast_scheme_from_hand(_selected_hand_index)
+		_scheme_button.tooltip_text = _scheme_button_tooltip(_selected_hand_card())
 	if _well_button != null:
 		_well_button.text = "우물 +%d골드" % RunState.WELL_GOLD
 		_well_button.disabled = _phase != Phase.DEPLOY or _selected_hand_index < 0
+		_well_button.tooltip_text = _well_button_tooltip(_selected_hand_card())
 	if _start_button != null:
 		_start_button.disabled = _phase != Phase.DEPLOY or _board_unit_count() <= 0
+		_start_button.tooltip_text = "손패 선택 후 빈 타일을 클릭해 장수나 병종을 먼저 배치하세요." if _board_unit_count() <= 0 else "현재 보드 군세로 전투를 시작합니다."
 	_refresh_board_tiles()
 	_sync_hud()
 
@@ -614,7 +664,8 @@ func _rebuild_board_summary() -> void:
 		_board_box.add_child(_make_board_row(key, StringName(board[key])))
 	if not any:
 		var empty := Label.new()
-		empty.text = "보드 군세 없음"
+		empty.text = "보드 군세 없음 — 손패 선택 후 빈 타일 클릭"
+		empty.tooltip_text = "손패 카드를 선택한 뒤 빈 타일을 클릭해 보드에 배치합니다."
 		_board_box.add_child(empty)
 
 func _rebuild_hand_list(hand: Array[StringName]) -> void:
@@ -638,11 +689,13 @@ func _rebuild_hand_list(hand: Array[StringName]) -> void:
 		var card := CardLibrary.get_card(card_id)
 		var card_name := card.display_name if card != null else String(card_id)
 		var card_cost := card.cost if card != null else 0
+		var type_label := _card_type_label(card)
 		var b := Button.new()
 		b.theme = _hud_theme
 		b.toggle_mode = true
 		b.button_pressed = idx == _selected_hand_index
-		b.text = "%d. %s (%d)" % [idx + 1, card_name, card_cost]
+		b.text = "%d. [%s] %s (%d)" % [idx + 1, type_label, card_name, card_cost]
+		b.tooltip_text = _hand_card_tooltip(card)
 		b.custom_minimum_size = Vector2(0.0, 36.0)
 		b.disabled = _phase != Phase.DEPLOY
 		b.pressed.connect(_select_hand.bind(idx))
@@ -663,6 +716,7 @@ func _refresh_board_tiles() -> void:
 			var card := CardLibrary.get_card(StringName(board[key]))
 			if label != null:
 				label.text = card.display_name if card != null else String(board[key])
+				label.tooltip_text = _CardUiText.tooltip(card) if card != null else String(board[key])
 			if poly != null:
 				poly.color = Color(0.24, 0.42, 0.26, 0.95)
 			if sprite != null:
@@ -672,6 +726,7 @@ func _refresh_board_tiles() -> void:
 		else:
 			if label != null:
 				label.text = ""
+				label.tooltip_text = "선택한 손패를 이 빈 타일에 배치합니다." if _phase == Phase.DEPLOY else ""
 			if poly != null:
 				poly.color = Color(0.22, 0.38, 0.22, 0.90) if _phase == Phase.DEPLOY else Color(0.17, 0.27, 0.17, 0.0)
 			if sprite != null:
@@ -700,7 +755,12 @@ func _select_hand(index: int) -> void:
 		_selected_hand_index = index
 		var card := CardLibrary.get_card(hand[index])
 		var card_name := card.display_name if card != null else String(hand[index])
-		_hint_label.text = "선택 — %s" % card_name
+		if RunManager.can_cast_scheme_from_hand(index):
+			_hint_label.text = "선택 — %s. 계략 발동으로 사용합니다." % card_name
+		elif RunManager.can_place_hand_card(index):
+			_hint_label.text = "선택 — %s. 빈 타일에 배치한 뒤 전투 시작을 누르세요." % card_name
+		else:
+			_hint_label.text = "선택 — %s. 지금 사용할 수 없는 카드입니다." % card_name
 	_refresh_deploy_ui()
 
 func _on_tile_area_input(_viewport: Node, event: InputEvent, _shape_idx: int, block_key: String) -> void:
@@ -716,7 +776,7 @@ func _on_tile_pressed(block_key: String) -> void:
 	if _phase != Phase.DEPLOY:
 		return
 	if _selected_hand_index < 0:
-		_hint_label.text = "손패 카드를 먼저 선택하세요."
+		_hint_label.text = "손패 카드를 먼저 선택하세요. 그 다음 빈 타일을 클릭합니다."
 		return
 	var hand := RunManager.get_hand()
 	if _selected_hand_index >= hand.size():
@@ -725,6 +785,14 @@ func _on_tile_pressed(block_key: String) -> void:
 		_refresh_deploy_ui()
 		return
 	var card_id: StringName = hand[_selected_hand_index]
+	if RunManager.can_cast_scheme_from_hand(_selected_hand_index):
+		_hint_label.text = "계략은 타일에 배치하지 않고 발동합니다."
+		_refresh_deploy_ui()
+		return
+	if not RunManager.can_place_hand_card(_selected_hand_index):
+		_hint_label.text = "이 카드는 보드에 배치할 수 없습니다."
+		_refresh_deploy_ui()
+		return
 	if not RunManager.place_from_hand(_selected_hand_index, block_key):
 		_hint_label.text = "배치할 수 없습니다."
 		_refresh_deploy_ui()
@@ -733,7 +801,32 @@ func _on_tile_pressed(block_key: String) -> void:
 	var card := CardLibrary.get_card(card_id)
 	var card_name := card.display_name if card != null else String(card_id)
 	_selected_hand_index = -1
-	_hint_label.text = "배치 — %s" % card_name
+	_hint_label.text = "배치 — %s. 전투 시작을 누르세요." % card_name
+	_refresh_deploy_ui()
+
+func _on_scheme_pressed() -> void:
+	if _phase != Phase.DEPLOY:
+		return
+	var hand := RunManager.get_hand()
+	if _selected_hand_index < 0 or _selected_hand_index >= hand.size():
+		_hint_label.text = "발동할 계략을 선택하세요."
+		_refresh_deploy_ui()
+		return
+	if not RunManager.can_cast_scheme_from_hand(_selected_hand_index):
+		_hint_label.text = "선택한 카드는 계략이 아닙니다."
+		_refresh_deploy_ui()
+		return
+	var card_id: StringName = hand[_selected_hand_index]
+	if not RunManager.cast_scheme_from_hand(_selected_hand_index):
+		_hint_label.text = "계략을 발동할 수 없습니다."
+		_refresh_deploy_ui()
+		return
+	var card := CardLibrary.get_card(card_id)
+	var card_name := card.display_name if card != null else String(card_id)
+	var result := RunManager.get_last_scheme_result()
+	_apply_scheme_battle_result(result)
+	_selected_hand_index = -1
+	_hint_label.text = "계략 발동 — %s%s" % [card_name, _scheme_result_brief(result)]
 	_refresh_deploy_ui()
 
 func _on_well_pressed() -> void:
@@ -789,9 +882,12 @@ func _on_start_pressed() -> void:
 		_hint_label.text = "보드 군세가 비어 있습니다."
 		_refresh_deploy_ui()
 		return
+	AudioManager.play_sfx(&"start")
 	_sim.set_waves(RunManager.current_waves())
 	_enemy_force_max = maxi(1, _sim.enemy_units.size())
+	_apply_pending_scheme_battle_effects()
 	_apply_building_auras()
+	RunManager.apply_treasure_battle_modifiers(_sim.player_units)
 	_battle_gold_per_sec = _BoardEconomy.gold_per_sec(RunManager.get_board(), CardLibrary.catalog)
 	_battle_gold_accum = 0.0
 	_update_building_gold_labels()
@@ -919,8 +1015,10 @@ func _sync_speed_controls() -> void:
 	if _pause_button != null:
 		_pause_button.button_pressed = _paused
 		_pause_button.text = "▶" if _paused else "Ⅱ"
+		_pause_button.tooltip_text = "전투를 재개합니다." if _paused else "전투를 일시정지합니다."
 	if _auto_button != null:
 		_auto_button.button_pressed = _auto_enabled
+		_auto_button.tooltip_text = "자동 진행을 끕니다." if _auto_enabled else "자동 진행을 켭니다."
 	for button in _speed_buttons:
 		var label := button.text.replace("×", "")
 		button.button_pressed = is_equal_approx(label.to_float(), _speed)
@@ -1018,7 +1116,7 @@ func _spawn_damage_number(event: Dictionary) -> void:
 	label.position = field_to_screen(float(event.get("px", 0.0)), float(event.get("py", 0.0))) + Vector2(-48.0, -96.0)
 	label.size = Vector2(96.0, 34.0)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.z_index = 10000
+	label.z_index = VFX_FLOATING_Z
 	label.add_theme_font_size_override("font_size", 27 if is_crit else 22)
 	label.add_theme_color_override("font_shadow_color", Color(0.05, 0.02, 0.01, 0.85))
 	label.add_theme_constant_override("shadow_offset_x", 2)
@@ -1160,6 +1258,34 @@ func _building_texture(card: CardData) -> Texture2D:
 func _apply_building_auras() -> void:
 	_BoardEconomy.apply_auras(_sim.player_units, RunManager.get_board(), CardLibrary.catalog)
 
+func _apply_scheme_battle_result(result: Dictionary) -> void:
+	var battle: Dictionary = result.get("battle", {})
+	if battle.is_empty():
+		return
+	var castle_delta := maxi(0, int(battle.get("castle_hp_delta", 0)))
+	if castle_delta > 0:
+		_sim.apply_battle_effect({"castle_hp_delta": castle_delta})
+	if battle.has("damage_enemy"):
+		var damage: Dictionary = battle.get("damage_enemy", {})
+		var effect := {"damage_enemy": damage.duplicate(true)}
+		if _sim.enemy_units.is_empty():
+			_pending_scheme_battle_effects.append(effect)
+		else:
+			_sim.apply_battle_effect(effect)
+			_play_damage_events()
+	_sync_visuals()
+
+func _apply_pending_scheme_battle_effects() -> void:
+	if _pending_scheme_battle_effects.is_empty():
+		return
+	var remaining: Array[Dictionary] = []
+	for effect in _pending_scheme_battle_effects:
+		if _sim.enemy_units.is_empty():
+			remaining.append(effect)
+			continue
+		_sim.apply_battle_effect(effect)
+	_pending_scheme_battle_effects = remaining
+
 func _accumulate_building_gold(delta: float) -> void:
 	if _battle_gold_per_sec <= 0:
 		return
@@ -1253,6 +1379,14 @@ func _load_texture(path: String) -> Texture2D:
 		return load(path) as Texture2D
 	return null
 
+func _player_realm() -> String:
+	if _lord != null:
+		return String(_lord.realm)
+	var lord := CardLibrary.get_lord(RunManager.state.lord_id)
+	if lord == null:
+		return "mortal"
+	return String(lord.realm)
+
 func _fit_sprite_to_size(sprite: Node2D, texture: Texture2D, target_size: Vector2) -> void:
 	if sprite == null or texture == null:
 		return
@@ -1267,12 +1401,18 @@ func _unit_texture_path(u: BattleUnit) -> String:
 		return "res://assets/sprites/buildings/castle.png"
 	var faction := String(RunManager.player_faction()) if u.team == BattleUnit.Team.PLAYER else "demon"
 	if _is_boss(u):
-		return "res://assets/sprites/units/%s/boss_dongzhuo.png" % faction
+		return _boss_texture_path(u, faction)
 	if u.team == BattleUnit.Team.PLAYER and not u.card_id.is_empty():
 		var general_path := "res://assets/sprites/units/%s/%s.png" % [faction, String(u.card_id)]
 		if ResourceLoader.exists(general_path):
 			return general_path
 	return "res://assets/sprites/units/%s/%s.png" % [faction, u.troop_type]
+
+func _boss_texture_path(u: BattleUnit, fallback_faction: String) -> String:
+	var mapped_path: String = String(BOSS_TEXTURE_PATHS.get(u.display_name, ""))
+	if mapped_path != "" and ResourceLoader.exists(mapped_path):
+		return mapped_path
+	return "res://assets/sprites/units/%s/boss_dongzhuo.png" % fallback_faction
 
 func _placeholder_texture(width: int, height: int, color: Color) -> Texture2D:
 	var key := "%d:%d:%s" % [width, height, color.to_html(true)]
@@ -1303,7 +1443,7 @@ func _unit_color(u: BattleUnit) -> Color:
 	return Color(0.62, 0.18, 0.42)
 
 func _is_boss(u: BattleUnit) -> bool:
-	return u.display_name == "마왕 동탁"
+	return WaveFactory.is_boss_name(u.display_name)
 
 func _apply_hero_command_at(screen_pos: Vector2) -> void:
 	var target := _enemy_near_screen_pos(screen_pos)
@@ -1409,7 +1549,8 @@ func _end_battle() -> void:
 	# 재정(財政) 칙령은 둔전 생산 골드(_battle_gold_accum)에만 적용 — 우물 골드(discard 보상)는 제외(feat-021 설계).
 	var produced_gold := int(floor(_battle_gold_accum))
 	if produced_gold > 0:
-		var gold := int(round(produced_gold * (1.0 + _EdictCatalog.gold_pct(RunManager.get_edicts()))))
+		var gold_bonus_pct := _EdictCatalog.gold_pct(RunManager.get_edicts()) + RunManager.gold_reward_pct()
+		var gold := int(round(produced_gold * (1.0 + gold_bonus_pct)))
 		RunManager.add_gold(gold)
 		_update_building_gold_labels()
 		_sync_hud()
@@ -1418,12 +1559,16 @@ func _end_battle() -> void:
 	_clear_hero_command(false)
 	_result_label.visible = true
 	var win := _sim.result == BattleSim.Result.PLAYER_WIN
+	_battle_outcome = RunManager.record_battle_outcome(win)
+	var run_victory := bool(_battle_outcome.get("run_victory", false))
 	if win:
-		_result_label.text = "승리!"
+		AudioManager.play_sfx(&"victory")
+		_result_label.text = "구주 정복!" if run_victory else "승리!"
 		_result_label.modulate = Color(0.5, 1.0, 0.5)
-		_hint_label.text = "전리품을 고르세요."
+		_hint_label.text = "최종 보스를 격파했습니다." if run_victory else "전리품을 고르세요."
 		EventBus.battle_won.emit()
 	else:
+		AudioManager.play_sfx(&"defeat")
 		_result_label.text = "런 실패"
 		_result_label.modulate = Color(1.0, 0.5, 0.5)
 		_hint_label.text = "전투 종료."
@@ -1432,29 +1577,49 @@ func _end_battle() -> void:
 
 func _build_outcome_ui(win: bool) -> void:
 	var box := _new_overlay_box()
+	_add_profile_result_summary(box, _battle_outcome)
 	if not win:
 		var fail := Label.new()
 		fail.text = "런 실패"
 		fail.add_theme_font_size_override("font_size", 24)
+		fail.add_theme_color_override("font_color", Color(1.0, 0.62, 0.62))
 		box.add_child(fail)
-		box.add_child(_make_button("새 런", _restart_run))
+		box.add_child(_make_button("군주 선택으로 새 런", _restart_run))
 		return
-	var candidates := RunManager.reward_candidates(3)
+	if bool(_battle_outcome.get("run_victory", false)):
+		var clear := Label.new()
+		clear.text = "런 승리 — 구주 정복"
+		clear.add_theme_font_size_override("font_size", 24)
+		clear.add_theme_color_override("font_color", Color(0.72, 1.0, 0.78))
+		box.add_child(clear)
+		box.add_child(_make_button("군주 선택으로 새 런", _restart_run))
+		return
+	var candidates := RunManager.reward_candidates(RunManager.reward_choice_count(3))
 	_add_expand_reward_notice(box)
 	if candidates.is_empty():
 		var none := Label.new()
 		none.text = "획득 가능한 보상이 없습니다."
+		none.add_theme_color_override("font_color", Color(0.96, 0.90, 0.74))
 		box.add_child(none)
 		_advance_stage_once()
 		_add_next_stage_button(box)
 		return
 	var head := Label.new()
-	head.text = "전리품 — 한 장을 골라 손패에 넣으세요"
+	head.text = "전리품 — 한 장을 고르세요"
 	head.add_theme_font_size_override("font_size", 24)
+	head.add_theme_color_override("font_color", Color(0.96, 0.90, 0.74))
 	box.add_child(head)
+	var reward_guide := Label.new()
+	reward_guide.text = "카드 버튼을 누르면 보상이 적용되고 다음 스테이지 버튼이 열립니다."
+	reward_guide.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	reward_guide.add_theme_font_size_override("font_size", 18)
+	reward_guide.add_theme_color_override("font_color", Color(0.86, 0.90, 1.0))
+	box.add_child(reward_guide)
 	for id in candidates:
 		var card := CardLibrary.get_card(id)
-		box.add_child(_make_button("%s (%d) — %s" % [card.display_name, card.cost, _card_brief(card)], _pick_reward.bind(id)))
+		var reward_button := _make_button("선택 — %s (%d) — %s" % [card.display_name, card.cost, _card_brief(card)], _pick_reward.bind(id))
+		reward_button.tooltip_text = "이 전리품을 선택합니다.\n%s" % _CardUiText.tooltip(card)
+		box.add_child(reward_button)
 
 func _add_expand_reward_notice(box: VBoxContainer) -> void:
 	if not RunManager.is_expand_stage():
@@ -1467,25 +1632,31 @@ func _add_expand_reward_notice(box: VBoxContainer) -> void:
 		var got := Label.new()
 		got.text = "보드 확장 — %d→%d행" % [before, RunManager.get_board_rows()]
 		got.add_theme_font_size_override("font_size", 22)
-		got.modulate = Color(0.72, 1.0, 0.60)
+		got.add_theme_color_override("font_color", Color(0.72, 1.0, 0.60))
 		box.add_child(got)
 
 func _pick_reward(id: StringName) -> void:
-	RunManager.hand_add(id)
 	var card := CardLibrary.get_card(id)
 	var got_name := card.display_name if card != null else String(id)
+	var acquired := RunManager.acquire_card(id)
+	if not acquired:
+		_hint_label.text = "획득 실패 — %s" % got_name
+		return
 	EventBus.card_rewarded.emit(id)
-	_hint_label.text = "획득 — %s! 손패에 들어왔습니다." % got_name
+	_hint_label.text = _CardUiText.acquisition_hint(card, got_name)
 	_advance_stage_once()
 	var box := _new_overlay_box()
+	_add_profile_result_summary(box, _battle_outcome)
 	var got := Label.new()
-	got.text = "획득 — %s" % got_name
+	got.text = _CardUiText.acquisition_hint(card, got_name)
 	got.add_theme_font_size_override("font_size", 24)
+	got.add_theme_color_override("font_color", Color(0.72, 1.0, 0.78))
 	box.add_child(got)
 	_add_next_stage_button(box)
 
 func _add_next_stage_button(box: VBoxContainer) -> void:
 	box.add_child(_make_button("다음 스테이지로 (보드 %d장 / 손패 %d장)" % [RunManager.get_deck().size(), RunManager.get_hand().size()], _go_to_run_map))
+	box.add_child(_make_button("군주 선택으로 새 런", _restart_run))
 
 func _advance_stage_once() -> void:
 	if _stage_advanced:
@@ -1498,19 +1669,58 @@ func _go_to_run_map() -> void:
 
 func _restart_run() -> void:
 	RunManager.reset_run()
-	GameManager.change_scene("res://scenes/screens/run_map.tscn")
+	GameManager.change_scene(LORD_SELECT_SCENE)
+
+func _add_profile_result_summary(box: VBoxContainer, outcome: Dictionary) -> void:
+	if outcome.is_empty():
+		return
+	var profile := RunManager.get_profile()
+	var summary := Label.new()
+	summary.text = "기록 — 스테이지 %d · 점수 %d · 최고 %d/%d" % [
+		int(outcome.get("stage", RunManager.stage_index())),
+		int(outcome.get("score", 0)),
+		profile.best_stage,
+		profile.best_score,
+	]
+	summary.add_theme_font_size_override("font_size", 20)
+	summary.add_theme_color_override("font_color", Color(0.86, 0.90, 1.0))
+	box.add_child(summary)
+
+	var unlocked_lords: Array = outcome.get("unlocked_lords", [])
+	for lord_id in unlocked_lords:
+		var lord := CardLibrary.get_lord(StringName(lord_id))
+		var lord_name := lord.display_name if lord != null else String(lord_id)
+		var unlock := Label.new()
+		unlock.text = "해금 — %s" % lord_name
+		unlock.add_theme_font_size_override("font_size", 22)
+		unlock.add_theme_color_override("font_color", Color(1.0, 0.86, 0.42))
+		box.add_child(unlock)
 
 # ── 헬퍼 ────────────────────────────────────────────────────
 func _new_overlay_box() -> VBoxContainer:
 	if _overlay != null and is_instance_valid(_overlay):
 		_overlay.queue_free()
+	var panel := PanelContainer.new()
+	panel.theme = _hud_theme
+	panel.position = Vector2(560.0, 180.0)
+	panel.custom_minimum_size = Vector2(980.0, 0.0)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.add_theme_stylebox_override("panel", _stylebox(Color(0.12, 0.08, 0.04, 0.88), Color(0.95, 0.67, 0.24, 0.95), 2, 8))
+	_deploy_panel.add_child(panel)
+	_overlay = panel
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_top", 14)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_bottom", 14)
+	panel.add_child(margin)
+
 	var box := VBoxContainer.new()
-	box.position = Vector2(560.0, 150.0)
-	box.custom_minimum_size = Vector2(980.0, 0.0)
+	box.custom_minimum_size = Vector2(948.0, 0.0)
 	box.add_theme_constant_override("separation", 10)
 	box.mouse_filter = Control.MOUSE_FILTER_STOP
-	_deploy_panel.add_child(box)
-	_overlay = box
+	margin.add_child(box)
 	return box
 
 func _make_button(text: String, cb: Callable) -> Button:
@@ -1522,14 +1732,60 @@ func _make_button(text: String, cb: Callable) -> Button:
 	return b
 
 func _card_brief(card: CardData) -> String:
-	if card is UnitCardData:
-		return "%s/%s" % [card.troop_type, card.attack_range]
-	if String(card.get("card_type")) == "building":
-		if int(card.get("gold_per_sec")) > 0:
-			return "건물/초당 %d골드" % int(card.get("gold_per_sec"))
-		if float(card.get("aura_attack_pct")) > 0.0:
-			return "건물/공격 +%d%%" % int(round(float(card.get("aura_attack_pct")) * 100.0))
-	return card.card_type
+	return _CardUiText.battle_brief(card)
+
+func _card_type_label(card: CardData) -> String:
+	return _CardUiText.type_label(card)
+
+func _selected_hand_card() -> CardData:
+	var hand := RunManager.get_hand()
+	if _selected_hand_index < 0 or _selected_hand_index >= hand.size():
+		return null
+	return CardLibrary.get_card(StringName(hand[_selected_hand_index]))
+
+func _hand_card_tooltip(card: CardData) -> String:
+	var text := _CardUiText.tooltip(card)
+	if card == null:
+		return text
+	match String(card.get("card_type")):
+		"scheme":
+			return "%s\n계략 발동 버튼으로 사용합니다." % text
+		"building":
+			return "%s\n빈 타일을 클릭해 건물로 배치하거나 우물로 보낼 수 있습니다." % text
+		"treasure":
+			return "%s\n보패는 획득 즉시 장착되어 손패에 남지 않아야 합니다." % text
+		_:
+			return "%s\n빈 타일을 클릭해 배치하거나 우물로 보낼 수 있습니다." % text
+
+func _scheme_button_tooltip(card: CardData) -> String:
+	if _phase != Phase.DEPLOY:
+		return "전투 중에는 새 계략을 발동할 수 없습니다."
+	if card == null:
+		return "손패에서 계략 카드를 선택하면 발동할 수 있습니다."
+	if String(card.get("card_type")) != "scheme":
+		return "선택한 카드는 계략이 아닙니다.\n%s" % _CardUiText.tooltip(card)
+	return "선택한 계략을 발동합니다.\n%s" % _CardUiText.tooltip(card)
+
+func _well_button_tooltip(card: CardData) -> String:
+	if _phase != Phase.DEPLOY:
+		return "전투 중에는 우물을 사용할 수 없습니다."
+	if card == null:
+		return "손패 카드를 선택하면 버리고 +%d골드를 얻을 수 있습니다." % RunState.WELL_GOLD
+	return "선택한 카드를 우물에 보내고 +%d골드를 얻습니다.\n%s" % [RunState.WELL_GOLD, _CardUiText.tooltip(card)]
+
+func _scheme_result_brief(result: Dictionary) -> String:
+	if result.is_empty():
+		return ""
+	var run: Dictionary = result.get("run", {})
+	if run.has("gold_delta"):
+		return " (+%d골드)" % int(run.get("gold_delta", 0))
+	var battle: Dictionary = result.get("battle", {})
+	if battle.has("damage_enemy"):
+		var damage: Dictionary = battle.get("damage_enemy", {})
+		return " (피해 %d)" % int(damage.get("amount", 0))
+	if battle.has("castle_hp_delta"):
+		return " (성 +%d)" % int(battle.get("castle_hp_delta", 0))
+	return ""
 
 func _board_unit_count() -> int:
 	var count := 0
