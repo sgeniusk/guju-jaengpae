@@ -435,3 +435,25 @@ repo lookup과 단순 파일 매핑은 low effort로 다룬다.
 - read-only 탐색 결과와 추정이 구분되어 있다.
 - 외부 문서나 설계 판단이 필요한 부분은 별도로 표시되어 있다.
 - 불필요한 장기 조사로 확대되지 않았다.
+
+## G101 — export high
+
+릴리스 export와 세이브 마이그레이션은 high effort로 다룬다.
+
+### 해당 범위
+- `export_presets.cfg`, export templates, exported app smoke, packaging output.
+- `.tres.remap`, Resource loading, platform path, build artifact ignore 정책.
+- `save_version`, old/new run payload, profile payload, unlock migration.
+- 릴리스 tag 전에 필요한 checklist, known risk, rollback 판단.
+
+### 처리 원칙
+- export는 editor green만으로 닫지 않고 실제 export와 실행 smoke를 확인한다.
+- migration은 old payload, missing field, unknown field, newer version 테스트를 포함한다.
+- build artifact는 repo에 섞이지 않게 하고, 필요한 정책만 문서화한다.
+- tag나 release는 `git-master`와 사용자 확인 전에는 실행하지 않는다.
+
+### 완료 기준
+- export 산출물 생성과 실행 marker가 모두 증거로 남아 있다.
+- 저장 호환성 테스트가 과거 payload와 신규 payload를 함께 덮고 있다.
+- 알려진 플랫폼·템플릿·Resource warning이 release risk로 연결되어 있다.
+- push, tag, release 같은 외부 side effect의 실행 여부가 명시되어 있다.
