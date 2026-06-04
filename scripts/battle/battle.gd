@@ -11,6 +11,7 @@ const _BattlefieldTheme := preload("res://scripts/battle/battlefield_theme.gd")
 const _BoardEconomy := preload("res://scripts/run/board_economy.gd")
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
+const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
 
 const VIEW_ORIGIN := Vector2(520.0, 225.0)
@@ -114,6 +115,8 @@ func _ready() -> void:
 	_build_panel()
 	if _lord == null:
 		_hint_label.text = "오류 — 군주(%s)를 불러오지 못했습니다." % LORD_ID
+	if _ExportSmoke.is_first_battle_requested():
+		call_deferred("_run_export_first_battle_smoke")
 
 func _process(delta: float) -> void:
 	if _phase != Phase.BATTLE:
@@ -898,6 +901,39 @@ func _on_start_pressed() -> void:
 	_start_button.disabled = true
 	_hint_label.text = "전투 중…"
 	_refresh_deploy_ui()
+
+func _run_export_first_battle_smoke() -> void:
+	if not _ExportSmoke.is_first_battle_requested():
+		return
+	if _phase != Phase.DEPLOY:
+		_ExportSmoke.fail_and_quit(get_tree(), "battle_not_in_deploy_phase", { "phase": _phase })
+		return
+	var placement := { "ok": true, "source": "existing" }
+	if _board_unit_count() <= 0:
+		placement = _ExportSmoke.ensure_first_battle_board()
+		if not bool(placement.get("ok", false)):
+			_ExportSmoke.fail_and_quit(get_tree(), "battle_has_no_unit", placement)
+			return
+		if placement.has("block_key"):
+			_spawn_unit_for_board_key(String(placement["block_key"]))
+		_refresh_deploy_ui()
+	_ExportSmoke.log_marker("battle_ready", {
+		"stage": RunManager.stage_index(),
+		"board_units": _board_unit_count(),
+		"placement": placement,
+	})
+	_on_start_pressed()
+	await get_tree().process_frame
+	if _phase != Phase.BATTLE:
+		_ExportSmoke.fail_and_quit(get_tree(), "first_battle_start_failed", { "phase": _phase })
+		return
+	_ExportSmoke.log_marker("first_battle_reached", {
+		"stage": RunManager.stage_index(),
+		"player_units": _sim.player_units.size(),
+		"enemy_units": _sim.enemy_units.size(),
+		"wave_total": _sim.wave_total,
+	})
+	get_tree().quit(0)
 
 # ── 시각화 ──────────────────────────────────────────────────
 func _spawn_visual(u: BattleUnit) -> void:

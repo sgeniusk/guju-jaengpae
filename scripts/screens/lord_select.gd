@@ -2,6 +2,7 @@
 extends Control
 
 const RUN_MAP_SCENE := "res://scenes/screens/run_map.tscn"
+const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 
 # 진영 식별자 → 한국어 표기.
 const NATION_LABELS := {
@@ -16,6 +17,8 @@ func _ready() -> void:
 	RunManager.ensure_profile_loaded()
 	AudioManager.play_music(&"battle")
 	_render()
+	if _ExportSmoke.is_first_battle_requested():
+		call_deferred("_run_export_first_battle_smoke")
 
 func _render() -> void:
 	for child in get_children():
@@ -143,3 +146,12 @@ func _on_continue_pressed() -> void:
 	else:
 		AudioManager.play_sfx(&"defeat")
 		_render()
+
+func _run_export_first_battle_smoke() -> void:
+	if not _ExportSmoke.is_first_battle_requested():
+		return
+	var lord_id := _ExportSmoke.lord_id()
+	_ExportSmoke.log_marker("lord_select_ready", { "lord_id": String(lord_id) })
+	RunManager.reset_run()
+	RunManager.ensure_started(lord_id)
+	GameManager.change_scene(RUN_MAP_SCENE)

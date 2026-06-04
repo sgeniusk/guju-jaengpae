@@ -21,6 +21,19 @@ func test_catalog_loads_expected_counts() -> void:
 	eq(cat.cards.size(), 20, "비건물 카드 20장 로드")
 	eq(cat.lords.size(), 3, "군주 3명 로드")
 
+func test_catalog_accepts_export_remap_dir_entries() -> void:
+	eq(
+		CardCatalog.resource_path_for_dir_entry("res://resources/cards", "troop_infantry.tres.remap"),
+		"res://resources/cards/troop_infantry.tres",
+		"export .tres.remap 항목은 원본 리소스 경로로 로드"
+	)
+	eq(
+		CardCatalog.resource_path_for_dir_entry("res://resources/cards", "troop_infantry.tres"),
+		"res://resources/cards/troop_infantry.tres",
+		"editor .tres 항목도 유지"
+	)
+	eq(CardCatalog.resource_path_for_dir_entry("res://resources/cards", "README.md"), "", "비리소스 파일 제외")
+
 func test_lord_catalog_order_is_stable_for_selection_ui() -> void:
 	eq(cat.lord_ids(), [&"lord_liubei", &"lord_caocao", &"lord_sunquan"], "군주 선택 UI 기본 순서")
 	var names: Array[String] = []

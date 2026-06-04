@@ -46,12 +46,20 @@ func _load_dir(dir_path: String, target: Dictionary) -> void:
 	dir.list_dir_begin()
 	var f := dir.get_next()
 	while f != "":
-		if not dir.current_is_dir() and f.ends_with(".tres"):
-			var res = ResourceLoader.load(dir_path + "/" + f)
+		var resource_path := resource_path_for_dir_entry(dir_path, f)
+		if not dir.current_is_dir() and resource_path != "":
+			var res = ResourceLoader.load(resource_path)
 			if res != null and String(res.get("id")) != "":
 				target[StringName(res.get("id"))] = res
 		f = dir.get_next()
 	dir.list_dir_end()
+
+static func resource_path_for_dir_entry(dir_path: String, file_name: String) -> String:
+	if file_name.ends_with(".tres"):
+		return "%s/%s" % [dir_path, file_name]
+	if file_name.ends_with(".tres.remap"):
+		return "%s/%s" % [dir_path, file_name.trim_suffix(".remap")]
+	return ""
 
 func get_card(id: StringName) -> CardData:
 	return cards.get(id, building_cards.get(id, null))

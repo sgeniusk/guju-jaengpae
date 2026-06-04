@@ -1,7 +1,7 @@
 # feat-037 — Phase 7 밸런스·릴리스 준비
 
 ## 목표
-Phase 7은 제품 루프가 끝까지 돈 뒤 최종 릴리스 전에 수치와 발행 경로를 잠근다. G078은 난이도 곡선, 보상 풀, 상점 가격, trait·edict·scheme·treasure 값을 하나의 밸런스 계약으로 고정하고, G079는 민감정보 없는 macOS Desktop export preset과 pack export 경계를 고정한다.
+Phase 7은 제품 루프가 끝까지 돈 뒤 최종 릴리스 전에 수치와 발행 경로를 잠근다. G078은 난이도 곡선, 보상 풀, 상점 가격, trait·edict·scheme·treasure 값을 하나의 밸런스 계약으로 고정하고, G079는 민감정보 없는 macOS Desktop export preset과 pack export 경계를 고정한다. G083은 full app export가 실행되고 export 앱이 첫 전투까지 도달하는지 검증한다.
 
 ## G078 세부 기준
 - 난이도 곡선은 선형 구조를 유지하되 `StageCadence.DIFFICULTY_STEP = 0.10`으로 둔다.
@@ -22,7 +22,7 @@ Phase 7은 제품 루프가 끝까지 돈 뒤 최종 릴리스 전에 수치와 
 - `.gitignore`는 `export_presets.cfg`를 숨기지 않고, `build/` 산출물과 `.godot/` 로컬 상태를 계속 숨긴다.
 - 기본 preset 이름은 `macOS Desktop`, platform은 `macOS`, export path는 `build/macos/guju-jaengpae.zip`이다.
 - 리소스 export는 `all_resources`를 사용하되, 보고용 스크린샷 묶음 `docs/reports/**`, 테스트 `test/**`, 개발 도구 `tools/**`는 제외한다.
-- full app export는 로컬 export templates가 필요하므로 G083에서 실행 증거로 닫는다. G079는 preset 파싱과 pack export 경계만 검증한다.
+- full app export는 로컬 export templates가 필요하므로 G083 실행 증거로 닫았다. G079는 preset 파싱과 pack export 경계만 검증한다.
 
 ## G081 세부 기준
 - 릴리스 체크리스트는 `docs/release-checklist.md`에 둔다.
@@ -36,6 +36,13 @@ Phase 7은 제품 루프가 끝까지 돈 뒤 최종 릴리스 전에 수치와 
 - 검증 대상 클론은 clean checkout 상태여야 하며, 원본 작업트리의 `.godot/` import cache나 dirty file에 의존하지 않는다.
 - fresh clone 안에서 `./init.sh`를 실행해 Godot import, 카드/군주 validator, 부팅 스모크, UI 피드백 스모크, 단위 테스트가 green임을 확인한다.
 - 성공 증거는 clone 경로, HEAD short hash, 카드 수, 단언 수로 남긴다.
+
+## G083 세부 기준
+- G083 full app export는 Godot 4.6.3 export templates가 설치된 로컬 환경에서 `godot --headless --path . --export-release "macOS Desktop" build/macos/guju-jaengpae.zip`로 실행한다.
+- macOS universal export에 필요한 `rendering/textures/vram_compression/import_etc2_astc=true`를 프로젝트 설정에 둔다.
+- release export 안에서는 Resource 디렉터리 항목이 `.tres.remap`으로 보일 수 있으므로 카탈로그 로더는 원본 `.tres` 경로로 정규화해 로드한다.
+- export 실행 smoke는 `GUJU_EXPORT_SMOKE=first_battle` 환경변수에서만 동작하며, 일반 플레이 경로에는 영향이 없어야 한다.
+- smoke는 lord_select → run_map → battle 경로를 지나 시작 손패 유닛을 보드에 놓고 stage 1 첫 전투 시작 후 `GUJU_EXPORT_SMOKE first_battle_reached` marker와 종료 코드 0을 남겨야 한다.
 
 ## 비범위
 - G078 범위에서는 export preset 생성과 실제 export 실행을 하지 않는다.
@@ -53,4 +60,5 @@ Phase 7은 제품 루프가 끝까지 돈 뒤 최종 릴리스 전에 수치와 
 - `godot --headless --path . --export-pack "macOS Desktop" build/macos/guju-jaengpae.pck`는 preset을 사용해 pack export 경로가 동작하는지 확인한다.
 - `docs/release-checklist.md`는 태그 후보, 사용자 확인 게이트, preflight 명령, G082~G084 선행 조건을 문서화한다.
 - fresh clone 검증은 로컬 임시 클론에서 `./init.sh` 전체 green을 확인한다.
+- full app export 검증은 `build/macos/guju-jaengpae.zip` 생성과 export 앱 `GUJU_EXPORT_SMOKE first_battle_reached` marker를 확인한다.
 - `./init.sh` 전체 green으로 카드 validator, 부팅 스모크, UI 피드백 스모크, 보스/결과 스모크, 단위 테스트를 함께 확인한다.

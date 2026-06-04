@@ -6,6 +6,7 @@ const BATTLE_SCENE := "res://scenes/battle/battle.tscn"
 const _StageCadence := preload("res://scripts/run/stage_cadence.gd")
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
+const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 
 var _root: VBoxContainer
 var _shop_status_message := ""
@@ -16,6 +17,8 @@ func _ready() -> void:
 	RunManager.ensure_started(LORD_ID)
 	AudioManager.play_music(&"battle")
 	_render()
+	if _ExportSmoke.is_first_battle_requested():
+		call_deferred("_run_export_first_battle_smoke")
 
 func _render() -> void:
 	for child in get_children():
@@ -345,6 +348,20 @@ func _shop_card_tooltip(card: CardData, can_afford: bool) -> String:
 func _on_battle_pressed() -> void:
 	AudioManager.play_sfx(&"start")
 	GameManager.change_scene(BATTLE_SCENE)
+
+func _run_export_first_battle_smoke() -> void:
+	if not _ExportSmoke.is_first_battle_requested():
+		return
+	var placement := _ExportSmoke.ensure_first_battle_board()
+	if not bool(placement.get("ok", false)):
+		_ExportSmoke.fail_and_quit(get_tree(), "no_unit_for_first_battle", placement)
+		return
+	_ExportSmoke.log_marker("run_map_ready", {
+		"stage": RunManager.stage_index(),
+		"kind": RunManager.stage_node_kind(),
+		"placement": placement,
+	})
+	_on_battle_pressed()
 
 func _on_shop_card_pressed(id: StringName) -> void:
 	var card := CardLibrary.get_card(id)

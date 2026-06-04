@@ -2,6 +2,7 @@
 extends TestCase
 
 const PRESET_PATH := "res://export_presets.cfg"
+const PROJECT_PATH := "res://project.godot"
 
 var cfg := ConfigFile.new()
 
@@ -37,3 +38,11 @@ func test_macos_options_are_release_ready_without_credentials() -> void:
 	eq(cfg.get_value("preset.0.options", "codesign/identity", "secret"), "", "서명 identity 미포함")
 	eq(cfg.get_value("preset.0.options", "notarization/notarization", -1), 0, "notarization 비활성")
 	eq(cfg.get_value("preset.0.options", "notarization/apple_id_password", "secret"), "", "notarization password 미포함")
+
+func test_project_import_settings_support_macos_universal_export() -> void:
+	var project_cfg := ConfigFile.new()
+	eq(project_cfg.load(PROJECT_PATH), OK, "project.godot 로드")
+	truthy(
+		project_cfg.get_value("rendering", "textures/vram_compression/import_etc2_astc", false),
+		"macOS universal/arm64 export는 ETC2/ASTC import 활성화 필요"
+	)
