@@ -523,3 +523,25 @@ OMX CLI tmux가 없는 Codex App 표면에서는 native subagents로 read-only r
 - subagent가 쓴 증거와 leader가 직접 확인한 증거가 구분되어 있다.
 - leader가 최종 diff를 읽고 `./init.sh` 또는 story별 검증을 실행했다.
 - OMX/tmux 의존 작업은 별도 pending 또는 CLI 전환 후보로 남아 있다.
+
+## G105 — worker write scope
+
+각 worker는 자기 write scope와 테스트 증거를 보고한다.
+
+### 보고해야 할 것
+- 맡은 story 또는 subtask id.
+- 허용된 write scope와 실제로 수정한 파일.
+- 실행한 테스트 명령, 주요 출력, 실패 또는 경고.
+- 건드리지 않은 shared file, unresolved decision, leader가 확인해야 할 diff.
+
+### 운영 원칙
+- worker는 자기 scope 밖 파일을 발견하면 leader에게 보고하고 멈춘다.
+- 같은 shared file을 여러 worker가 만져야 하면 leader가 먼저 순서를 정한다.
+- worker는 “통과했다”가 아니라 어떤 명령이 어떤 assertion 또는 smoke를 통과했는지 남긴다.
+- 테스트를 못 돌렸으면 못 돌린 이유와 대체 확인을 분리해서 적는다.
+
+### 완료 기준
+- worker별 write scope와 실제 diff가 일치한다.
+- 테스트 증거가 leader의 통합 검증으로 재현 가능하다.
+- unresolved decision이 구현 diff 안에 숨지 않고 보고서에 남아 있다.
+- leader가 worker 결과를 읽고 merge, reject, follow-up 중 하나로 판정할 수 있다.
