@@ -479,3 +479,25 @@ repo lookup과 단순 파일 매핑은 low effort로 다룬다.
 - 각 story 증거에 커밋, 검증, worktree 상태, 실행하지 않은 외부 작업이 남아 있다.
 - 최종 story 전까지 aggregate goal은 active로 유지된다.
 - 다음 story가 같은 프롬프트로 이어질 수 있다.
+
+## G103 — realm team prompt
+
+병렬 구현이 필요해지면 `$team "구주쟁패 Phase 4 마계 3국 확장"`처럼 realm 단위로 실행한다.
+
+### 쓸 때
+- 한 realm 안에서 세력별 데이터, 스킬, 테스트, 스크린샷 QA를 분리할 수 있을 때.
+- worker별 write scope가 다른 파일이나 다른 faction resource로 나뉠 때.
+- leader가 정본 승인 범위와 금지된 세력 id를 명확히 줄 수 있을 때.
+- 병렬 결과를 하나의 realm-level 검증으로 통합할 수 있을 때.
+
+### 실행 전 확인
+- `docs/worldview.md`와 정본 승인 상태.
+- `CardVocab.NATIONS`, lord catalog, reward pool, validator의 현재 id 정책.
+- worker별 금지 파일, 허용 파일, 검증 명령.
+- 천계·마계 명칭 미승인 상태에서는 playable nation/resource를 만들지 않는다는 gate.
+
+### 완료 기준
+- realm 단위 작업이 정본 승인 범위 안에 있다.
+- worker 결과가 leader에게 통합되고 `./init.sh`가 leader 손으로 실행되어 있다.
+- 세력별 fallback, 테스트, 스크린샷 QA 증거가 분리되어 있다.
+- unresolved canon은 needs-user-decision이나 pending story로 남아 있다.
