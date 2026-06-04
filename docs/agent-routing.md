@@ -721,3 +721,25 @@ leader가 `feature_list.json`, `progress.md`, 필요 시 `session-handoff.md`를
 - 연구 결론과 구현 결정이 별도 story 또는 정본 승인 gate로 이어진다.
 - 외부 reference가 현 프로젝트 invariant를 깨지 않는다.
 - 조사만으로 완료되는 목표와 구현이 필요한 follow-up이 명확히 갈라져 있다.
+
+## G114 — ralph fallback
+
+`$ralph`는 명확한 단일 피처를 한 소유자가 끝까지 검증해야 할 때 선택하는 fallback이다.
+
+### 쓸 때
+- feature objective, owner files, acceptance criteria, 검증 명령이 이미 분명할 때.
+- 한 사람이 구현, 테스트, 상태 파일 갱신, checkpoint까지 밀고 가는 편이 안전할 때.
+- 장기 ultragoal이 아니라 단일 피처의 persistent loop만 필요할 때.
+- 실패를 반복해도 같은 owner가 원인 파악과 재검증을 계속해야 할 때.
+
+### 쓰지 않을 때
+- 정본 명칭, 9세력 id, push/tag처럼 사용자 확인 또는 외부 권한이 먼저 필요한 때.
+- PRD와 test spec이 아직 없고 ralph planning gate가 닫히지 않았을 때.
+- 작업이 faction, asset, QA lane으로 자연스럽게 분리되어 `$team`이 더 적합할 때.
+- 연구 산출물이 먼저 필요한 문제이거나 성능 목표처럼 별도 측정 계약이 필요한 때.
+
+### 완료 기준
+- 한 피처의 목표 동작, 테스트, 상태 파일, handoff가 모두 닫혀 있다.
+- `./init.sh` 또는 문서화된 대체 검증이 실제로 실행되어 있다.
+- 남은 blocker가 ralph 내부 문제가 아니라 사용자 결정 또는 별도 story로 분리되어 있다.
+- 완료 후에는 ultragoal ledger나 repo 상태와 모순되는 runtime state가 남지 않는다.
