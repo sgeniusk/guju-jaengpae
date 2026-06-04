@@ -457,3 +457,25 @@ repo lookup과 단순 파일 매핑은 low effort로 다룬다.
 - 저장 호환성 테스트가 과거 payload와 신규 payload를 함께 덮고 있다.
 - 알려진 플랫폼·템플릿·Resource warning이 release risk로 연결되어 있다.
 - push, tag, release 같은 외부 side effect의 실행 여부가 명시되어 있다.
+
+## G102 — default ultragoal prompt
+
+기본 실행 프롬프트는 `$ultragoal "구주쟁패 Phase 0부터 v1.0 계획 순차 실행"`이다.
+
+### 쓸 때
+- 새 세션에서 긴 제품 완성 계획을 이어가야 할 때.
+- 아직 어떤 피처를 잡을지보다 durable sequencing과 ledger checkpoint가 더 중요할 때.
+- Phase 0부터 v1.0까지의 남은 story를 순서대로 재개해야 할 때.
+- 단일 피처 실행보다 전체 계획의 stop condition과 audit trail이 중요한 때.
+
+### 실행 전 확인
+- `AGENTS.md`, `session-handoff.md`, `progress.md`를 읽는다.
+- `omx ultragoal complete-goals --json`으로 현재 story를 받는다.
+- `get_goal`이 같은 aggregate objective를 active로 보고하는지 확인한다.
+- push/tag/canon approval처럼 사용자 확인이 필요한 항목은 실행하지 않고 보류한다.
+
+### 완료 기준
+- 현재 story만 완료하고 checkpoint한다.
+- 각 story 증거에 커밋, 검증, worktree 상태, 실행하지 않은 외부 작업이 남아 있다.
+- 최종 story 전까지 aggregate goal은 active로 유지된다.
+- 다음 story가 같은 프롬프트로 이어질 수 있다.
