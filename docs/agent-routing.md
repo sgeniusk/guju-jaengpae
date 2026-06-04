@@ -633,3 +633,25 @@ leader가 `feature_list.json`, `progress.md`, 필요 시 `session-handoff.md`를
 - future agent가 같은 결정을 반복 조사하지 않아도 된다.
 - checkpoint evidence와 commit trailers가 서로 모순되지 않는다.
 - 커밋 단위가 되돌리기 쉽고 story objective 하나에 대응한다.
+
+## G110 — ultragoal durable ledger
+
+`$ultragoal`을 기본으로 추천한다. 이 계획은 긴 순차 제품 완성 목표라 durable ledger가 가장 잘 맞는다.
+
+### 쓸 때
+- Phase 0부터 v1.0까지처럼 여러 세션에 걸친 제품 완성 계획을 이어갈 때.
+- 각 story가 commit, 검증, checkpoint evidence로 닫혀야 할 때.
+- 미승인 정본, push/tag 보류, failed story처럼 장기 상태를 잃으면 안 될 때.
+- 현재 story만 구현하고 다음 story는 ledger가 이어받게 해야 할 때.
+
+### 운영 원칙
+- Codex goal은 전체 aggregate objective로 유지하고, OMX story는 ledger 항목으로 닫는다.
+- 매 story 시작은 `omx ultragoal complete-goals --json`과 `get_goal` 확인으로 시작한다.
+- 최종 story 전까지는 aggregate goal을 complete로 표시하지 않는다.
+- blocked, failed, pending, needs-user-decision 상태를 억지로 구현으로 해소하지 않는다.
+
+### 완료 기준
+- 각 story evidence에 commit, 검증 명령, worktree 상태, 외부 side effect 여부가 남아 있다.
+- story completion과 Codex aggregate goal 상태가 서로 모순되지 않는다.
+- 다음 story가 같은 ledger에서 자동 재개된다.
+- 사용자가 push/tag/canon approval 같은 외부 결정을 내릴 때까지 gate가 보존된다.
