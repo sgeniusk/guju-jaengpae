@@ -369,3 +369,25 @@
 - 상태 파일이 다음 세션에서 바로 재시작 가능한 내용을 담고 있다.
 - ralph loop가 불필요하게 열린 채 남아 있지 않다.
 - durable multi-story 추적이 필요한 경우 ultragoal ledger로 handoff되어 있다.
+
+## G098 — high
+
+스키마, 저장, 전투 경계 변경은 high effort로 다룬다.
+
+### 해당 범위
+- `CardData` 계열 Resource schema, `CardVocab`, validator, catalog loading.
+- `RunState`, `ProfileState`, `PersistenceStore`, `RunManager` 저장·재개·해금 경계.
+- `BattleSim`, `BattleUnit`, `SkillSystem`, `WaveFactory` 결정성·전투 결과 경계.
+- export, save migration, 기존 run/profile 호환성을 건드리는 변경.
+
+### 처리 원칙
+- `architect` 검토로 owner와 invariant를 먼저 확정한다.
+- `test-engineer`가 missing field, unknown field, deterministic sim, smoke test를 잠근다.
+- `executor`는 한 피처 diff로 구현하고, 넓은 리팩터링은 분리한다.
+- `verifier`가 표적 테스트와 `./init.sh`를 모두 읽고 완료 판정한다.
+
+### 완료 기준
+- 유지해야 할 schema, save payload, RNG, battle result invariant가 문서나 테스트에 드러나 있다.
+- old/new payload와 Resource id 안정성을 깨지 않는 증거가 있다.
+- 실패 시 어떤 owner로 되돌릴지 분명하다.
+- 릴리스 리스크가 있으면 `docs/release-risks.md` 또는 handoff에 연결되어 있다.
