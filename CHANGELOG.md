@@ -2,6 +2,14 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-04 — feat-028 유닛 애니메이션 (스프라이트 시트 · agy→Codex · architect APPROVED)
+정적 Sprite2D 빌보드 → 프레임 애니메이션. agy 가로 4프레임 walk 시트 → AnimatedSprite2D/SpriteFrames. **순수 뷰(결정성 불변)**.
+- **시트 규약** — `<unit>_walk.png` 가로 4프레임 균등(프레임폭=시트폭÷4), 마젠타 키아웃. agy 생성(품질 우수·캐릭터 일관)→Claude 시트 키잉(autocrop 없이 프레임 구조 유지).
+- **렌더 분기** — battle.gd `_create_unit_body`(_walk.png 있으면 AnimatedSprite2D, 없으면 Sprite2D 현행)·`_apply_unit_body_visuals`(flip/modulate/scale/발밑앵커 공통)·`_build_walk_sprite_frames`(4 AtlasTexture region·8fps loop)·`_sync_unit_walk_animation`(이동 delta 시 play, 정지 frame0). 시트 없는 유닛 정적 유지.
+- **결정성** — 애니는 뷰 캐시(last_px/py 델타)로만 판정, BattleSim 무오염(architect 3중 확인). 스킬/데미지 modulate 트윈은 CanvasItem 캐스트로 양 노드 공통.
+- **검증** — test_unit_walk_visuals 21단언(시트→AnimatedSprite·무시트→Sprite2D·적 flip_h). `./init.sh` 935 green(914→+21), 부팅 무에러. 시범 1종(촉 보병). agy 자율-쓰기 함정 — `--add-dir` 디렉토리에 이미지 직접 저장.
+- **잔여** — 나머지 유닛 walk + idle/attack 애니는 agy 점진 생성(시스템 구축 완료, 시트만 추가하면 자동 적용).
+
 ## 2026-06-04 — feat-021 왕의 칙령 (전역 perk · Codex · architect THOROUGH APPROVED)
 3스테이지마다 칙령 드래프트 — 전역 perk 3중1을 골라 런 전체에 누적 적용. EdictCatalog 코드 레지스트리(skill_system 패턴).
 - **EdictCatalog** — 군세(edict_might, 전 아군 공격력 +12%)·재정(economy, 골드 +25%)·축성(fortify, 성HP +20%), pct 합산 헬퍼·고정 all_ids(결정성).

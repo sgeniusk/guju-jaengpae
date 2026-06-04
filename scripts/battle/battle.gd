@@ -29,11 +29,14 @@ const BUILDING_W := 108.0
 const BUILDING_H := 104.0
 const COMMAND_PICK_RADIUS := 70.0
 const MAX_FLOATING_DAMAGE_LABELS := 40
+const WALK_FRAME_COUNT := 4
+const WALK_FPS := 8.0
+const WALK_MOVE_EPSILON := 0.01
 
 var _phase: int = Phase.DEPLOY
 var _sim := BattleSim.new()
 var _lord: LordData
-var _vis: Dictionary = {}            # BattleUnit -> { root, body, hp, command_marker, hp_width }
+var _vis: Dictionary = {}            # BattleUnit -> { root, body, hp, command_marker, hp_width, last_px, last_py }
 var _building_vis: Dictionary = {}   # "col:row" -> { root, gold_label, gold_per_sec }
 var _tile_buttons: Dictionary = {}   # "col:row" -> { area, poly, label }
 var _placeholder_textures: Dictionary = {}
@@ -812,15 +815,8 @@ func _spawn_visual(u: BattleUnit) -> void:
 	command_marker.position = Vector2(0.0, -6.0)
 	command_marker.visible = false
 	root.add_child(command_marker)
-	var body := Sprite2D.new()
-	body.centered = true
 	var texture := _unit_texture(u)
-	body.texture = texture
-	body.modulate = Color.WHITE
-	body.flip_h = u.team == BattleUnit.Team.ENEMY
-	body.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_fit_sprite_to_size(body, texture, size)
-	body.position = Vector2(0.0, -size.y * 0.5)
+	var body := _create_unit_body(u, texture, size)
 	root.add_child(body)
 	var hp_bg := ColorRect.new()
 	hp_bg.color = Color(0, 0, 0, 0.65)
@@ -843,7 +839,7 @@ func _spawn_visual(u: BattleUnit) -> void:
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(name_label)
 	_units_layer.add_child(root)
-	_vis[u] = { "root": root, "body": body, "base_color": body.modulate, "hp": hp, "command_marker": command_marker, "hp_width": size.x }
+	_vis[u] = { "root": root, "body": body, "base_color": body.modulate, "hp": hp, "command_marker": command_marker, "hp_width": size.x, "last_px": u.px, "last_py": u.py }
 	_position_visual(u)
 
 func _sync_visuals() -> void:
@@ -866,6 +862,7 @@ func _sync_visuals() -> void:
 		_vis.erase(u)
 	for u in active_units:
 		if _vis.has(u):
+			_sync_unit_walk_animation(u)
 			_position_visual(u)
 			var hp: ColorRect = _vis[u].get("hp", null)
 			if hp != null:
@@ -967,12 +964,31 @@ func _position_visual(u: BattleUnit) -> void:
 	root.position = field_to_screen(u.px, u.py) + offset
 	root.z_index = int(u.py)
 
+func _sync_unit_walk_animation(u: BattleUnit) -> void:
+	var visual: Dictionary = _vis[u]
+	var body := visual.get("body", null) as AnimatedSprite2D
+	if body == null:
+		visual["last_px"] = u.px
+		visual["last_py"] = u.py
+		return
+	var last_px := float(visual.get("last_px", u.px))
+	var last_py := float(visual.get("last_py", u.py))
+	var delta := Vector2(u.px - last_px, u.py - last_py)
+	if delta.length_squared() > WALK_MOVE_EPSILON:
+		if not body.is_playing():
+			body.play("walk")
+	else:
+		body.stop()
+		body.frame = 0
+	visual["last_px"] = u.px
+	visual["last_py"] = u.py
+
 func _flash_skill_casts() -> void:
 	for cast in _sim.last_skill_casts:
 		var caster: BattleUnit = cast.get("caster", null)
 		if caster == null or not _vis.has(caster):
 			continue
-		var body := _vis[caster].get("body", null) as Sprite2D
+		var body := _vis[caster].get("body", null) as CanvasItem
 		if body == null or not is_instance_valid(body):
 			continue
 		var base_color: Color = _vis[caster].get("base_color", body.modulate)
@@ -1027,7 +1043,7 @@ func _flash_damaged_target(event: Dictionary) -> void:
 	var target: BattleUnit = event.get("target", null)
 	if target == null or not _vis.has(target):
 		return
-	var body := _vis[target].get("body", null) as Sprite2D
+	var body := _vis[target].get("body", null) as CanvasItem
 	if body == null or not is_instance_valid(body):
 		return
 	var base_color: Color = _vis[target].get("base_color", body.modulate)
@@ -1176,12 +1192,68 @@ func _unit_texture(u: BattleUnit) -> Texture2D:
 	var size := _unit_size(u)
 	return _placeholder_texture(int(size.x), int(size.y), _unit_color(u))
 
+func _create_unit_body(u: BattleUnit, fallback_texture: Texture2D, target_size: Vector2) -> Node2D:
+	var walk_sheet_path := _unit_walk_sheet_path(u)
+	if not walk_sheet_path.is_empty() and ResourceLoader.exists(walk_sheet_path):
+		var walk_sheet := load(walk_sheet_path) as Texture2D
+		if walk_sheet != null:
+			var animated := AnimatedSprite2D.new()
+			animated.centered = true
+			animated.sprite_frames = _build_walk_sprite_frames(walk_sheet)
+			animated.animation = &"walk"
+			animated.frame = 0
+			animated.stop()
+			var frame_texture := animated.sprite_frames.get_frame_texture(&"walk", 0)
+			_apply_unit_body_visuals(animated, u, frame_texture, target_size)
+			return animated
+	var sprite := Sprite2D.new()
+	sprite.centered = true
+	sprite.texture = fallback_texture
+	_apply_unit_body_visuals(sprite, u, fallback_texture, target_size)
+	return sprite
+
+func _apply_unit_body_visuals(body: Node2D, u: BattleUnit, texture: Texture2D, target_size: Vector2) -> void:
+	if body == null:
+		return
+	var item := body as CanvasItem
+	if item != null:
+		item.modulate = Color.WHITE
+		item.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if body is Sprite2D:
+		(body as Sprite2D).flip_h = u.team == BattleUnit.Team.ENEMY
+	elif body is AnimatedSprite2D:
+		(body as AnimatedSprite2D).flip_h = u.team == BattleUnit.Team.ENEMY
+	_fit_sprite_to_size(body, texture, target_size)
+	body.position = Vector2(0.0, -target_size.y * 0.5)
+
+func _build_walk_sprite_frames(sheet: Texture2D) -> SpriteFrames:
+	var frames := SpriteFrames.new()
+	frames.add_animation(&"walk")
+	frames.set_animation_speed(&"walk", WALK_FPS)
+	frames.set_animation_loop(&"walk", true)
+	var sheet_size := sheet.get_size()
+	var frame_width := sheet_size.x / float(WALK_FRAME_COUNT)
+	for i in range(WALK_FRAME_COUNT):
+		var atlas := AtlasTexture.new()
+		atlas.atlas = sheet
+		atlas.region = Rect2(frame_width * float(i), 0.0, frame_width, sheet_size.y)
+		frames.add_frame(&"walk", atlas)
+	return frames
+
+func _unit_walk_sheet_path(u: BattleUnit) -> String:
+	if u.is_castle:
+		return ""
+	var texture_path := _unit_texture_path(u)
+	if texture_path.ends_with(".png"):
+		return texture_path.trim_suffix(".png") + "_walk.png"
+	return ""
+
 func _load_texture(path: String) -> Texture2D:
 	if ResourceLoader.exists(path):
 		return load(path) as Texture2D
 	return null
 
-func _fit_sprite_to_size(sprite: Sprite2D, texture: Texture2D, target_size: Vector2) -> void:
+func _fit_sprite_to_size(sprite: Node2D, texture: Texture2D, target_size: Vector2) -> void:
 	if sprite == null or texture == null:
 		return
 	var source_size := texture.get_size()

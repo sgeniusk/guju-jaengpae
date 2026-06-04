@@ -277,9 +277,9 @@
       "name": "유닛 애니메이션 (스프라이트 시트)",
       "description": "정적 Sprite2D 빌보드 → 프레임 애니메이션. agy가 유닛별 멀티프레임 스프라이트 시트(idle/walk/attack 4~6프레임 그리드 PNG, agy는 영상 출력 불가하니 시트만) 생성 → Godot AnimatedSprite2D/SpriteFrames로 슬라이스·배선(battle.gd 렌더 레이어). 매니페스트에 시트 규격(프레임 수·셀 크기) 추가. 결정성 전투 로직 불변(뷰만).",
       "dependencies": ["feat-022", "feat-025"],
-      "status": "not-started",
+      "status": "done",
       "owner": "agy(시트)→Codex(엔진 배선)",
-      "evidence": ""
+      "evidence": "battle.gd가 <unit>_walk.png 존재 시 AnimatedSprite2D(SpriteFrames walk 4 AtlasTexture, 8fps loop)로 렌더하고 없으면 기존 Sprite2D 유지. 이동 delta 시 play, 정지 시 stop/frame0. test_unit_walk_visuals 21단언 추가. ./init.sh 935 단언 green, run_map/battle 부팅 OK."
     },
     {
       "id": "feat-029",
