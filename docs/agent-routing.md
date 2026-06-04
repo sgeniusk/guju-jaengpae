@@ -677,3 +677,25 @@ leader가 `feature_list.json`, `progress.md`, 필요 시 `session-handoff.md`를
 - 정본 gate와 금지 scope가 team prompt에 들어 있다.
 - screenshot/asset QA와 코드 테스트가 각자 evidence를 가진다.
 - team 결과를 leader가 commit, checkpoint, state-file 기준으로 닫았다.
+
+## G112 — performance goal
+
+`$performance-goal`은 전투 시뮬레이션이나 렌더 성능 최적화가 별도 목표가 될 때만 쓴다.
+
+### 쓸 때
+- `BattleSim` step time, large-wave simulation, targeting loop가 수치로 느려졌을 때.
+- 전투 렌더, animation, screenshot/export smoke가 frame time 문제를 보일 때.
+- 최적화 전후를 같은 seed, 같은 stage, 같은 scene에서 비교할 수 있을 때.
+- 성능 목표가 기능 구현과 분리된 독립 acceptance criteria를 가질 때.
+
+### 쓰지 않을 때
+- 아직 기능 동작이나 정본 gate가 닫히지 않은 상태에서 조기 최적화를 하고 싶을 때.
+- 체감만 있고 기준 seed, frame budget, sample size가 없을 때.
+- 코드 단순화나 버그 수정이 먼저인 문제를 성능 목표로 포장할 때.
+- 한 피처 구현 중 작은 로컬 개선이면 일반 verifier evidence로 충분할 때.
+
+### 완료 기준
+- baseline과 after 수치가 같은 조건에서 비교되어 있다.
+- 성능 개선이 결정성, 저장 호환성, Resource schema를 깨지 않는다.
+- `./init.sh`와 필요한 표적 perf/smoke가 함께 통과한다.
+- 남은 성능 부채가 v1.0 blocker인지 polish인지 분리되어 있다.
