@@ -391,3 +391,25 @@
 - old/new payload와 Resource id 안정성을 깨지 않는 증거가 있다.
 - 실패 시 어떤 owner로 되돌릴지 분명하다.
 - 릴리스 리스크가 있으면 `docs/release-risks.md` 또는 handoff에 연결되어 있다.
+
+## G099 — medium
+
+데이터 튜닝과 문서 동기화는 medium effort로 다룬다.
+
+### 해당 범위
+- trait, edict, scheme, treasure, shop price, reward pool의 명백한 outlier 조정.
+- README, CHANGELOG, roadmap, specs, handoff, feature list의 현재 상태 동기화.
+- stage cadence, tooltip copy, release checklist처럼 정책은 정해졌고 반영이 필요한 작업.
+- 테스트 기대값 또는 스크린샷 증거를 최신 동작에 맞춰 갱신하는 작업.
+
+### 처리 원칙
+- 변경 전 현재 값과 의도한 효과를 작게 기록한다.
+- 수치 튜닝은 broad rebalance가 아니라 명백한 outlier 중심으로 제한한다.
+- 문서 동기화는 코드와 정본 중 어느 쪽을 기준으로 삼았는지 밝힌다.
+- 검증은 관련 표적 테스트와 `./init.sh`를 기본으로 한다.
+
+### 완료 기준
+- 바뀐 수치나 문서 문구의 기준이 현재 코드·정본·검증 증거와 일치한다.
+- 밸런스 조정이 플레이 루프를 막는 문제를 해결한다는 근거가 있다.
+- stale 문구가 남았는지 `rg`나 관련 파일 확인으로 점검되어 있다.
+- high-effort 경계로 번지는 변경은 분리되어 있다.
