@@ -501,3 +501,25 @@ repo lookup과 단순 파일 매핑은 low effort로 다룬다.
 - worker 결과가 leader에게 통합되고 `./init.sh`가 leader 손으로 실행되어 있다.
 - 세력별 fallback, 테스트, 스크린샷 QA 증거가 분리되어 있다.
 - unresolved canon은 needs-user-decision이나 pending story로 남아 있다.
+
+## G104 — Codex App fallback
+
+OMX CLI tmux가 없는 Codex App 표면에서는 native subagents로 read-only review와 검증만 병렬화한다.
+
+### 쓸 때
+- Codex App 안에서 작업 중이고 OMX CLI/tmux runtime state가 확인되지 않을 때.
+- repo lookup, diff review, 테스트 증거 점검, screenshot 판독처럼 write scope가 없는 병렬 검토가 필요할 때.
+- 구현 owner가 이미 leader에게 있고, subagent 결과를 참고 자료로만 통합할 때.
+- runtime workflow를 직접 띄우기보다 현재 App 표면에서 안전하게 계속해야 할 때.
+
+### 운영 원칙
+- Codex App에서 `$team`, `$ralph` 같은 runtime workflow가 실제로 active라고 단정하지 않는다.
+- native subagents는 read-only review와 검증 보조에 한정한다.
+- 구현, 상태 파일 갱신, commit, checkpoint는 leader가 직접 통합하고 확인한다.
+- subagent 결과가 서로 충돌하면 leader가 diff와 테스트 증거를 기준으로 최종 판단한다.
+
+### 완료 기준
+- 어떤 표면에서 실행 중인지와 runtime availability가 명시되어 있다.
+- subagent가 쓴 증거와 leader가 직접 확인한 증거가 구분되어 있다.
+- leader가 최종 diff를 읽고 `./init.sh` 또는 story별 검증을 실행했다.
+- OMX/tmux 의존 작업은 별도 pending 또는 CLI 전환 후보로 남아 있다.
