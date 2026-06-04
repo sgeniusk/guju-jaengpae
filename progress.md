@@ -4,8 +4,8 @@
 
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-06-04
-**활성 피처 (Active Feature)** — feat-037 Phase 7 밸런스·릴리스 준비 (in-progress)
-**현재 목표 (Current Objective)** — Phase 4는 G054/G063으로 9세력 정본 승인→CardVocab→validator→Resource→lord_select 게이트와 현재 Resource schema 정합성을 고정했고, G055/G056은 승인 대기 blocked다. Phase 5 G064~G070으로 act-aware WaveFactory, 보스 3종, 정예/사건 node_kind, 최종 승리 조건, 런 노드 믹스, 보스별 순수 sim/부팅 스모크, 결과 화면 스모크를 잠갔다. Phase 6 G071~G077은 핵심 UI 툴팁/피드백, walk 시트/보스 렌더, realm/stage 배경, 최소 BGM/SFX, 첫 전투·보상 온보딩, HUD placeholder 감소, UI 스크린샷 묶음을 추가했다. Phase 7 G078은 난이도·edict·건물·징발·보패 수치 계약을 잠갔고, G079는 macOS Desktop export preset과 pack export 경계를 잠갔으며, G080~G083은 릴리스 문서·태그 체크리스트·fresh clone green·full app export 첫 전투 smoke를 준비했다. `./init.sh`는 카드 **22개 / 2375 단언 green**이다. push는 사용자 확인 대기.
+**활성 피처 (Active Feature)** — feat-037 Phase 7 밸런스·릴리스 준비 (done)
+**현재 목표 (Current Objective)** — Phase 4는 G054/G063으로 9세력 정본 승인→CardVocab→validator→Resource→lord_select 게이트와 현재 Resource schema 정합성을 고정했고, G055/G056은 승인 대기 blocked다. Phase 5 G064~G070으로 act-aware WaveFactory, 보스 3종, 정예/사건 node_kind, 최종 승리 조건, 런 노드 믹스, 보스별 순수 sim/부팅 스모크, 결과 화면 스모크를 잠갔다. Phase 6 G071~G077은 핵심 UI 툴팁/피드백, walk 시트/보스 렌더, realm/stage 배경, 최소 BGM/SFX, 첫 전투·보상 온보딩, HUD placeholder 감소, UI 스크린샷 묶음을 추가했다. Phase 7 G078~G084는 수치 계약, macOS export preset, pack/full app export, fresh clone green, 태그 체크리스트, 리스크/미지원 범위 문서화를 닫았다. `./init.sh`는 카드 **22개 / 2375 단언 green**이다. push는 사용자 확인 대기.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
@@ -45,17 +45,17 @@
 - [x] **feat-031/G030 첫 5스테이지 UI 흐름** (Codex) — `tools/shoot_run_map.gd` + `tools/shoot_run_flow.sh`가 위·촉·오 run_map stage 1/3/4/5 화면 12장을 생성한다. `/tmp/guju-run-flow-qa-smoke` 12 PNG(각 1920×1080) 생성 및 stage 3 칙령·stage 4 상점·stage 5 보스 샘플 확인. ./init.sh 1029 단언 green.
 - [x] **feat-031/G031~G033 증거 정리와 Phase 7 이월** (Codex) — 헤드리스 수치 회귀는 1029 green으로, 스크린샷 증거는 `/tmp/guju-visual-qa-smoke` 10 PNG + `/tmp/guju-run-flow-qa-smoke` 12 PNG로 닫았다. 최종 밸런스는 Phase 7로 이월했고 G078에서 수치 계약을 시작했다. 남은 시각 QA 부채는 장기런·전투 중 표적 지정 체감 등이다.
 - [x] **feat-032/G034~G044 계략·보패 카드 시스템** (Codex) — `SchemeCardData`/`TreasureCardData`, 계략 발동, `SchemeCatalog`, 보패 `RunState.treasures`, `TreasureCatalog`, 타입별 `RewardPool`, validator, 초기 3+3 Resource, 실제 효과, id/primitive, mixed-flow, UI 혼동 방지를 구현했다. ./init.sh 1270 단언 green.
-- [x] **feat-033/G045~G053 저장 포맷+payload+profile+result+resume+unlock+boundary** (Codex) — `PersistenceStore`, primitive payload, `save_version`, ProfileState API, 전투 결과 기록/해금/새 런 overlay, 런 autosave/이어하기, 신규/미래 버전 테스트, unlock-aware 보상/군주 선택, 프로필 저장/로드와 저장 I/O 경계를 구현했다. **feat-034/G054/G057/G063 + feat-035/G064~G070 + feat-036/G071~G077 + feat-037/G078~G083** — 9세력 게이트, act·보스 구조, 결과 화면, UI 툴팁/피드백, walk/배경/오디오/온보딩/HUD placeholder 감소, UI 스크린샷 묶음, Phase 7 밸런스 수치 계약, macOS export preset/pack export, 릴리스 문서·태그 체크리스트, fresh clone green, full app export 첫 전투 smoke를 닫았다. ./init.sh 2375 단언 green.
+- [x] **feat-033/G045~G053 저장 포맷+payload+profile+result+resume+unlock+boundary** (Codex) — `PersistenceStore`, primitive payload, `save_version`, ProfileState API, 전투 결과 기록/해금/새 런 overlay, 런 autosave/이어하기, 신규/미래 버전 테스트, unlock-aware 보상/군주 선택, 프로필 저장/로드와 저장 I/O 경계를 구현했다. **feat-034/G054/G057/G063 + feat-035/G064~G070 + feat-036/G071~G077 + feat-037/G078~G084** — 9세력 게이트, act·보스 구조, 결과 화면, UI 툴팁/피드백, walk/배경/오디오/온보딩/HUD placeholder 감소, UI 스크린샷 묶음, Phase 7 밸런스 수치 계약, macOS export preset/pack/full app export, 릴리스 문서·태그 체크리스트, fresh clone green, 리스크/미지원 범위를 닫았다. ./init.sh 2375 단언 green.
 ### 진행 중 (What's In Progress)
-- [ ] Phase 7 알려진 리스크와 미지원 범위 문서화. Phase 4/G055·G056 마계·천계 데이터 확장은 사용자 명칭 승인 전 blocked.
+- [ ] Codex Ultragoal 후속 ledger story. Phase 4/G055·G056 마계·천계 데이터 확장은 사용자 명칭 승인 전 blocked.
 ### 다음 (What's Next)
 1. 사용자 승인으로 천계·마계 명칭이 canon이 되면 G055/G056을 재개한다.
-2. 승인 전에는 리스크 문서화와 릴리스 게이트 정리처럼 nation id 확정이 필요 없는 작업을 먼저 고른다.
+2. 승인 전에는 릴리스 게이트 재검증과 운영 문서 정리처럼 nation id 확정이 필요 없는 작업을 먼저 고른다.
 3. 사용자 확인이 오면 `git push origin main`으로 미푸시 커밋을 발행한다.
 
 ## 블로커 / 리스크 (Blockers / Risks)
 - [ ] `git push origin main`은 사용자 확인 전 실행 금지. 보류 사유는 session-handoff와 Ultragoal ledger에 기록됨.
-- [ ] 알려진 리스크와 미지원 범위는 G084에서 릴리스 노트/체크리스트에 고정한다.
+- [x] 알려진 리스크와 미지원 범위는 `docs/release-risks.md`와 `docs/release-checklist.md`에 고정했다.
 - [ ] 남은 시각 QA 부채 — Phase 1 22 PNG와 G077 제품 화면 26 PNG는 증거화됨. 장기런과 전투 중 표적 지정 체감은 후속 수동/agy QA 필요.
 - [ ] Godot 4.6.3 macOS headless `get_system_ca_certificates` 경고 — 무해(종료 0).
 
@@ -75,7 +75,7 @@
 - feat-031/G028 — tools/visual_qa_config.gd, tools/shoot_visual_qa.sh, tools/shoot_battle.gd, tools/shoot_shop.gd, tools/shoot_scene.gd, test/test_visual_qa_config.gd, docs/specs/feat-031.md, feature_list.json, progress.md, session-handoff.md.
 - feat-031/G029 — test/test_run_flow_sanity.gd, scripts/battle/skill_system.gd, test/test_skills.gd, resources/lords/lord_caocao.tres, resources/lords/lord_sunquan.tres, tools/validate_cards.gd, tools/shoot_battle.gd, docs/specs/feat-029.md, docs/specs/feat-031.md, feature_list.json, progress.md, session-handoff.md.
 - feat-031/G030 — tools/shoot_run_map.gd, tools/shoot_run_map.tscn, tools/shoot_run_flow.sh, tools/visual_qa_config.gd, test/test_visual_qa_config.gd, docs/specs/feat-031.md, feature_list.json, progress.md, session-handoff.md.
-- feat-031/G033~feat-037/G083 — README.md, CHANGELOG.md, docs/roadmap.md, docs/worldview.md, docs/specs/feat-031~037.md, docs/release-checklist.md, docs/reports/phase6-ui-screens/*, export_presets.cfg, .gitignore, assets/MANIFEST.md, resources/cards/scheme_*.tres, resources/cards/treasure_*.tres, scripts/resources/*catalog/data*.gd, scripts/run/*.gd, scripts/autoloads/*.gd, scripts/battle/*.gd, scripts/screens/lord_select.gd, scripts/screens/run_map.gd, scripts/ui/card_ui_text.gd, tools/validate_cards.gd, tools/shoot_*.gd, tools/generate_*.py, tools/*smoke.gd, test/test_*.gd, init.sh, feature_list.json, progress.md, session-handoff.md.
+- feat-031/G033~feat-037/G084 — README.md, CHANGELOG.md, docs/roadmap.md, docs/worldview.md, docs/specs/feat-031~037.md, docs/release-checklist.md, docs/release-risks.md, docs/reports/phase6-ui-screens/*, export_presets.cfg, .gitignore, assets/MANIFEST.md, resources/cards/scheme_*.tres, resources/cards/treasure_*.tres, scripts/resources/*catalog/data*.gd, scripts/run/*.gd, scripts/autoloads/*.gd, scripts/battle/*.gd, scripts/screens/lord_select.gd, scripts/screens/run_map.gd, scripts/ui/card_ui_text.gd, tools/validate_cards.gd, tools/shoot_*.gd, tools/generate_*.py, tools/*smoke.gd, test/test_*.gd, init.sh, feature_list.json, progress.md, session-handoff.md.
 - feat-020 — scripts/run/run_state.gd, scripts/battle/battle_sim.gd, scripts/resources/card_catalog.gd, scripts/autoloads/run_manager.gd, scripts/battle/battle.gd, scripts/screens/run_map.gd, scripts/run/board_economy.gd, test/test_run_board.gd, test/test_board_army.gd, test/test_grid.gd.
 - feat-021 — scripts/run/edict_catalog.gd, scripts/run/edict_catalog.gd.uid, scripts/run/stage_cadence.gd, scripts/run/run_state.gd, scripts/autoloads/run_manager.gd, scripts/resources/card_catalog.gd, scripts/autoloads/card_library.gd, scripts/battle/battle.gd, scripts/screens/run_map.gd, test/test_stage_cadence.gd, test/test_run_board.gd.
 - feat-028 — scripts/battle/battle.gd, assets/MANIFEST.md, assets/sprites/units/shu/infantry_walk.png, test/test_unit_walk_visuals.gd.
@@ -89,7 +89,7 @@
 - [x] `./init.sh` (2026-06-04, feat-031/G028) → `test_visual_qa_config` 5단언 포함 단위 테스트 **967 단언** green. `bash -n tools/shoot_visual_qa.sh` 통과. `SHOT_DIR=/tmp/guju-visual-qa-smoke ./tools/shoot_visual_qa.sh`로 10 PNG(각 1920×1080) 생성.
 - [x] `./init.sh` (2026-06-04, feat-031/G029) → `test_run_flow_sanity` 60단언 포함 단위 테스트 **1028 단언** green. 위·촉·오 모두 첫 보스 승리 후 보드 확장과 stage 6 도달 확인.
 - [x] `./init.sh` (2026-06-04, feat-031/G030) → `test_visual_qa_config` stage list 포함, 단위 테스트 **1029 단언** green. `SHOT_DIR=/tmp/guju-run-flow-qa-smoke ./tools/shoot_run_flow.sh` → 12 PNG(1920×1080) 생성.
-- [x] `./init.sh` (2026-06-04, feat-037/G079~G083) → 카드 **22개** 검증 OK, Phase 5/6/7 스모크와 밸런스/export preset/export smoke 계약, 단위 테스트 **2375 단언** green. pack export와 full app export 성공, export 앱 `GUJU_EXPORT_SMOKE first_battle_reached` 확인. 산출물은 `build/` ignore. 로컬 fresh clone에서도 `./init.sh` green. 종료 0.
+- [x] `./init.sh` (2026-06-04, feat-037/G079~G084) → 카드 **22개** 검증 OK, Phase 5/6/7 스모크와 밸런스/export preset/export smoke 계약, 단위 테스트 **2375 단언** green. pack export와 full app export 성공, export 앱 `GUJU_EXPORT_SMOKE first_battle_reached` 확인. 리스크/미지원 범위는 `docs/release-risks.md`에 고정. 종료 0.
 - [x] `./init.sh` (2026-05-30, feat-013) → 카드검증(10·1) / sim default_waves 승리 28.7s·무배치 패배 0.1s / reward / run_map·battle 부팅 / 단위 12파일 **356 단언** 통과. 종료 0.
 - [x] `./init.sh` (2026-05-30, feat-014) → 카드검증(10·1) / sim 성 방어 승리 28.7s(성HP 1200)·성 노출 패배 29.0s / reward / run_map·battle 부팅 / 단위 13파일 **383 단언** 통과. 종료 0.
 - [x] `./init.sh` (2026-05-30, feat-017) → 카드검증(10·1) / sim 성 방어 승리 28.7s·성 노출 패배 29.0s / reward / run_map·battle 부팅 / 단위 14파일 **395 단언** 통과. 종료 0.
@@ -117,4 +117,4 @@
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh` 2375단언 green. **feat-031 G026~G033, feat-032 G034~G044, feat-033 G045~G053, feat-034 G054/G057/G063, feat-035 G064~G070, feat-036 G071~G077, feat-037 G078~G083 done** — Phase 4 9세력 확장은 정본 승인→CardVocab→validator→Resource→lord_select 순서가 고정됐고 G055/G056은 명칭 승인 대기 blocked. 다음은 G084 리스크 문서화. 푸시는 사용자 확인 후.
+`./init.sh` 2375단언 green. **feat-031 G026~G033, feat-032 G034~G044, feat-033 G045~G053, feat-034 G054/G057/G063, feat-035 G064~G070, feat-036 G071~G077, feat-037 G078~G084 done** — Phase 4 9세력 확장은 정본 승인→CardVocab→validator→Resource→lord_select 순서가 고정됐고 G055/G056은 명칭 승인 대기 blocked. 푸시와 태그는 사용자 확인 후.

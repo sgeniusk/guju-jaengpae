@@ -1,7 +1,7 @@
 # feat-037 — Phase 7 밸런스·릴리스 준비
 
 ## 목표
-Phase 7은 제품 루프가 끝까지 돈 뒤 최종 릴리스 전에 수치와 발행 경로를 잠근다. G078은 난이도 곡선, 보상 풀, 상점 가격, trait·edict·scheme·treasure 값을 하나의 밸런스 계약으로 고정하고, G079는 민감정보 없는 macOS Desktop export preset과 pack export 경계를 고정한다. G083은 full app export가 실행되고 export 앱이 첫 전투까지 도달하는지 검증한다.
+Phase 7은 제품 루프가 끝까지 돈 뒤 최종 릴리스 전에 수치와 발행 경로를 잠근다. G078은 난이도 곡선, 보상 풀, 상점 가격, trait·edict·scheme·treasure 값을 하나의 밸런스 계약으로 고정하고, G079는 민감정보 없는 macOS Desktop export preset과 pack export 경계를 고정한다. G083은 full app export가 실행되고 export 앱이 첫 전투까지 도달하는지 검증한다. G084는 알려진 리스크와 미지원 범위를 릴리스 후보 문서에 고정한다.
 
 ## G078 세부 기준
 - 난이도 곡선은 선형 구조를 유지하되 `StageCadence.DIFFICULTY_STEP = 0.10`으로 둔다.
@@ -44,10 +44,17 @@ Phase 7은 제품 루프가 끝까지 돈 뒤 최종 릴리스 전에 수치와 
 - export 실행 smoke는 `GUJU_EXPORT_SMOKE=first_battle` 환경변수에서만 동작하며, 일반 플레이 경로에는 영향이 없어야 한다.
 - smoke는 lord_select → run_map → battle 경로를 지나 시작 손패 유닛을 보드에 놓고 stage 1 첫 전투 시작 후 `GUJU_EXPORT_SMOKE first_battle_reached` marker와 종료 코드 0을 남겨야 한다.
 
+## G084 세부 기준
+- 알려진 리스크와 미지원 범위는 `docs/release-risks.md`에 둔다.
+- 문서는 지원 기준, 미지원·보류 범위, 운영 리스크, 태그 전 stop condition을 구분한다.
+- 천계·마계 6국 playable 확장, 온라인 멀티플레이, notarization/signing, GitHub release 생성, 장기런 수동 QA, 고급 애니메이션, 최종 사운드 디자인은 현재 릴리스 후보의 미지원·보류 범위로 명시한다.
+- full app export 산출물, Godot export templates 의존성, `.tres.remap` export 로더 경계, macOS headless 경고, ObjectDB/resource 종료 경고, 사용자 확인 전 push/tag 금지를 운영 리스크로 명시한다.
+- `docs/release-checklist.md`는 G084 완료와 리스크 문서 링크를 표시한다.
+
 ## 비범위
 - G078 범위에서는 export preset 생성과 실제 export 실행을 하지 않는다.
 - G079 범위에서는 playable `.app`/`.zip` full export 실행을 하지 않는다.
-- CHANGELOG/릴리스 노트 최종본.
+- GitHub release 게시문 최종본.
 - 사용자 확인 없는 실제 tag 생성과 push.
 - 천계·마계 nation id와 군주·카드 Resource 추가.
 - 장기런 수동 QA에서 나온 후속 수치 재조정.
@@ -61,4 +68,5 @@ Phase 7은 제품 루프가 끝까지 돈 뒤 최종 릴리스 전에 수치와 
 - `docs/release-checklist.md`는 태그 후보, 사용자 확인 게이트, preflight 명령, G082~G084 선행 조건을 문서화한다.
 - fresh clone 검증은 로컬 임시 클론에서 `./init.sh` 전체 green을 확인한다.
 - full app export 검증은 `build/macos/guju-jaengpae.zip` 생성과 export 앱 `GUJU_EXPORT_SMOKE first_battle_reached` marker를 확인한다.
+- `docs/release-risks.md`는 지원 기준, 미지원·보류 범위, 운영 리스크, 태그 전 stop condition을 문서화한다.
 - `./init.sh` 전체 green으로 카드 validator, 부팅 스모크, UI 피드백 스모크, 보스/결과 스모크, 단위 테스트를 함께 확인한다.

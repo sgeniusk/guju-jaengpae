@@ -2,7 +2,7 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
-## 2026-06-04 — feat-037 Phase 7 밸런스·릴리스 준비 (G078~G083)
+## 2026-06-04 — feat-037 Phase 7 밸런스·릴리스 준비 (G078~G084)
 제품 루프가 끝까지 도는 현재 baseline을 릴리스 준비 상태로 정리했다. 천계·마계 nation id는 승인 전 그대로 보류하고, 승인 없이 가능한 밸런스·export·문서 경계를 먼저 닫았다.
 - **G078 밸런스 계약** — `StageCadence.DIFFICULTY_STEP=0.10`으로 stage 1/5/15 배율을 1.00/1.40/2.40에 고정했다. 칙령은 군세 +10%, 재정 +20%, 축성 +15%. 둔전은 cost 3·gold/sec 1, 망루는 cost 4·오라 +10%, 징발은 cost 4·gold +6. 보패 기본값은 병법서 +10%/2중첩, 금인 +20%, 천리안 +1 선택지 유지. `test_balance.gd`가 수치 계약을 한곳에서 검증한다.
 - **G079 macOS export preset** — `export_presets.cfg`에 민감정보 없는 `macOS Desktop` preset을 추가했다. `export_presets.cfg`는 추적하고, signing/notarization credential은 비워 두며, Godot credential 경계는 `.godot/export_credentials.cfg`로 둔다. `test_export_preset.gd`가 preset 이름, platform, export path, resource filter, `docs/reports/**`·`test/**`·`tools/**` 제외, bundle id, credential-free 필드를 검증한다.
@@ -11,6 +11,7 @@
 - **G081 릴리스 체크리스트** — `docs/release-checklist.md`를 추가하고 앱 버전 `0.7.0`, 태그 후보 `v0.7.0-rc1`/`v0.7.0`, 사용자 확인 전 tag/push 금지, preflight 명령, G082~G084 선행 조건을 문서화했다.
 - **G082 fresh clone 검증** — 로컬 임시 클론에서 `./init.sh`를 실행했고, 카드 22개와 단위 테스트 2349/2349 green을 확인했다.
 - **G083 full app export 검증** — Godot 4.6.3 export templates로 `build/macos/guju-jaengpae.zip`를 생성했고, release 앱을 `GUJU_EXPORT_SMOKE=first_battle`로 실행해 lord_select → run_map → battle → stage 1 첫 전투 marker를 확인했다. export 앱에서 `.tres.remap` 디렉터리 항목이 보이는 문제를 `CardCatalog.resource_path_for_dir_entry()`로 정규화해 시작 덱이 비지 않게 했다.
+- **G084 리스크 문서화** — `docs/release-risks.md`에 지원 기준, 미지원·보류 범위, 운영 리스크, 태그 전 stop condition을 고정했다. `docs/release-checklist.md`는 이 문서를 릴리스 노트 기준으로 링크한다.
 - **검증** — `./init.sh` 카드 22개, 단위 테스트 2375/2375 green. `jq empty feature_list.json`, `git diff --check`, `progress.md` 120줄 제한 유지.
 
 ## 2026-06-04 — feat-028 유닛 애니메이션 (스프라이트 시트 · agy→Codex · architect APPROVED)
