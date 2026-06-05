@@ -33,9 +33,9 @@ static func deck_for_lord(lord: LordData) -> Array[StringName]:
 				&"troop_crossbow",
 				&"troop_infantry",
 				&"troop_infantry",
-				&"building_mangru",
 				&"building_dunjeon",
 				&"scheme_raid",
+				&"building_mangru",
 				&"scheme_fortify",
 			]
 		&"lord_sunquan":

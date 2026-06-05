@@ -37,6 +37,18 @@ func test_stage_ten_boss_wave_uses_act_two_context() -> void:
 	truthy(names.has("황건 부적병"), "act 2 보스 파도는 부적병 호위 포함")
 	truthy(names.has("요사 명궁"), "act 2 보스 파도는 명궁 호위 포함")
 
+func test_first_elite_encounter_keeps_ranged_pressure_fast_but_not_spiky() -> void:
+	var encounter: Array = WaveFactory.stage_encounter_waves(7)[0]
+	var elite := _find_unit(encounter, "마군 정예")
+	var archer := _find_unit(encounter, "요사 명궁")
+	not_null(elite, "첫 정예 근접 유닛")
+	not_null(archer, "첫 정예 원거리 유닛")
+	if elite == null or archer == null:
+		return
+	eq(elite.max_hp, 416, "정예 기병 HP는 stage 7 배율 반영")
+	eq(archer.max_hp, 96, "명궁 HP는 첫 정예 템포에 맞게 낮춤")
+	eq(archer.attack, 35, "명궁 공격은 성을 과도하게 녹이지 않음")
+
 func test_three_boss_stages_have_distinct_bosses_rules_and_skills() -> void:
 	var stage_five: BattleUnit = (WaveFactory.stage_waves(5)[0] as Array)[0]
 	var stage_ten: BattleUnit = (WaveFactory.stage_waves(10)[0] as Array)[0]
@@ -73,3 +85,9 @@ func _has_unit_with_rule(waves: Array, display_name: String, target_rule: String
 			if unit.display_name == display_name and unit.target_rule == target_rule:
 				return true
 	return false
+
+func _find_unit(units: Array, display_name: String) -> BattleUnit:
+	for unit: BattleUnit in units:
+		if unit.display_name == display_name:
+			return unit
+	return null

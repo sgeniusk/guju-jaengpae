@@ -176,7 +176,7 @@ static func _combat_encounter(stage: int, act: int) -> Array[BattleUnit]:
 	if _StageCadence.is_elite(stage):
 		return [
 			_enemy_unit(1, spawn_x, "마군 정예", 260, 34, 1.0, "melee", 42.0, "cavalry", "lowest_hp"),
-			_enemy_unit(0, spawn_x, "요사 명궁", 110, 28, 1.0, "ranged", 30.0, "archer", "strongest_ranged"),
+			_enemy_unit(0, spawn_x, "요사 명궁", 60, 22, 1.0, "ranged", 30.0, "archer", "strongest_ranged"),
 		]
 	if template <= 0:
 		return [

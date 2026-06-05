@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~046으로 성 선점→3장 손패→1장 플레이→분대/호위 성장→첫 전열 충돌→진형 전술→전술 미리보기→장기런 검증→집중표적 피드백→카드 선택 전략 안내까지 MVP 이후 체감 루프를 보강했다. ./init.sh 카드 22개 / 2726 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~047로 성 선점→3장 손패→1장 플레이→분대/호위 성장→첫 전열 충돌→진형 전술→전술 미리보기→장기런 검증→집중표적 피드백→카드 선택 전략 안내→현세 3군주 장기런 스모크까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2731 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -442,6 +442,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-046-card-choice-advisor.md + CardChoiceAdvisor helper/test 추가. run_map 상점 카드와 battle 전리품 버튼이 현재 보드/레벨/손패/골드 기준 `추천 — 증원 후보`, `경제 확장`, `자금 부족` 같은 visible text와 tooltip을 표시한다. tools/ui_feedback_smoke.gd가 상점/보상 추천 렌더를 검증한다. ./init.sh 카드 22개 / 2726 단언 green."
+    },
+    {
+      "id": "feat-047",
+      "name": "현세 3군주 장기런 스모크",
+      "description": "최종 보스까지의 자동 장기런 검증을 유비 단일 루트에서 현세 3군주 전체로 확장하고, 건물·계략·보패·군주별 우선순위를 실제 전투 입력에 반영한다.",
+      "dependencies": ["feat-044", "feat-046"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-047-three-lord-long-run-smoke.md 추가. tools/long_run_smoke.gd가 유비·조조·손권 stage 1~15를 각각 통과하며 건물 배치/망루 오라/계략/보패를 반영한다. 첫 정예 명궁 스파이크를 좁게 낮추고 test_wave_factory.gd가 stage 7 정예 encounter 수치를 검증한다. ./init.sh 카드 22개 / 2731 단언 green."
     }
   ]
 }
