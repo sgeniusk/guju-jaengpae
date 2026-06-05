@@ -5,6 +5,7 @@ const LORD_ID := &"lord_liubei"
 const BATTLE_SCENE := "res://scenes/battle/battle.tscn"
 const _StageCadence := preload("res://scripts/run/stage_cadence.gd")
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
+const _CardChoiceAdvisor := preload("res://scripts/run/card_choice_advisor.gd")
 const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 
@@ -164,7 +165,7 @@ func _build_shop_panel() -> void:
 	_root.add_child(leave)
 
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(1760.0, 300.0)
+	scroll.custom_minimum_size = Vector2(1760.0, 340.0)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	_root.add_child(scroll)
@@ -178,6 +179,13 @@ func _build_shop_panel() -> void:
 	scroll.add_child(grid)
 
 	var gold := RunManager.get_gold()
+	var choice_context := _CardChoiceAdvisor.context(
+		RunManager.get_board(),
+		RunManager.get_board_levels(),
+		RunManager.get_hand(),
+		gold,
+		CardLibrary.catalog
+	)
 
 	for id in RunManager.shop_card_ids():
 		var card := CardLibrary.get_card(id)
@@ -189,8 +197,8 @@ func _build_shop_panel() -> void:
 
 		# 카드 컨테이너 버튼 — 프레임 이미지 위에 텍스트를 올린다.
 		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(220.0, 300.0)
-		btn.tooltip_text = _shop_card_tooltip(card, can_afford)
+		btn.custom_minimum_size = Vector2(240.0, 330.0)
+		btn.tooltip_text = _shop_card_tooltip(card, can_afford, choice_context)
 		btn.disabled = not can_afford
 		if not can_afford:
 			btn.modulate = Color(0.55, 0.55, 0.55, 0.80)
@@ -242,6 +250,15 @@ func _build_shop_panel() -> void:
 		effect_label.modulate = Color(0.88, 0.94, 0.82)
 		effect_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		info_box.add_child(effect_label)
+
+		var advice_label := Label.new()
+		advice_label.text = _CardChoiceAdvisor.line_for_card(card, choice_context, _CardChoiceAdvisor.MODE_SHOP)
+		advice_label.add_theme_font_size_override("font_size", 14)
+		advice_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		advice_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		advice_label.modulate = Color(1.0, 0.86, 0.46) if can_afford else Color(1.0, 0.56, 0.46)
+		advice_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info_box.add_child(advice_label)
 
 		# 비용 행 — 골드 아이콘 + 숫자.
 		var cost_row := HBoxContainer.new()
@@ -337,8 +354,9 @@ func _add_board_summary(parent: VBoxContainer) -> void:
 		label.add_theme_font_size_override("font_size", 21)
 		parent.add_child(label)
 
-func _shop_card_tooltip(card: CardData, can_afford: bool) -> String:
+func _shop_card_tooltip(card: CardData, can_afford: bool, choice_context: Dictionary) -> String:
 	var text := _CardUiText.tooltip(card)
+	text += "\n%s" % _CardChoiceAdvisor.tooltip_for_card(card, choice_context, _CardChoiceAdvisor.MODE_SHOP)
 	if not can_afford:
 		text += "\n골드가 부족합니다."
 	else:

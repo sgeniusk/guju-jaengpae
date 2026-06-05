@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-046 카드 선택 전략 안내
+상점과 전리품 선택이 현재 런 맥락에서 왜 좋은 선택인지 읽히도록 추천 문구를 추가했다.
+- **CardChoiceAdvisor helper** — `scripts/run/card_choice_advisor.gd`가 보드, 보드 레벨, 손패, 골드, 카드 타입만 읽어 `증원 후보`, `전열 보강`, `지휘 핵심`, `경제 확장`, `화력 거점`, `즉시 한 수`, `지속 화력`, `자금 부족` 같은 player-facing 선택 이유를 순수 계산한다.
+- **상점 전략 라벨** — `run_map.gd` 상점 카드가 추천 한 줄을 visible text로 표시하고 tooltip에도 같은 판단을 붙인다. 골드가 부족한 카드는 부족 금액을 말한다.
+- **전리품 추천 버튼** — `battle.gd` 전투 승리 보상 버튼이 카드 brief 아래 추천 문구를 함께 표시한다.
+- **검증** — `test_card_choice_advisor.gd`가 주요 추천 분기를 검증하고, `tools/ui_feedback_smoke.gd`가 상점과 보상 화면에서 추천 문구가 실제 렌더되는지 확인한다. `./init.sh` 카드 22개, 단위 테스트 2726/2726 green.
+
 ## 2026-06-06 — feat-045 집중표적 체감 피드백
 전투 중 표적 지정이 실제 지휘처럼 읽히도록 화면 피드백과 회귀 검증을 보강했다.
 - **BattleCommandFeedback helper** — `scripts/battle/battle_command_feedback.gd`가 집중표적 선택 반경, 현재 표적/장수 수 tooltip, 성공/실패/자동복귀 문구, 표적 마커 문자열을 순수 계산한다.

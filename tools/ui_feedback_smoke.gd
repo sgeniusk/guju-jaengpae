@@ -82,6 +82,8 @@ func _run_map_shop_case() -> int:
 	var errors := 0
 	errors += _assert_button_tooltip(screen, "상점 떠나기", "다음 스테이지", "상점 떠나기 tooltip")
 	errors += _assert_any_tooltip(screen, "손패 구매", "상점 카드 구매 경로 tooltip")
+	errors += _assert_any_text(screen, "추천 —", "상점 전략 추천 문구")
+	errors += _assert_any_tooltip(screen, "추천 —", "상점 전략 추천 tooltip")
 	errors += _assert_any_tooltip(screen, "보드 배치", "보드 요약 카드 tooltip")
 	screen.queue_free()
 	await _frames(2)
@@ -264,7 +266,9 @@ func _battle_reward_case() -> int:
 	errors += _assert_any_text(battle, "전리품 — 한 장을 고르세요", "보상 선택 제목")
 	errors += _assert_any_text(battle, "카드 버튼을 누르면", "보상 선택 행동 안내")
 	errors += _assert_button_text(battle, "선택 —", "보상 선택 버튼")
+	errors += _assert_button_text(battle, "추천 —", "보상 선택 전략 추천")
 	errors += _assert_any_tooltip(battle, "이 전리품을 선택합니다", "보상 선택 tooltip")
+	errors += _assert_any_tooltip(battle, "추천 —", "보상 전략 추천 tooltip")
 	battle.queue_free()
 	await _frames(2)
 	if errors == 0:

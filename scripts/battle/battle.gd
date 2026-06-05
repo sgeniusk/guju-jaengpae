@@ -10,6 +10,7 @@ const _BattleHudState := preload("res://scripts/battle/hud_state.gd")
 const _BattlefieldTheme := preload("res://scripts/battle/battlefield_theme.gd")
 const _BoardEconomy := preload("res://scripts/run/board_economy.gd")
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
+const _CardChoiceAdvisor := preload("res://scripts/run/card_choice_advisor.gd")
 const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
 const _FormationRenderer := preload("res://scripts/battle/formation_renderer.gd")
 const _BattleFeel := preload("res://scripts/battle/battle_feel.gd")
@@ -2136,10 +2137,21 @@ func _build_outcome_ui(win: bool) -> void:
 	reward_guide.add_theme_font_size_override("font_size", 18)
 	reward_guide.add_theme_color_override("font_color", Color(0.86, 0.90, 1.0))
 	box.add_child(reward_guide)
+	var choice_context := _CardChoiceAdvisor.context(
+		RunManager.get_board(),
+		RunManager.get_board_levels(),
+		RunManager.get_hand(),
+		RunManager.get_gold(),
+		CardLibrary.catalog
+	)
 	for id in candidates:
 		var card := CardLibrary.get_card(id)
-		var reward_button := _make_button("선택 — %s (%d) — %s" % [card.display_name, card.cost, _card_brief(card)], _pick_reward.bind(id))
-		reward_button.tooltip_text = "이 전리품을 선택합니다.\n%s" % _CardUiText.tooltip(card)
+		var advice_line := _CardChoiceAdvisor.line_for_card(card, choice_context, _CardChoiceAdvisor.MODE_REWARD)
+		var reward_button := _make_button("선택 — %s (%d) — %s\n%s" % [card.display_name, card.cost, _card_brief(card), advice_line], _pick_reward.bind(id))
+		reward_button.tooltip_text = "이 전리품을 선택합니다.\n%s\n%s" % [
+			_CardUiText.tooltip(card),
+			_CardChoiceAdvisor.tooltip_for_card(card, choice_context, _CardChoiceAdvisor.MODE_REWARD),
+		]
 		box.add_child(reward_button)
 
 func _add_expand_reward_notice(box: VBoxContainer) -> void:
