@@ -150,6 +150,7 @@ func _battle_deploy_case() -> int:
 	errors += _assert_button_tooltip(battle, "교전 시작", "성 위치", "교전 시작 비활성 tooltip")
 	errors += _assert_button_tooltip(battle, "계략 발동", "계략 발동 버튼", "계략 손패 tooltip")
 	errors += _assert_button_tooltip(battle, "10명 분대", "빈 타일", "병종 손패 tooltip")
+	errors += _assert_default_speed_fast(battle)
 	if battle.has_method("_select_hand"):
 		battle._select_hand(0)
 		await _frames(2)
@@ -433,6 +434,20 @@ func _assert_manual_first_play_started(battle: Node, run_manager) -> int:
 		errors += _fail("수동 첫 플레이 아군 보병 유닛 생성 실패")
 	if battle._hint_label.text.find("전군 돌격") < 0:
 		errors += _fail("수동 첫 플레이 시작 함성 힌트 누락: %s" % battle._hint_label.text)
+	return errors
+
+func _assert_default_speed_fast(battle: Node) -> int:
+	var errors := 0
+	if not is_equal_approx(float(battle._speed), 3.0):
+		errors += _fail("전투 기본 속도 x3 아님: %.1f" % float(battle._speed))
+	var found_selected := false
+	for entry in battle._speed_buttons:
+		var button := entry as Button
+		if button != null and button.text == "×3" and button.button_pressed:
+			found_selected = true
+			break
+	if not found_selected:
+		errors += _fail("전투 기본 속도 x3 버튼 선택 표시 누락")
 	return errors
 
 func _buttons(node: Node) -> Array[Button]:

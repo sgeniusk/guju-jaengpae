@@ -68,6 +68,26 @@ func test_first_encounter_has_visible_squad_density_and_fast_result() -> void:
 	truthy(float(metrics.get("elapsed", 0.0)) <= 25.0, "초반 교전은 25초 안에 끝")
 	truthy(int(metrics.get("visible_soldiers", 0)) >= 16, "장수 호위+병종 분대로 군세 밀도 확보")
 
+func test_first_five_metrics_enforce_tempo_budget() -> void:
+	var fast_metrics := [
+		{"result": BattleSim.Result.PLAYER_WIN, "elapsed": 21.0, "visible_soldiers": 10},
+		{"result": BattleSim.Result.PLAYER_WIN, "elapsed": 18.0, "visible_soldiers": 16},
+		{"result": BattleSim.Result.PLAYER_WIN, "elapsed": 14.0, "visible_soldiers": 26},
+	]
+	truthy(PlaytestMetrics.first_five_ok(fast_metrics), "빠른 첫 5스테이지 메트릭 통과")
+	var slow_stage := [
+		{"result": BattleSim.Result.PLAYER_WIN, "elapsed": PlaytestMetrics.FIRST_FIVE_MAX_COMBAT_TIME + 0.1, "visible_soldiers": 10},
+		{"result": BattleSim.Result.PLAYER_WIN, "elapsed": 18.0, "visible_soldiers": 16},
+		{"result": BattleSim.Result.PLAYER_WIN, "elapsed": 14.0, "visible_soldiers": 26},
+	]
+	falsy(PlaytestMetrics.first_five_ok(slow_stage), "개별 전투가 예산을 넘으면 실패")
+	var slow_average := [
+		{"result": BattleSim.Result.PLAYER_WIN, "elapsed": 20.5, "visible_soldiers": 10},
+		{"result": BattleSim.Result.PLAYER_WIN, "elapsed": 20.5, "visible_soldiers": 16},
+		{"result": BattleSim.Result.PLAYER_WIN, "elapsed": 20.5, "visible_soldiers": 26},
+	]
+	falsy(PlaytestMetrics.first_five_ok(slow_average), "평균 전투 시간이 예산을 넘으면 실패")
+
 func test_card_ui_action_label_explains_player_intent() -> void:
 	var troop := cat.get_card(&"troop_archer")
 	var building := cat.get_card(&"building_mangru")

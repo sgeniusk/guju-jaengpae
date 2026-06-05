@@ -460,6 +460,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-048-manual-playthrough-smoke.md 추가. tools/ui_feedback_smoke.gd가 첫 손패 계략/보병/건물 상태에서 성 선택→계략 타일 배치 거부→보병 배치→전투 phase 진입, 성/아군/적 생성, 손패 감소, 교전당 1장 제한, 전군 돌격 hint를 검증한다. ./init.sh 카드 22개 / 2731 단언 green."
+    },
+    {
+      "id": "feat-049",
+      "name": "전투 템포 예산",
+      "description": "첫 플레이 전투가 느리게 끌리는 회귀를 줄이기 위해 battle 기본 속도를 x3으로 올리고, 첫 5스테이지 전투 시간 예산을 자동 검증한다.",
+      "dependencies": ["feat-041", "feat-048"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-049-battle-tempo-budget.md 추가. battle.gd 기본 전투 속도 x3, tools/ui_feedback_smoke.gd 기본 x3 버튼 선택 검증, PlaytestMetrics 첫 5스테이지 개별 24초/평균 20초 예산과 test_fun_contract 회귀 테스트 추가. ./init.sh 카드 22개 / 2734 단언 green."
     }
   ]
 }

@@ -3,6 +3,8 @@ class_name PlaytestMetrics
 extends RefCounted
 
 const BattleFeel := preload("res://scripts/battle/battle_feel.gd")
+const FIRST_FIVE_MAX_COMBAT_TIME := 24.0
+const FIRST_FIVE_AVERAGE_COMBAT_TIME := 20.0
 
 static func summarize(stage: int, sim: BattleSim, board: Dictionary, board_levels: Dictionary, hand_size: int, draw_size: int) -> Dictionary:
 	var visible_soldiers := 0
@@ -51,14 +53,20 @@ static func first_five_ok(metrics_list: Array) -> bool:
 	if metrics_list.size() < 3:
 		return false
 	var saw_density := false
+	var elapsed_total := 0.0
+	var combat_count := 0
 	for metrics in metrics_list:
 		if int(metrics.get("result", BattleSim.Result.ONGOING)) != BattleSim.Result.PLAYER_WIN:
 			return false
 		var elapsed := float(metrics.get("elapsed", 0.0))
-		if elapsed <= 0.0 or elapsed > 35.0:
+		if elapsed <= 0.0 or elapsed > FIRST_FIVE_MAX_COMBAT_TIME:
 			return false
+		elapsed_total += elapsed
+		combat_count += 1
 		if int(metrics.get("visible_soldiers", 0)) >= 10:
 			saw_density = true
+	if combat_count <= 0 or elapsed_total / float(combat_count) > FIRST_FIVE_AVERAGE_COMBAT_TIME:
+		return false
 	return saw_density
 
 static func _level_sum(levels: Dictionary) -> int:

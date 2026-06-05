@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-049 전투 템포 예산
+첫 플레이 전투가 느리게 끌리는 회귀를 줄이도록 기본 속도와 자동 검증 예산을 조정했다.
+- **기본 x3 전투** — `battle.gd`의 전투 기본 속도를 x3으로 올렸다. 플레이어가 첫 교전에 들어가면 별도 클릭 없이 빠른 전투 속도로 시작한다.
+- **속도 UI smoke** — `tools/ui_feedback_smoke.gd`가 battle 씬의 기본 `_speed`와 x3 버튼 선택 표시를 확인한다.
+- **초반 시간 예산** — `PlaytestMetrics.first_five_ok()`가 첫 5스테이지 전투의 개별 최대 시간을 24초, 평균 시간을 20초로 검증한다.
+- **검증** — `tools/playtest_loop_smoke.gd`에서 stage 1/2/5가 21.1s/18.3s/14.6s로 통과했다. `./init.sh` 카드 22개, 단위 테스트 2734/2734 green.
+
 ## 2026-06-06 — feat-048 수동 플레이 QA 자동화
 첫 전투의 실제 수동 조작 경로를 UI smoke에 묶어, 배치가 다시 깨지는 회귀를 빠르게 잡도록 했다.
 - **Manual first play smoke** — `tools/ui_feedback_smoke.gd`가 유비 새 런을 시작하고 첫 손패를 계략/보병/건물로 고정한다.
