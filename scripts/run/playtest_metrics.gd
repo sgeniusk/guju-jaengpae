@@ -2,15 +2,22 @@
 class_name PlaytestMetrics
 extends RefCounted
 
+const BattleFeel := preload("res://scripts/battle/battle_feel.gd")
+
 static func summarize(stage: int, sim: BattleSim, board: Dictionary, board_levels: Dictionary, hand_size: int, draw_size: int) -> Dictionary:
 	var visible_soldiers := 0
+	var enemy_visible_soldiers := 0
 	var player_units := 0
 	if sim != null:
 		for unit in sim.player_units:
 			if unit == null or unit.is_castle:
 				continue
 			player_units += 1
-			visible_soldiers += _rendered_visible_count(unit)
+			visible_soldiers += BattleFeel.visible_count_for_unit(unit)
+		for unit in sim.enemy_units:
+			if unit == null:
+				continue
+			enemy_visible_soldiers += BattleFeel.visible_count_for_unit(unit)
 	return {
 		"stage": stage,
 		"result": sim.result if sim != null else BattleSim.Result.ONGOING,
@@ -21,10 +28,12 @@ static func summarize(stage: int, sim: BattleSim, board: Dictionary, board_level
 		"draw": draw_size,
 		"player_units": player_units,
 		"visible_soldiers": visible_soldiers,
+		"enemy_visible_soldiers": enemy_visible_soldiers,
+		"total_visible_soldiers": visible_soldiers + enemy_visible_soldiers,
 	}
 
 static func compact_line(metrics: Dictionary) -> String:
-	return "stage %d result=%d time=%.1fs board=%d lvsum=%d hand=%d draw=%d units=%d soldiers=%d" % [
+	return "stage %d result=%d time=%.1fs board=%d lvsum=%d hand=%d draw=%d units=%d soldiers=%d enemy=%d total=%d" % [
 		int(metrics.get("stage", 0)),
 		int(metrics.get("result", 0)),
 		float(metrics.get("elapsed", 0.0)),
@@ -34,6 +43,8 @@ static func compact_line(metrics: Dictionary) -> String:
 		int(metrics.get("draw", 0)),
 		int(metrics.get("player_units", 0)),
 		int(metrics.get("visible_soldiers", 0)),
+		int(metrics.get("enemy_visible_soldiers", 0)),
+		int(metrics.get("total_visible_soldiers", 0)),
 	]
 
 static func first_five_ok(metrics_list: Array) -> bool:
@@ -55,10 +66,3 @@ static func _level_sum(levels: Dictionary) -> int:
 	for key in levels.keys():
 		total += int(levels[key])
 	return total
-
-static func _rendered_visible_count(unit: BattleUnit) -> int:
-	if unit == null:
-		return 0
-	if unit.retinue_count > 0:
-		return 1 + mini(maxi(0, unit.retinue_count), 8)
-	return mini(maxi(1, unit.squad_count), 14)

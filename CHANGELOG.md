@@ -2,6 +2,14 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-05 — feat-041 전투 체감 패스
+MVP 루프의 첫 교전을 "군세 충돌"로 읽히게 하는 뷰·파도 체감 패스. BattleSim 결정성은 보존하고, stage 1 encounter와 시작 VFX만 좁게 조정했다.
+- **BattleFeel helper** — `scripts/battle/battle_feel.gd`가 visible soldiers, lane coverage, enemy front 계약, rally text를 순수 계산한다. `test_battle_feel.gd`가 첫 encounter enemy front와 병력 밀도 집계를 검증한다.
+- **첫 적 전열** — `WaveFactory.stage_encounter_waves(1)`이 단일 적 대신 중앙 전선 근처 3개 저체력 분대를 낸다. enemy visible 25명으로 보이되, stage 1 자동 교전은 21.1s에 끝나도록 HP/공격/y 간격을 낮췄다.
+- **전투 시작 피드백** — `battle.gd`가 전투 시작 순간 "전군 돌격!" banner, 양 진영 charge line, 짧은 camera shake를 VFX layer에 표시한다. 시뮬레이션·저장·카드 데이터는 바꾸지 않는다.
+- **메트릭 확장** — `PlaytestMetrics`가 아군/적/전체 visible soldiers를 출력한다. `tools/playtest_loop_smoke.gd`는 stage 1 total 35명, stage 2 total 32명, stage 5 total 36명을 확인한다.
+- **검증** — `./init.sh` 카드 22개, 단위 테스트 2645/2645 green. 플레이테스트 루프 stage 1/2/5 전투 21.1s/18.3s/14.6s green.
+
 ## 2026-06-04 — feat-037 Phase 7 밸런스·릴리스 준비 (G078~G084)
 제품 루프가 끝까지 도는 현재 baseline을 릴리스 준비 상태로 정리했다. 천계·마계 nation id는 승인 전 그대로 보류하고, 승인 없이 가능한 밸런스·export·문서 경계를 먼저 닫았다.
 - **G078 밸런스 계약** — `StageCadence.DIFFICULTY_STEP=0.10`으로 stage 1/5/15 배율을 1.00/1.40/2.40에 고정했다. 칙령은 군세 +10%, 재정 +20%, 축성 +15%. 둔전은 cost 3·gold/sec 1, 망루는 cost 4·오라 +10%, 징발은 cost 4·gold +6. 보패 기본값은 병법서 +10%/2중첩, 금인 +20%, 천리안 +1 선택지 유지. `test_balance.gd`가 수치 계약을 한곳에서 검증한다.

@@ -388,6 +388,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-040-fun-reset.md + SquadProfile/StrategyDeckCatalog/TerrainPerkCatalog/FormationRenderer/PlaytestMetrics 순수 helper와 계약 테스트 추가. 전략 풀 12장·첫 손패 장수+병종·성 선점·교전당 1장·우물도 한 수로 계산·분대 밀도(stage 1/2/5 soldiers 10/16/26) 검증. ./init.sh 카드 22개 / 2624 단언 green."
+    },
+    {
+      "id": "feat-041",
+      "name": "전투 체감 패스",
+      "description": "첫 전투부터 적 전열이 보이고, 전투 시작 순간 돌격 피드백과 병력 밀도 메트릭이 잡히도록 MVP 전투 체감을 보강한다.",
+      "dependencies": ["feat-040"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-041-battle-feel-pass.md + BattleFeel helper/test 추가. stage 1 encounter를 3개 저체력 적 분대 전열로 조정하고, battle.gd 시작 rally banner/charge line/camera shake VFX를 추가했다. PlaytestMetrics가 아군/적/전체 visible soldiers를 출력한다. ./init.sh 카드 22개 / 2645 단언 green, playtest loop stage 1 enemy=25 total=35, time=21.1s."
     }
   ]
 }

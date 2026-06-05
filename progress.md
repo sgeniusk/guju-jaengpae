@@ -4,11 +4,12 @@
 
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-06-05
-**활성 피처 (Active Feature)** — feat-040 Fun Reset MVP 완료
-**현재 목표 (Current Objective)** — 사용자 플레이 피드백을 MVP 재미 계약으로 묶었다. 시작 손패는 12장 전략 풀에서 3장만 보이고, 첫 손패부터 장수+병종 선택지가 섞인다. 성 위치를 먼저 고른 뒤 한 장만 플레이하며, 우물도 성/보드 군세/한 장 제한을 따르는 한 수다. 병종은 8~10명 분대와 중복 증원 Lv.5 성장을 갖고 장수는 작아진 본체+호위병으로 보인다. 지형 특전·전략 덱·분대 성장·포메이션·플레이테스트 메트릭을 순수 helper로 분리했다. `./init.sh`는 카드 **22개 / 2624 단언 green**이다. push는 사용자 확인 대기.
+**활성 피처 (Active Feature)** — feat-041 전투 체감 패스 완료
+**현재 목표 (Current Objective)** — MVP 루프 위에 첫 전투부터 적 전열과 돌격 피드백을 보강했다. stage 1 적은 3개 저체력 분대가 중앙 전선 근처에 펼쳐져 보이고, 전투 시작 시 rally banner/charge line/camera shake가 뷰 레이어에서만 재생된다. `BattleFeel` helper가 visible soldiers/전열 계약을 계산하고 `PlaytestMetrics`는 아군·적·전체 병력 밀도를 출력한다. `./init.sh`는 카드 **22개 / 2645 단언 green**이다. push는 사용자 확인 대기.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
+- [x] **feat-041 전투 체감 패스** (Codex) — `docs/specs/feat-041-battle-feel-pass.md`와 `BattleFeel` helper/test를 추가했다. 첫 combat encounter는 3개 적 분대 전열(enemy visible 25명)로 보이되 개별 HP/공격과 y 간격을 낮춰 stage 1 자동 교전은 21.1s에 승리한다. battle.gd는 전투 시작 때 "전군 돌격!" banner, 양 진영 charge line, 짧은 camera shake를 표시한다. ./init.sh 2645 단언 green.
 - [x] **feat-040 Fun Reset MVP** (Codex) — `docs/specs/feat-040-fun-reset.md`에 제품 계약을 고정하고, `SquadProfile`/`StrategyDeckCatalog`/`TerrainPerkCatalog`/`FormationRenderer`/`PlaytestMetrics` 순수 helper와 계약 테스트를 추가했다. 전략 풀은 12장으로 확장하되 손패는 3장 유지, 첫 손패는 장수+병종 혼합, 성 선점·교전당 1장·중복 증원·지형 시너지·카드 action label·우물 한 수 제한을 검증한다. `tools/playtest_loop_smoke.gd`는 stage 1/2/5 전투에서 16.8s/18.3s/14.6s와 시작 병력 10/16/26명을 출력했다. ./init.sh 2624 단언 green.
 - [x] **feat-039 분대 전투·성장 템포 hotfix** (Codex) — 유닛 카드는 보드 레벨을 갖고 같은 카드 재획득 시 새 칸이 아니라 기존 부대 Lv.+1 증원으로 소비된다. 병종은 10명 안팎의 분대 비주얼과 레벨별 병력/체력/공격/공속 성장을 갖고, 장수는 크기를 줄인 본체 주변에 호위병이 붙는다. 기본 전투 속도 x2, 근접/원거리 교전 거리 확대. ./init.sh 2485 단언 green.
 - [x] **feat-038 전술 배치 루프 hotfix** (Codex) — 9장 진영 전략 덱에서 3장만 손패로 뽑고, 먼저 성 위치를 고른 뒤 카드 1장 배치 또는 계략 1장 사용 시 바로 단일 교전에 들어간다. 촉/위/오 지형 특전이 성 인접·성 행·가장자리 배치에 보너스를 주고, 유닛 그림자 렌더로 공중에 뜬 느낌을 줄였다. ./init.sh 2462 단언 green.
@@ -50,7 +51,7 @@
 - [x] **feat-032/G034~G044 계략·보패 카드 시스템** (Codex) — `SchemeCardData`/`TreasureCardData`, 계략 발동, `SchemeCatalog`, 보패 `RunState.treasures`, `TreasureCatalog`, 타입별 `RewardPool`, validator, 초기 3+3 Resource, 실제 효과, id/primitive, mixed-flow, UI 혼동 방지를 구현했다. ./init.sh 1270 단언 green.
 - [x] **feat-033/G045~G053 저장 포맷+payload+profile+result+resume+unlock+boundary** (Codex) — `PersistenceStore`, primitive payload, `save_version`, ProfileState API, 전투 결과 기록/해금/새 런 overlay, 런 autosave/이어하기, 신규/미래 버전 테스트, unlock-aware 보상/군주 선택, 프로필 저장/로드와 저장 I/O 경계를 구현했다. **feat-034/G054/G057/G063 + feat-035/G064~G070 + feat-036/G071~G077 + feat-037/G078~G084 + G085~G114 운영 라우팅 문서** — 9세력 게이트, act·보스 구조, 결과 화면, UI 툴팁/피드백, walk/배경/오디오/온보딩/HUD placeholder 감소, UI 스크린샷 묶음, Phase 7 밸런스 수치 계약, macOS export preset/pack/full app export, 릴리스 문서·태그 체크리스트, fresh clone green, 리스크/미지원 범위, Codex 운영 라우팅 경계를 닫았다. ./init.sh 2375 단언 green.
 ### 진행 중 (What's In Progress)
-- [ ] 수동 플레이 감각 확인 — 새 로컬 실행에서 첫 손패 장수+병종, 성 위치 선택, 3장 중 1장 배치/증원, 즉시 교전, stage 3 칙령과 stage 4 상점 흐름을 사용자 플레이로 확인한다.
+- [ ] 수동 플레이 감각 확인 — 새 로컬 실행에서 첫 손패 장수+병종, 성 위치 선택, 3장 중 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령과 stage 4 상점 흐름을 사용자 플레이로 확인한다.
 - [ ] Codex Ultragoal 남은 항목은 사용자 결정 게이트에 걸려 있다. G019는 push 확인 대기, G055/G056/G058/G060/G061/G062는 천계·마계 정본 승인 전 blocked.
 ### 다음 (What's Next)
 1. 사용자 승인으로 천계·마계 명칭과 resource id가 canon이 되면 G055/G056/G058/G060/G061/G062를 재개한다.
@@ -74,57 +75,22 @@
 
 ## 이번 세션 수정 파일 (Files Modified)
 - feat-040 — docs/specs/feat-040-fun-reset.md, docs/superpowers/plans/2026-06-05-game-completion-multi-lane-plan.md, scripts/battle/squad_profile.gd, scripts/battle/formation_renderer.gd, scripts/run/terrain_perk_catalog.gd, scripts/run/strategy_deck_catalog.gd, scripts/run/playtest_metrics.gd, scripts/resources/card_catalog.gd, scripts/ui/card_ui_text.gd, scripts/battle/battle.gd, tools/playtest_loop_smoke.gd, tools/reward_smoke.gd, tools/shoot_battle.gd, tools/shoot_run_map.gd, tools/boss_stage_boot_smoke.gd, test/test_fun_contract.gd, test/test_squad_profile.gd, test/test_terrain_perk_catalog.gd, test/test_strategy_deck_catalog.gd, test/test_formation_renderer.gd, test/test_run_board.gd, test/test_factions.gd, test/test_run_reward.gd, init.sh, feature_list.json, progress.md, session-handoff.md.
+- feat-041 — docs/specs/feat-041-battle-feel-pass.md, scripts/battle/battle_feel.gd, scripts/battle/wave_factory.gd, scripts/battle/battle.gd, scripts/run/playtest_metrics.gd, test/test_battle_feel.gd, feature_list.json, progress.md, session-handoff.md.
 - feat-039 — scripts/run/run_state.gd, scripts/autoloads/run_manager.gd, scripts/resources/card_catalog.gd, scripts/run/reward_pool.gd, scripts/battle/battle_unit.gd, scripts/battle/battle_sim.gd, scripts/battle/wave_factory.gd, scripts/battle/battle.gd, test/test_board_army.gd, test/test_persistence_payload.gd, test/test_run_board.gd, test/test_run_reward.gd, tools/reward_smoke.gd, feature_list.json, progress.md, session-handoff.md.
 - feat-038 — scripts/run/run_state.gd, scripts/autoloads/run_manager.gd, scripts/resources/card_catalog.gd, scripts/battle/battle.gd, scripts/battle/battle_sim.gd, scripts/battle/wave_factory.gd, scripts/run/export_smoke.gd, test/test_board_army.gd, test/test_castle.gd, test/test_factions.gd, test/test_multiwave.gd, test/test_run_board.gd, test/test_run_flow_sanity.gd, test/test_run_resume.gd, test/test_run_reward.gd, tools/reward_smoke.gd, tools/ui_feedback_smoke.gd, feature_list.json, progress.md, session-handoff.md.
-- feat-030 — README.md, docs/roadmap.md, session-handoff.md, progress.md, feature_list.json, .gitignore, assets/MANIFEST.md.
-- feat-031/G026 — docs/specs/feat-031.md, test/test_stage_cadence.gd, feature_list.json, progress.md, session-handoff.md.
-- feat-031/G027 — resources/lords/lord_caocao.tres, resources/lords/lord_sunquan.tres, test/test_factions.gd, docs/specs/feat-031.md, feature_list.json, progress.md, session-handoff.md.
-- feat-031/G028 — tools/visual_qa_config.gd, tools/shoot_visual_qa.sh, tools/shoot_battle.gd, tools/shoot_shop.gd, tools/shoot_scene.gd, test/test_visual_qa_config.gd, docs/specs/feat-031.md, feature_list.json, progress.md, session-handoff.md.
-- feat-031/G029 — test/test_run_flow_sanity.gd, scripts/battle/skill_system.gd, test/test_skills.gd, resources/lords/lord_caocao.tres, resources/lords/lord_sunquan.tres, tools/validate_cards.gd, tools/shoot_battle.gd, docs/specs/feat-029.md, docs/specs/feat-031.md, feature_list.json, progress.md, session-handoff.md.
-- feat-031/G030 — tools/shoot_run_map.gd, tools/shoot_run_map.tscn, tools/shoot_run_flow.sh, tools/visual_qa_config.gd, test/test_visual_qa_config.gd, docs/specs/feat-031.md, feature_list.json, progress.md, session-handoff.md.
-- feat-031/G033~feat-037/G084 — README.md, CHANGELOG.md, docs/roadmap.md, docs/worldview.md, docs/specs/feat-031~037.md, docs/release-checklist.md, docs/release-risks.md, docs/reports/phase6-ui-screens/*, export_presets.cfg, .gitignore, assets/MANIFEST.md, resources/cards/scheme_*.tres, resources/cards/treasure_*.tres, scripts/resources/*catalog/data*.gd, scripts/run/*.gd, scripts/autoloads/*.gd, scripts/battle/*.gd, scripts/screens/lord_select.gd, scripts/screens/run_map.gd, scripts/ui/card_ui_text.gd, tools/validate_cards.gd, tools/shoot_*.gd, tools/generate_*.py, tools/*smoke.gd, test/test_*.gd, init.sh, feature_list.json, progress.md, session-handoff.md.
-- feat-020 — scripts/run/run_state.gd, scripts/battle/battle_sim.gd, scripts/resources/card_catalog.gd, scripts/autoloads/run_manager.gd, scripts/battle/battle.gd, scripts/screens/run_map.gd, scripts/run/board_economy.gd, test/test_run_board.gd, test/test_board_army.gd, test/test_grid.gd.
-- feat-021 — scripts/run/edict_catalog.gd, scripts/run/edict_catalog.gd.uid, scripts/run/stage_cadence.gd, scripts/run/run_state.gd, scripts/autoloads/run_manager.gd, scripts/resources/card_catalog.gd, scripts/autoloads/card_library.gd, scripts/battle/battle.gd, scripts/screens/run_map.gd, test/test_stage_cadence.gd, test/test_run_board.gd.
-- feat-028 — scripts/battle/battle.gd, assets/MANIFEST.md, assets/sprites/units/shu/infantry_walk.png, test/test_unit_walk_visuals.gd.
-- 상태 — feature_list.json·progress.md.
+- feat-040 기준점은 커밋 `5a10dda feat: lock fun reset MVP`로 보존.
+- 오래된 상세 파일 목록은 CHANGELOG와 `docs/specs/`를 본다.
 
 ## 검증 증거
 - [x] `./init.sh` (2026-06-05, feat-040) → 카드 **22개** 검증 OK, 전략 풀 12장/시작 손패 3장/드로우 9장, 플레이테스트 루프 stage 1/2/5 전투 **16.8s/18.3s/14.6s** 및 시작 병력 **10/16/26명**, stage 3 칙령·stage 4 상점, 우물 한 수 제한, battle/run_map/보스/result/UI 스모크 포함 단위 테스트 **2624 단언** green. 종료 0. Godot 종료 시 resource leak 경고 1건은 기존 headless 종료 경고 계열로 테스트 실패는 아님.
+- [x] `./init.sh` (2026-06-05, feat-041) → 카드 **22개** 검증 OK, battle/run_map/보스/result/UI 스모크 통과, 플레이테스트 루프 stage 1/2/5 전투 **21.1s/18.3s/14.6s**, stage 1 enemy visible **25명**·total **35명**, 단위 테스트 **2645 단언** green. 종료 0. Godot 종료 시 resource leak 경고 1건은 기존 headless 종료 경고 계열로 테스트 실패는 아님.
+- [x] `./init.sh` (2026-06-05, feat-040) → 카드 **22개**, MVP 재미 계약과 플레이테스트 루프, 단위 테스트 **2624 단언** green.
 - [x] `./init.sh` (2026-06-05, feat-039) → 카드 **22개** 검증 OK, 전투 sim 승리 19.4s/패배 28.3s, 보상 스모크 유닛 성장 반복 정책 반영, battle.tscn 부팅, boss/result/UI 스모크, board_levels 저장 payload, squad growth, RewardPool Lv.5 반복 제안, 단위 테스트 **2485 단언** green. 종료 0.
 - [x] `./init.sh` (2026-06-05, feat-038) → 카드 **22개** 검증 OK, RunState 3장 손패/6장 draw pile/성 위치 저장, RunManager 교전당 1장 제한, WaveFactory 단일 encounter, 촉/위/오 지형 특전, 성 위치 기반 BattleSim 스폰, UI 피드백 스모크 갱신 포함 단위 테스트 **2462 단언** green. 종료 0.
-- [x] `./init.sh` (2026-06-04, feat-030/G020) → 카드 16·군주 3 검증 OK / sim 성 방어 승리 25.5s·성 노출 패배 29.0s / run_map·battle 부팅 OK / 단위 테스트 **935 단언** green. 종료 0.
-- [x] `.import` 정책 검증 (2026-06-04) → `git check-ignore -v docs/reports/v0.5-screens/*.png.import`는 `.gitignore:docs/reports/**/*.import` 매칭, `git check-ignore -v assets/sprites/units/shu/infantry_walk.png.import`는 비매칭. `git diff --check` 통과.
-- [x] `./init.sh` (2026-06-04, feat-031/G026) → `test_stage_cadence` 첫 15스테이지 node_kind baseline 추가, 단위 테스트 **950 단언** green. 종료 0.
-- [x] `./init.sh` (2026-06-04, feat-031/G027) → 조조·손권 trait_text를 실제 구현 효과 설명으로 동기화하고 `test_factions` trait 설명 테스트 추가. 수치 조정 없음. 단위 테스트 **962 단언** green. 종료 0.
-- [x] `./init.sh` (2026-06-04, feat-031/G028) → `test_visual_qa_config` 5단언 포함 단위 테스트 **967 단언** green. `bash -n tools/shoot_visual_qa.sh` 통과. `SHOT_DIR=/tmp/guju-visual-qa-smoke ./tools/shoot_visual_qa.sh`로 10 PNG(각 1920×1080) 생성.
-- [x] `./init.sh` (2026-06-04, feat-031/G029) → `test_run_flow_sanity` 60단언 포함 단위 테스트 **1028 단언** green. 위·촉·오 모두 첫 보스 승리 후 보드 확장과 stage 6 도달 확인.
-- [x] `./init.sh` (2026-06-04, feat-031/G030) → `test_visual_qa_config` stage list 포함, 단위 테스트 **1029 단언** green. `SHOT_DIR=/tmp/guju-run-flow-qa-smoke ./tools/shoot_run_flow.sh` → 12 PNG(1920×1080) 생성.
-- [x] `./init.sh` (2026-06-04, feat-037/G079~G114) → 카드 **22개** 검증 OK, Phase 5/6/7 스모크와 밸런스/export preset/export smoke 계약, 운영 라우팅 문서 G085~G114, 단위 테스트 **2375 단언** green. pack export와 full app export 성공, export 앱 `GUJU_EXPORT_SMOKE first_battle_reached` 확인. 리스크/미지원 범위는 `docs/release-risks.md`에 고정. 종료 0.
-- [x] `./init.sh` (2026-05-30, feat-013) → 카드검증(10·1) / sim default_waves 승리 28.7s·무배치 패배 0.1s / reward / run_map·battle 부팅 / 단위 12파일 **356 단언** 통과. 종료 0.
-- [x] `./init.sh` (2026-05-30, feat-014) → 카드검증(10·1) / sim 성 방어 승리 28.7s(성HP 1200)·성 노출 패배 29.0s / reward / run_map·battle 부팅 / 단위 13파일 **383 단언** 통과. 종료 0.
-- [x] `./init.sh` (2026-05-30, feat-017) → 카드검증(10·1) / sim 성 방어 승리 28.7s·성 노출 패배 29.0s / reward / run_map·battle 부팅 / 단위 14파일 **395 단언** 통과. 종료 0.
-- [x] `./init.sh` (2026-05-31, feat-018) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward / run_map·battle 부팅 / 단위 15파일 **412 단언** 통과. 종료 0.
-- [x] `./init.sh` (2026-05-31, feat-015) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward owned 7장·후보 3장 / run_map·battle 부팅 / 단위 16파일 **541 단언** 통과. 종료 0.
-- [x] `./init.sh` (2026-05-31, feat-015b) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward owned 7장·후보 3장 / run_map·battle 부팅 / 단위 17파일 **619 단언** 통과. 종료 0.
-- [x] `./init.sh` (2026-05-31, feat-015c) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward 시작 손패 6장·후보 4장·획득 후 owned 7장 / run_map·battle 부팅 / 단위 17파일 **605 단언** 통과. 종료 0.
-- [x] `./init.sh` (2026-06-01, feat-019) → 카드검증(10·1) / sim 성 방어 승리 25.5s(성HP 1200, 아군잔존 6)·성 노출 패배 29.0s / reward 시작 손패 6장·후보 4장·획득 후 owned 7장 / run_map·battle 부팅 / 단위 17파일 **618 단언** 통과. 종료 0.
-- [x] `./init.sh` (2026-06-03, feat-027) → 강화본 17종 배치 후 **723 단언** green, 텍스처 재import·회귀 없음. 위·오 before/after 인게임 스크린샷 확인. 종료 0.
-- [x] `./init.sh` (2026-06-04, feat-029) → 카드 16·군주 3 검증 OK / sim 성 방어 승리 25.5s·성 노출 패배 29.0s / run_map·battle 부팅 OK / 단위 테스트 **795 단언** green. 종료 0.
-- [x] `./init.sh` (2026-06-04, feat-020) → 카드 16·군주 3 검증 OK / sim 성 방어 승리 25.5s·성 노출 패배 29.0s / run_map·battle 부팅 OK / 단위 테스트 **876 단언** green. 종료 0.
-- [x] `./init.sh` (2026-06-04, feat-021) → 카드 16·군주 3 검증 OK / sim 성 방어 승리 25.5s·성 노출 패배 29.0s / run_map·battle 부팅 OK / 단위 테스트 **914 단언** green. 종료 0.
-- [x] `./init.sh` (2026-06-04, feat-028) → 카드 16·군주 3 검증 OK / sim 성 방어 승리 25.5s·성 노출 패배 29.0s / run_map·battle 부팅 OK / `test_unit_walk_visuals` 포함 단위 테스트 **935 단언** green. 종료 0.
-- [x] feat-013 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙) 미수정.
-- [x] feat-014 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙) 미수정.
-- [x] feat-017 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, resources/.tres, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙, WaveFactory) 미수정.
-- [x] feat-018 스코프 — git diff상 금지 영역(scripts/run/*, RunMap/RunManager, scenes/screens/*, RewardPool, TypeChart 규칙, SkillSystem 효과 규칙, battle.gd) 미수정.
-- [x] feat-015 스코프 — 전투/씬/리소스(`scripts/battle/*`, `scripts/screens/*`, `scenes/*`, `resources/.tres`) 미수정. 브리지로 run_map/battle 부팅 유지.
-- [x] feat-015b 스코프 — 수정 허용 파일만 변경(scripts/battle/battle.gd, scripts/resources/card_catalog.gd, scripts/autoloads/run_manager.gd, test/test_board_army.gd, 상태 파일). 금지 영역(`battle_sim.gd`, `battle_unit.gd`, `run_state.gd`, `reward_pool.gd`, scenes/screens, resources/.tres, RunMap, TypeChart/SkillSystem/TargetRules) 미수정.
-- [x] feat-015c 스코프 — 수정 허용 파일과 테스트/스모크/상태만 변경. 금지 영역(`battle_sim.gd`, `battle_unit.gd`, `card_catalog.gd`, TargetRules/SkillSystem/WaveFactory, scenes/screens, resources/.tres, RunMap, TypeChart) 미수정.
-- [x] feat-019 스코프 — 수정 허용 파일과 테스트/상태만 변경. 금지 영역(`battle_sim.gd`, `battle_unit.gd`, `card_catalog.gd`, `target_rules.gd`, `skill_system.gd`, `type_chart.gd`, resources, `.tres`, scene 구조) 미수정.
-- [x] Phase 1/G049 시각 증거 — lord_select, battle deploy/fight, shop, run_map stage 1/3/4/5는 기존 22 PNG, 결과 overlay loss/win은 `/tmp/guju-g049-result` PNG 2장으로 확인. 장수 표적 지정 체감은 후속 QA 범위.
+- [x] 이전 세부 검증과 스코프 증거는 CHANGELOG, `docs/specs/`, `docs/release-checklist.md`, `session-handoff.md`에 아카이브되어 있다.
 
 ## 아카이브 포인터
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh` 2624단언 green. **feat-040 MVP done** — 전투 진입은 성 위치 선택 후 12장 전략 풀에서 보이는 3장 중 1장만 쓰거나 같은 유닛 카드를 증원해 즉시 단일 교전으로 들어간다. 우물도 성/보드 군세/한 장 제한을 따르는 한 수다. 첫 손패는 장수+병종이 섞여 있고, 병종은 8~10명 분대, 장수는 축소 본체+호위병으로 렌더한다. `tools/playtest_loop_smoke.gd`가 stage 1/2/5 전투, stage 3 칙령, stage 4 상점 흐름을 헤드리스로 검증한다. Phase 4 9세력 확장은 정본 승인→CardVocab→validator→Resource→lord_select 순서가 고정됐고 G055/G056/G058/G060/G061/G062는 명칭 승인 대기 blocked. 푸시와 태그는 사용자 확인 후.
+`./init.sh` 2645단언 green. **feat-041 done** — feat-040 MVP 루프 위에서 첫 전투 적 전열을 3개 저체력 분대로 보강했고, 전투 시작 rally banner/charge line/camera shake로 "전군 돌격" 피드백을 추가했다. `tools/playtest_loop_smoke.gd`는 stage 1 enemy visible 25명·total 35명·21.1s 승리, stage 3 칙령, stage 4 상점, stage 5 보스 흐름을 검증한다. Phase 4 9세력 확장은 정본 승인→CardVocab→validator→Resource→lord_select 순서가 고정됐고 G055/G056/G058/G060/G061/G062는 명칭 승인 대기 blocked. 푸시와 태그는 사용자 확인 후.

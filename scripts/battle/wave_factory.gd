@@ -180,7 +180,9 @@ static func _combat_encounter(stage: int, act: int) -> Array[BattleUnit]:
 		]
 	if template <= 0:
 		return [
-			_enemy_unit(1, spawn_x, "사령 선봉", 120, 14, 1.2, "melee", 34.0, "infantry"),
+			_enemy_unit_at_y(0, spawn_x, 245.0, "사령병", 36, 5, 1.24, "melee", 38.0, "infantry"),
+			_enemy_unit_at_y(1, spawn_x, 300.0, "사령 선봉", 50, 7, 1.2, "melee", 40.0, "infantry"),
+			_enemy_unit_at_y(2, spawn_x, 355.0, "요사 궁수", 34, 6, 1.16, "ranged", 34.0, "archer", "strongest_ranged"),
 		]
 	if template == 1:
 		return [
@@ -262,4 +264,9 @@ static func _enemy_unit(lane: int, x: float, display_name: String, hp: int, atta
 	else:
 		unit.squad_count = 7 if attack_range == "ranged" else 9
 		unit.retinue_count = 0
+	return unit
+
+static func _enemy_unit_at_y(lane: int, x: float, y: float, display_name: String, hp: int, attack: int, interval: float, attack_range: String, speed: float, troop_type: String, target_rule: String = "nearest", skill_id: StringName = &"") -> BattleUnit:
+	var unit := _enemy_unit(lane, x, display_name, hp, attack, interval, attack_range, speed, troop_type, target_rule, skill_id)
+	unit.set_position(x, y)
 	return unit

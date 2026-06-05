@@ -12,6 +12,7 @@ const _BoardEconomy := preload("res://scripts/run/board_economy.gd")
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
 const _FormationRenderer := preload("res://scripts/battle/formation_renderer.gd")
+const _BattleFeel := preload("res://scripts/battle/battle_feel.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
 
@@ -38,6 +39,7 @@ const BUILDING_H := 104.0
 const COMMAND_PICK_RADIUS := 70.0
 const MAX_FLOATING_DAMAGE_LABELS := 40
 const VFX_FLOATING_Z := 4095
+const VFX_RALLY_Z := 4096
 const WALK_FRAME_COUNT := 4
 const WALK_FPS := 8.0
 const WALK_MOVE_EPSILON := 0.01
@@ -1061,8 +1063,9 @@ func _on_start_pressed() -> void:
 	_clear_hero_command(false)
 	_fade_iso_tiles_out()
 	_sync_visuals()
+	_spawn_battle_start_vfx()
 	_start_button.disabled = true
-	_hint_label.text = "전투 중…"
+	_hint_label.text = _BattleFeel.rally_text(RunManager.stage_index(), _sim.enemy_units)
 	_refresh_deploy_ui()
 
 func _run_export_first_battle_smoke() -> void:
@@ -1321,6 +1324,66 @@ func _play_damage_events() -> void:
 	for event in _sim.last_damage_events:
 		_spawn_damage_number(event)
 		_flash_damaged_target(event)
+
+func _spawn_battle_start_vfx() -> void:
+	if _vfx_layer == null:
+		return
+	_spawn_rally_banner(_BattleFeel.rally_text(RunManager.stage_index(), _sim.enemy_units))
+	_spawn_charge_lines()
+	_shake_camera()
+
+func _spawn_rally_banner(text: String) -> void:
+	var label := Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.position = Vector2(690.0, 330.0)
+	label.size = Vector2(540.0, 72.0)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.z_index = VFX_RALLY_Z
+	label.add_theme_font_size_override("font_size", 46)
+	label.add_theme_color_override("font_shadow_color", Color(0.02, 0.01, 0.0, 0.92))
+	label.add_theme_constant_override("shadow_offset_x", 4)
+	label.add_theme_constant_override("shadow_offset_y", 4)
+	if _damage_font != null:
+		label.add_theme_font_override("font", _damage_font)
+	label.modulate = Color(1.0, 0.86, 0.32, 1.0)
+	_vfx_layer.add_child(label)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 44.0, 0.82).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.82).set_delay(0.18)
+	tween.set_parallel(false)
+	tween.tween_callback(Callable(label, "queue_free"))
+
+func _spawn_charge_lines() -> void:
+	for y in BattleSim.COL_Y:
+		_spawn_charge_line(Vector2(260.0, y), Vector2(470.0, y), Color(0.46, 0.92, 0.58, 0.85))
+		_spawn_charge_line(Vector2(840.0, y), Vector2(610.0, y), Color(1.0, 0.34, 0.26, 0.78))
+
+func _spawn_charge_line(from_field: Vector2, to_field: Vector2, color: Color) -> void:
+	var line := Line2D.new()
+	line.width = 7.0
+	line.default_color = color
+	line.z_index = VFX_RALLY_Z - 1
+	line.points = PackedVector2Array([field_to_screen(from_field.x, from_field.y), field_to_screen(to_field.x, to_field.y)])
+	_vfx_layer.add_child(line)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(line, "width", 1.0, 0.54)
+	tween.tween_property(line, "modulate:a", 0.0, 0.54).set_delay(0.08)
+	tween.set_parallel(false)
+	tween.tween_callback(Callable(line, "queue_free"))
+
+func _shake_camera() -> void:
+	if _camera == null:
+		return
+	_camera.offset = Vector2(-8.0, 0.0)
+	var tween := create_tween()
+	tween.tween_property(_camera, "offset", Vector2(7.0, 0.0), 0.05)
+	tween.tween_property(_camera, "offset", Vector2(-5.0, 2.0), 0.05)
+	tween.tween_property(_camera, "offset", Vector2(3.0, -1.0), 0.05)
+	tween.tween_property(_camera, "offset", Vector2.ZERO, 0.08)
 
 func _spawn_damage_number(event: Dictionary) -> void:
 	if _vfx_layer == null:
