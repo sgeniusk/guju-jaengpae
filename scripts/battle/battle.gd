@@ -808,16 +808,24 @@ func _refresh_board_tiles() -> void:
 			if area != null:
 				area.input_pickable = false
 		else:
+			var preview := _placement_preview_for_block(key)
 			if label != null:
-				label.text = ""
+				label.text = String(preview.get("label", ""))
 				if _phase != Phase.DEPLOY:
 					label.tooltip_text = ""
 				elif not RunManager.has_castle():
 					label.tooltip_text = "이 빈 타일을 성 위치로 선택합니다."
+				elif not preview.is_empty():
+					label.tooltip_text = String(preview.get("tooltip", ""))
 				else:
 					label.tooltip_text = "선택한 손패 1장을 이 빈 타일에 배치합니다."
 			if poly != null:
-				poly.color = Color(0.25, 0.42, 0.28, 0.92) if _phase == Phase.DEPLOY else Color(0.17, 0.27, 0.17, 0.0)
+				if _phase != Phase.DEPLOY:
+					poly.color = Color(0.17, 0.27, 0.17, 0.0)
+				elif not preview.is_empty():
+					poly.color = Color(0.40, 0.54, 0.20, 0.98)
+				else:
+					poly.color = Color(0.25, 0.42, 0.28, 0.92)
 			if sprite != null:
 				sprite.modulate = Color(1.0, 1.0, 1.0, 0.5) if _phase == Phase.DEPLOY else Color(1.0, 1.0, 1.0, 0.0)
 			if area != null:
@@ -827,6 +835,41 @@ func _clear_children(node: Node) -> void:
 	for child in node.get_children():
 		node.remove_child(child)
 		child.queue_free()
+
+func _placement_preview_for_block(block_key: String) -> Dictionary:
+	if _phase != Phase.DEPLOY or not RunManager.has_castle() or not RunManager.can_place_deploy_card():
+		return {}
+	var hand := RunManager.get_hand()
+	if _selected_hand_index < 0 or _selected_hand_index >= hand.size():
+		return {}
+	if RunManager.can_cast_scheme_from_hand(_selected_hand_index) or RunManager.can_upgrade_from_hand(_selected_hand_index):
+		return {}
+	if not RunManager.can_place_hand_card(_selected_hand_index):
+		return {}
+	var card_id: StringName = hand[_selected_hand_index]
+	var card := CardLibrary.get_card(card_id)
+	if card == null or not (card is UnitCardData):
+		return {}
+	var board := RunManager.get_board()
+	if board.has(block_key):
+		return {}
+	board[block_key] = card_id
+	var levels := RunManager.get_board_levels()
+	levels[block_key] = 1
+	var army := CardLibrary.catalog.build_board_army(board, _lord, RunManager.get_board_rows(), RunManager.get_edicts(), RunManager.get_castle_key(), RunManager.get_terrain_perk_id(), levels)
+	var unit := _find_army_unit_at_block(army, block_key)
+	return _FormationTactics.preview_for_unit(unit, army, card.display_name)
+
+func _find_army_unit_at_block(army: Array, block_key: String) -> BattleUnit:
+	var parts := block_key.split(":")
+	if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
+		return null
+	var col := int(parts[0])
+	var row := int(parts[1])
+	for unit in army:
+		if unit != null and unit.lane == col and unit.row == row:
+			return unit
+	return null
 
 # ── 입력 ────────────────────────────────────────────────────
 func _select_hand(index: int) -> void:

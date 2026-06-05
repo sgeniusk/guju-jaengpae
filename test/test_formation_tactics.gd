@@ -74,6 +74,28 @@ func test_apply_to_army_is_idempotent() -> void:
 	_FormationTactics.apply_to_army(army)
 	eq(infantry.attack, once, "전술 재계산은 중첩 곱셈하지 않음")
 
+func test_preview_for_unit_returns_reader_facing_label_and_tooltip() -> void:
+	var army := cat.build_board_army({
+		"1:0": &"troop_infantry",
+		"1:1": &"troop_archer",
+	}, lord)
+	var archer := _find_unit(army, &"troop_archer")
+	not_null(archer, "궁병 생성")
+	if archer == null:
+		return
+	var preview := _FormationTactics.preview_for_unit(archer, army, "궁병")
+	eq(preview.get("label", ""), "엄호 +15%", "미리보기 라벨")
+	eq(preview.get("attack_pct", 0.0), 0.15, "미리보기 공격 보너스")
+	truthy(String(preview.get("tooltip", "")).contains("궁병 배치"), "tooltip에 카드명 포함")
+
+func test_preview_for_unit_is_empty_without_tactic_bonus() -> void:
+	var army := cat.build_board_army({"1:1": &"troop_archer"}, lord)
+	var archer := _find_unit(army, &"troop_archer")
+	not_null(archer, "궁병 생성")
+	if archer == null:
+		return
+	eq(_FormationTactics.preview_for_unit(archer, army, "궁병"), {}, "보너스 없으면 빈 미리보기")
+
 func _single_unit_attack(card_id: StringName, key: String) -> int:
 	var army := cat.build_board_army({key: card_id}, lord)
 	var unit := _find_unit(army, card_id)

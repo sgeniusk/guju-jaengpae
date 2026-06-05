@@ -64,6 +64,28 @@ static func tags_for_unit(unit: BattleUnit, army: Array = []) -> Array[String]:
 static func tag_text_for_unit(unit: BattleUnit, army: Array = []) -> String:
 	return join_tags(tags_for_unit(unit, army))
 
+static func preview_for_unit(unit: BattleUnit, army: Array, card_name: String = "") -> Dictionary:
+	if not _is_candidate(unit):
+		return {}
+	var summary := summary_for_unit(unit, army)
+	var tags := _string_tags(summary.get("tags", []))
+	var attack_pct := float(summary.get("attack_pct", 0.0))
+	if tags.is_empty() or attack_pct <= 0.0:
+		return {}
+	var label := preview_label(tags, attack_pct)
+	var name := card_name if not card_name.is_empty() else unit.display_name
+	return {
+		"tags": tags,
+		"attack_pct": attack_pct,
+		"label": label,
+		"tooltip": "%s 배치 — %s로 공격 +%d%%" % [name, join_tags(tags), int(round(attack_pct * 100.0))],
+	}
+
+static func preview_label(tags: Array[String], attack_pct: float) -> String:
+	if tags.is_empty() or attack_pct <= 0.0:
+		return ""
+	return "%s +%d%%" % [join_tags(tags), int(round(attack_pct * 100.0))]
+
 static func join_tags(tags: Array[String]) -> String:
 	var out := ""
 	for tag in tags:

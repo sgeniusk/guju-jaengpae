@@ -18,6 +18,7 @@ func _run() -> void:
 	errors += await _run_map_edict_case()
 	errors += await _run_map_event_case()
 	errors += await _battle_deploy_case()
+	errors += await _battle_formation_preview_case()
 	errors += await _battle_reward_case()
 	if errors == 0:
 		print("✅ UI 툴팁/피드백 스모크 통과")
@@ -157,6 +158,38 @@ func _battle_deploy_case() -> int:
 		print("  전투 배치 tooltip OK")
 	return errors
 
+func _battle_formation_preview_case() -> int:
+	var run_manager := root.get_node_or_null("/root/RunManager")
+	if run_manager == null:
+		return _fail("RunManager autoload 조회 실패")
+	run_manager.reset_run()
+	run_manager.ensure_started(LORD_ID)
+	run_manager.state.stage_index = 1
+	run_manager.state.castle_key = "0:2"
+	run_manager.state.board = {"1:0": &"troop_infantry"}
+	run_manager.state.board_levels = {"1:0": 1}
+	run_manager.state.hand.clear()
+	run_manager.state.hand.append(&"troop_archer")
+	run_manager.state.hand.append(&"troop_cavalry")
+	run_manager.state.hand.append(&"building_dunjeon")
+	var battle = _instantiate_scene(BATTLE_SCENE_PATH)
+	if battle == null:
+		return _fail("battle.tscn 전술 미리보기 인스턴스 생성 실패")
+	root.add_child(battle)
+	await _frames(8)
+	var errors := 0
+	if battle.has_method("_select_hand"):
+		battle._select_hand(0)
+		await _frames(2)
+		errors += _assert_tile_label_and_tooltip(battle, "1:1", "엄호 +15%", "궁병 배치", "궁병 엄호 미리보기")
+	else:
+		errors += _fail("battle._select_hand 없음")
+	battle.queue_free()
+	await _frames(2)
+	if errors == 0:
+		print("  전투 전술 미리보기 OK")
+	return errors
+
 func _battle_reward_case() -> int:
 	var run_manager := root.get_node_or_null("/root/RunManager")
 	if run_manager == null:
@@ -227,6 +260,20 @@ func _assert_button_text(node: Node, text_needle: String, msg: String) -> int:
 		if button.text.find(text_needle) >= 0:
 			return 0
 	return _fail("%s 누락: button text~=%s" % [msg, text_needle])
+
+func _assert_tile_label_and_tooltip(battle: Node, block_key: String, text_needle: String, tooltip_needle: String, msg: String) -> int:
+	var tiles: Dictionary = battle._tile_buttons
+	if not tiles.has(block_key):
+		return _fail("%s 누락: tile=%s" % [msg, block_key])
+	var tile: Dictionary = tiles[block_key]
+	var label := tile.get("label", null) as Label
+	if label == null:
+		return _fail("%s 누락: label 없음" % msg)
+	if label.text.find(text_needle) < 0:
+		return _fail("%s 누락: text=%s expected~=%s" % [msg, label.text, text_needle])
+	if label.tooltip_text.find(tooltip_needle) < 0:
+		return _fail("%s 누락: tooltip=%s expected~=%s" % [msg, label.tooltip_text, tooltip_needle])
+	return 0
 
 func _buttons(node: Node) -> Array[Button]:
 	var out: Array[Button] = []
