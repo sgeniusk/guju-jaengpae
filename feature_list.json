@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~047로 성 선점→3장 손패→1장 플레이→분대/호위 성장→첫 전열 충돌→진형 전술→전술 미리보기→장기런 검증→집중표적 피드백→카드 선택 전략 안내→현세 3군주 장기런 스모크까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2731 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~051로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX 스모크까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2740 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -478,6 +478,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-050-card-choice-priority.md 추가. CardChoiceAdvisor.ranked_ids가 추천 점수순 stable sort를 제공하고, run_map 상점과 battle 전리품 버튼이 이 순서로 렌더된다. UI smoke가 상점 첫 추천 카드를 증원 후보로 검증한다. ./init.sh 카드 22개 / 2740 단언 green."
+    },
+    {
+      "id": "feat-051",
+      "name": "저장/이어하기 UX 스모크",
+      "description": "군주 선택 화면에서 저장된 런 이어하기 버튼이 올바르게 노출되고, 누르면 저장된 stage·성·보드·손패·골드로 복원되는지 자동 smoke로 검증한다.",
+      "dependencies": ["feat-033", "feat-050"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-051-resume-ux-smoke.md + tools/resume_ux_smoke.gd 추가. no-save 상태에서는 이어하기 버튼이 없고, autosave 런은 군주 선택 화면의 `저장된 런 이어하기` 버튼으로 run_map route와 stage/성/보드/손패/골드를 복원한다. ./init.sh 카드 22개 / 2740 단언 green."
     }
   ]
 }
