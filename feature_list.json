@@ -451,6 +451,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-047-three-lord-long-run-smoke.md 추가. tools/long_run_smoke.gd가 유비·조조·손권 stage 1~15를 각각 통과하며 건물 배치/망루 오라/계략/보패를 반영한다. 첫 정예 명궁 스파이크를 좁게 낮추고 test_wave_factory.gd가 stage 7 정예 encounter 수치를 검증한다. ./init.sh 카드 22개 / 2731 단언 green."
+    },
+    {
+      "id": "feat-048",
+      "name": "수동 플레이 QA 자동화",
+      "description": "첫 전투에서 성 위치 선택, 계략 타일 배치 거부, 병종 카드 배치, 즉시 교전 시작까지 실제 battle.tscn 조작 경로를 자동 smoke로 검증한다.",
+      "dependencies": ["feat-038", "feat-047"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-048-manual-playthrough-smoke.md 추가. tools/ui_feedback_smoke.gd가 첫 손패 계략/보병/건물 상태에서 성 선택→계략 타일 배치 거부→보병 배치→전투 phase 진입, 성/아군/적 생성, 손패 감소, 교전당 1장 제한, 전군 돌격 hint를 검증한다. ./init.sh 카드 22개 / 2731 단언 green."
     }
   ]
 }

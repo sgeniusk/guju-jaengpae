@@ -4,10 +4,11 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-06
-**활성 피처** — feat-047 현세 3군주 장기런 스모크 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 최종 보스까지의 자동 장기런 검증을 유비 단일 루트에서 현세 3군주 전체로 확장하고, 건물·계략·보패·군주별 우선순위를 실제 전투 입력에 반영하는 작업이다.
+**활성 피처** — feat-048 수동 플레이 QA 자동화 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 첫 전투 수동 경로를 자동 smoke로 잠그는 작업이다.
 
 ## 완료
+- [x] **feat-048 수동 플레이 QA 자동화** — `docs/specs/feat-048-manual-playthrough-smoke.md`를 추가했다. `tools/ui_feedback_smoke.gd`가 첫 손패를 계략/보병/건물로 고정하고 성 선택, 계략 타일 배치 거부, 보병 배치, 즉시 교전 시작을 검증한다. 교전 시작 후 성/아군/적 생성, 손패 감소, 교전당 1장 제한, 전군 돌격 hint를 확인한다. `./init.sh` 카드 22개 / 2731 단언 green.
 - [x] **feat-047 현세 3군주 장기런 스모크** — `docs/specs/feat-047-three-lord-long-run-smoke.md`를 추가했다. `tools/long_run_smoke.gd`가 유비·조조·손권을 각각 새 런으로 시작해 stage 15 최종 보스까지 통과한다. 스모크 선택기는 건물 배치, 망루 오라, 계략 battle/run 효과, 병법서 보패를 반영한다. 조조 첫 정예에서 막히던 원거리 스파이크를 `WaveFactory` 정예 명궁 수치로 좁게 보정했고, 손권은 주유 우선 루트로 오나라 화공 축을 검증한다. `./init.sh` 카드 22개 / 2731 단언 green.
 - [x] **feat-046 카드 선택 전략 안내** — `docs/specs/feat-046-card-choice-advisor.md`와 `scripts/run/card_choice_advisor.gd`를 추가했다. run_map 상점 카드와 battle 전리품 버튼이 `추천 — 증원 후보`, `추천 — 경제 확장`, `추천 — 자금 부족` 같은 visible text와 tooltip을 표시한다. `test_card_choice_advisor.gd`와 `tools/ui_feedback_smoke.gd`가 전략 추천 렌더를 검증한다. `./init.sh` 카드 22개 / 2726 단언 green.
 - [x] **feat-045 집중표적 체감 피드백** — 전투 중 집중표적 버튼 tooltip, 성공/실패 힌트, 표적 위 `집중` 라벨, 장수→표적 지휘선, 사망/빈 곳 자동 복귀 문구를 추가했다. `./init.sh` 카드 22개 / 2701 단언 green.
@@ -18,7 +19,7 @@
 
 ## 진행 중
 - [ ] 수동 플레이 감각 확인 — 첫 손패 장수+병종, 성 위치 선택, 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령, stage 4 상점, 전리품 추천 문구를 사용자 플레이로 확인한다.
-- [ ] 완성판 안전 개선 계속 — 다음 피처 후보는 수동 플레이 QA 자동화, 상점/보상 선택 정렬 강화, 전투 속도·VFX 체감 조정, 병력 밀도/사운드 체감 패스다.
+- [ ] 완성판 안전 개선 계속 — 다음 피처 후보는 상점/보상 선택 정렬 강화, 전투 속도·VFX 체감 조정, 병력 밀도/사운드 체감 패스다.
 - [ ] Codex goal은 완성판까지 계속 활성이다. MVP 이후 핵심 루프 재미와 안정성을 단계적으로 개선한다.
 
 ## 다음
@@ -33,21 +34,20 @@
 - [ ] Godot 4.6.3 macOS headless 종료 시 resource leak 경고가 남지만 종료 코드는 0이고 테스트 실패는 아니다.
 
 ## 이번 세션 수정 파일
-- `docs/specs/feat-047-three-lord-long-run-smoke.md`
-- `tools/long_run_smoke.gd`
-- `scripts/battle/wave_factory.gd`
-- `scripts/run/strategy_deck_catalog.gd`
-- `test/test_wave_factory.gd`
+- `docs/specs/feat-048-manual-playthrough-smoke.md`
+- `tools/ui_feedback_smoke.gd`
 - `feature_list.json`
 - `progress.md`
 - `session-handoff.md`
 - `CHANGELOG.md`
 
 ## 검증 증거
+- [x] `godot --headless --path . --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-048) — 첫 수동 플레이 smoke 통과. 성 선택, 계략 타일 배치 거부, 보병 배치 후 전투 phase, 성/아군/적 생성, 전군 돌격 hint 확인.
+- [x] `./init.sh` (2026-06-06, feat-048) — 카드 22개 검증 OK, UI 스모크에 전투 수동 첫 플레이 OK 추가, 단위 테스트 2731/2731 green.
 - [x] `godot --headless --path . --script res://tools/long_run_smoke.gd` (2026-06-06, feat-047) — 유비·조조·손권 각각 wins=8, board=5, rows=6, stage 15 final boss 통과. Godot 종료 resource leak 경고는 기존 headless 경고이며 종료 코드는 0.
 - [x] `./init.sh` (2026-06-06, feat-047) — 카드 22개 검증 OK, 3군주 장기런 스모크 통과, test_wave_factory stage 7 정예 수치 검증 포함, 단위 테스트 2731/2731 green.
 - [x] `./init.sh` (2026-06-06, feat-046) — 카드 22개 검증 OK, CardChoiceAdvisor 전역 클래스 등록, run_map/battle/보스/result/UI 스모크 통과, UI 스모크에 상점·보상 추천 문구 검증 포함, 플레이테스트 루프 stage 1/2/5 전투 21.1s/18.3s/14.6s, 장기런 stage 15 result=1·wins=8·board=4·rows=6, 단위 테스트 2726/2726 green.
 - [x] `./init.sh` (2026-06-06, feat-045) — 카드 22개 검증 OK, 전투 집중표적 피드백 OK, 단위 테스트 2701/2701 green.
 
 ## 다음 세션 메모
-`./init.sh` 2731 단언 green. feat-047 done. 다음 안전 피처는 수동 플레이 QA 자동화나 전투 속도·VFX 체감 조정이 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+`./init.sh` 2731 단언 green. feat-048 done. 다음 안전 피처는 상점/보상 선택 정렬 강화, 전투 속도·VFX 체감 조정, 병력 밀도/사운드 체감 패스가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.

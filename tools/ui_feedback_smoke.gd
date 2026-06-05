@@ -6,6 +6,7 @@ const LORD_ID := &"lord_liubei"
 const LORD_SELECT_SCENE_PATH := "res://scenes/screens/lord_select.tscn"
 const RUN_MAP_SCENE_PATH := "res://scenes/screens/run_map.tscn"
 const BATTLE_SCENE_PATH := "res://scenes/battle/battle.tscn"
+const BATTLE_PHASE_BATTLE := 1
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -18,6 +19,7 @@ func _run() -> void:
 	errors += await _run_map_edict_case()
 	errors += await _run_map_event_case()
 	errors += await _battle_deploy_case()
+	errors += await _battle_manual_first_play_case()
 	errors += await _battle_formation_preview_case()
 	errors += await _battle_command_feedback_case()
 	errors += await _battle_reward_case()
@@ -159,6 +161,57 @@ func _battle_deploy_case() -> int:
 	await _frames(2)
 	if errors == 0:
 		print("  전투 배치 tooltip OK")
+	return errors
+
+func _battle_manual_first_play_case() -> int:
+	var run_manager := root.get_node_or_null("/root/RunManager")
+	if run_manager == null:
+		return _fail("RunManager autoload 조회 실패")
+	run_manager.reset_run()
+	run_manager.ensure_started(LORD_ID)
+	run_manager.state.stage_index = 1
+	run_manager.state.castle_key = ""
+	run_manager.state.board.clear()
+	run_manager.state.board_levels.clear()
+	run_manager.state.hand.clear()
+	run_manager.state.draw_pile.clear()
+	run_manager.state.hand.append(&"scheme_raid")
+	run_manager.state.hand.append(&"troop_infantry")
+	run_manager.state.hand.append(&"building_dunjeon")
+	run_manager.state.deploy_cards_played = 0
+	run_manager.state.deploy_stage_index = 1
+	var battle = _instantiate_scene(BATTLE_SCENE_PATH)
+	if battle == null:
+		return _fail("battle.tscn 수동 첫 플레이 인스턴스 생성 실패")
+	root.add_child(battle)
+	await _frames(8)
+	battle._paused = true
+	var errors := 0
+	battle._on_tile_pressed("1:1")
+	await _frames(2)
+	if run_manager.get_castle_key() != "1:1":
+		errors += _fail("수동 첫 플레이 성 선택 실패: %s" % run_manager.get_castle_key())
+	if battle._hint_label.text.find("성 위치") < 0:
+		errors += _fail("수동 첫 플레이 성 선택 힌트 누락: %s" % battle._hint_label.text)
+	battle._select_hand(0)
+	await _frames(2)
+	battle._on_tile_pressed("0:0")
+	await _frames(2)
+	if run_manager.state.board.size() != 0:
+		errors += _fail("계략 타일 배치 거부 실패: board=%s" % str(run_manager.state.board))
+	if run_manager.state.deploy_cards_played != 0:
+		errors += _fail("계략 타일 거부 후 교전 카드 소모됨: %d" % run_manager.state.deploy_cards_played)
+	if battle._hint_label.text.find("계략은 타일") < 0:
+		errors += _fail("계략 타일 거부 힌트 누락: %s" % battle._hint_label.text)
+	battle._select_hand(1)
+	await _frames(2)
+	battle._on_tile_pressed("0:0")
+	await _frames(8)
+	errors += _assert_manual_first_play_started(battle, run_manager)
+	battle.queue_free()
+	await _frames(2)
+	if errors == 0:
+		print("  전투 수동 첫 플레이 OK")
 	return errors
 
 func _battle_formation_preview_case() -> int:
@@ -347,6 +400,39 @@ func _assert_command_feedback(battle: Node, target: BattleUnit) -> int:
 	var label := visual.get("command_label", null) as Label
 	if label == null or not label.visible or label.text.find("집중") < 0:
 		errors += _fail("집중표적 label 표시 실패")
+	return errors
+
+func _assert_manual_first_play_started(battle: Node, run_manager) -> int:
+	var errors := 0
+	if run_manager.get_castle_key() != "1:1":
+		errors += _fail("수동 첫 플레이 성 위치 유지 실패: %s" % run_manager.get_castle_key())
+	var board: Dictionary = run_manager.get_board()
+	if StringName(board.get("0:0", &"")) != &"troop_infantry":
+		errors += _fail("수동 첫 플레이 보병 배치 실패: %s" % str(board))
+	if run_manager.state.deploy_cards_played != 1:
+		errors += _fail("수동 첫 플레이 교전당 1장 카운트 실패: %d" % run_manager.state.deploy_cards_played)
+	if run_manager.can_place_deploy_card():
+		errors += _fail("수동 첫 플레이 후 추가 배치 가능 상태")
+	if run_manager.get_hand().size() != 2:
+		errors += _fail("수동 첫 플레이 손패 감소 실패: %d" % run_manager.get_hand().size())
+	if int(battle._phase) != BATTLE_PHASE_BATTLE:
+		errors += _fail("수동 첫 플레이 전투 phase 진입 실패: %d" % int(battle._phase))
+	if battle._selected_hand_index != -1:
+		errors += _fail("수동 첫 플레이 선택 손패 해제 실패: %d" % battle._selected_hand_index)
+	if battle._sim.castle == null or not battle._sim.castle.is_alive():
+		errors += _fail("수동 첫 플레이 성 유닛 생성 실패")
+	if battle._sim.enemy_units.is_empty():
+		errors += _fail("수동 첫 플레이 적 유닛 생성 실패")
+	var has_infantry := false
+	for unit in battle._sim.player_units:
+		var battle_unit := unit as BattleUnit
+		if battle_unit != null and battle_unit.card_id == &"troop_infantry":
+			has_infantry = true
+			break
+	if not has_infantry:
+		errors += _fail("수동 첫 플레이 아군 보병 유닛 생성 실패")
+	if battle._hint_label.text.find("전군 돌격") < 0:
+		errors += _fail("수동 첫 플레이 시작 함성 힌트 누락: %s" % battle._hint_label.text)
 	return errors
 
 func _buttons(node: Node) -> Array[Button]:
