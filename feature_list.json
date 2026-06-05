@@ -415,6 +415,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-043-formation-preview.md 추가. FormationTactics.preview_for_unit/preview_label로 미리보기 문자열을 순수 계산하고, battle.gd가 선택 손패 기준 임시 보드를 계산해 빈 타일에 `엄호 +15%` 같은 라벨과 tooltip을 표시한다. tools/ui_feedback_smoke.gd가 궁병 엄호 미리보기를 검증한다. ./init.sh 카드 22개 / 2677 단언 green."
+    },
+    {
+      "id": "feat-044",
+      "name": "장기런 자동 스모크",
+      "description": "최종 보스까지 런 흐름이 끊기지 않는지 자동으로 검증하는 장기 플레이테스트 스모크를 추가한다.",
+      "dependencies": ["feat-043"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-044-long-run-smoke.md + tools/long_run_smoke.gd 추가. 유비 기준 stage 1~15를 결정적 선택으로 진행하며 전투/보스/칙령/상점/사건/확장과 병법서 보패 공격 보정을 검증한다. init.sh에 장기런 스모크를 연결했고 stage 15 result=1 time=20.5s, wins=8, board=4, rows=6으로 통과했다. ./init.sh 카드 22개 / 2677 단언 green."
     }
   ]
 }

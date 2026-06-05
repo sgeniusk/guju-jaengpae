@@ -4,11 +4,12 @@
 
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-06-05
-**활성 피처 (Active Feature)** — feat-043 배치 전술 미리보기 완료
-**현재 목표 (Current Objective)** — 배치 전략성을 수치 적용에서 사전 의사결정 UX까지 끌어올렸다. `FormationTactics`는 지휘/엄호/측면 보너스 계산과 미리보기 문자열을 제공하고, battle.gd는 손패 유닛 선택 중 빈 타일에 `엄호 +15%` 같은 전술 preview 라벨과 tooltip을 표시한다. UI 피드백 스모크가 실제 전투 씬에서 궁병 엄호 미리보기를 검증한다. `./init.sh`는 카드 **22개 / 2677 단언 green**이다. push/tag는 사용자 확인 대기.
+**활성 피처 (Active Feature)** — feat-044 장기런 자동 스모크 완료
+**현재 목표 (Current Objective)** — 완성판 안정성 검증을 최종 보스까지 확장했다. `tools/long_run_smoke.gd`가 유비 기준 stage 1~15를 결정적 선택으로 진행하며 전투·보스·칙령·상점·사건·확장과 병법서 보패 공격 보정을 검증한다. `init.sh`는 플레이테스트 루프 뒤 장기런 스모크를 실행하고, stage 15는 result=1, 20.5s 승리로 닫힌다. `./init.sh`는 카드 **22개 / 2677 단언 green**이다. push/tag는 사용자 확인 대기.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
+- [x] **feat-044 장기런 자동 스모크** (Codex) — `docs/specs/feat-044-long-run-smoke.md`와 `tools/long_run_smoke.gd`를 추가했다. 자동 선택기는 stage 1~15에서 전투/보스/칙령/상점/사건/확장을 통과하고, 병법서 보패를 장착한 뒤 `TreasureCatalog` 공격 보정을 시뮬레이션에 반영한다. `init.sh`에 연결했고 stage 15 최종 보스는 20.5s 승리, wins=8, board=4, rows=6으로 통과한다. ./init.sh 2677 단언 green.
 - [x] **feat-043 배치 전술 미리보기** (Codex) — `docs/specs/feat-043-formation-preview.md`를 추가했다. 손패 유닛 선택 중 빈 타일마다 임시 보드를 계산해 전술 보너스가 생기는 칸만 `지휘/엄호/측면 +%` 라벨과 tooltip을 표시한다. `FormationTactics.preview_for_unit()`이 문자열 계약을 맡고, `tools/ui_feedback_smoke.gd`는 보병 앞/궁병 뒤 배치에서 `엄호 +15%` 미리보기를 확인한다. ./init.sh 2677 단언 green.
 - [x] **feat-042 진형 전술 시너지** (Codex) — `docs/specs/feat-042-formation-tactics.md`와 `FormationTactics` helper/test를 추가했다. 병종이 상하좌우 인접 장수에게 지휘를 받으면 공격 +10%, 궁병 등 원거리 유닛 앞 같은 열에 근접 아군이 있으면 엄호 +15%, 기병이 좌우 가장자리 열에 있으면 측면 +10%를 받는다. 전술 재계산은 base attack 메타 기준이라 배치 중 중첩 곱셈하지 않고, 타일 라벨은 `지휘/엄호/측면` 태그를 표시한다. ./init.sh 2671 단언 green.
 - [x] **feat-041 전투 체감 패스** (Codex) — `docs/specs/feat-041-battle-feel-pass.md`와 `BattleFeel` helper/test를 추가했다. 첫 combat encounter는 3개 적 분대 전열(enemy visible 25명)로 보이되 개별 HP/공격과 y 간격을 낮춰 stage 1 자동 교전은 21.1s에 승리한다. battle.gd는 전투 시작 때 "전군 돌격!" banner, 양 진영 charge line, 짧은 camera shake를 표시한다. ./init.sh 2645 단언 green.
@@ -56,7 +57,7 @@
 - [ ] 수동 플레이 감각 확인 — 새 로컬 실행에서 첫 손패 장수+병종, 성 위치 선택, 3장 중 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령과 stage 4 상점 흐름을 사용자 플레이로 확인한다.
 - [ ] Codex Ultragoal 남은 항목은 사용자 결정 게이트에 걸려 있다. G019는 push 확인 대기, G055/G056/G058/G060/G061/G062는 천계·마계 정본 승인 전 blocked.
 ### 다음 (What's Next)
-1. 완성판 안전 작업으로 장기런 자동 스모크, 전투 중 표적 지정 체감, 보상/상점 카드 선택 전략성 중 하나를 feat-044로 고른다.
+1. 완성판 안전 작업으로 전투 중 표적 지정 체감, 보상/상점 카드 선택 전략성, 장기런 군주 3종 확대 중 하나를 feat-045로 고른다.
 2. 사용자 승인으로 천계·마계 명칭과 resource id가 canon이 되면 G055/G056/G058/G060/G061/G062를 재개한다.
 3. 사용자 확인 전 push/tag는 하지 않는다.
 
@@ -76,6 +77,7 @@
 - 전투 로직/표현 분리, 적은 카드 아님, trait_id, 오픈필드 이후 승=모든 파도 적전멸/패=아군 전멸 — 상세 CHANGELOG.
 
 ## 이번 세션 수정 파일 (Files Modified)
+- feat-044 — docs/specs/feat-044-long-run-smoke.md, tools/long_run_smoke.gd, init.sh, feature_list.json, progress.md, session-handoff.md, CHANGELOG.md.
 - feat-043 — docs/specs/feat-043-formation-preview.md, scripts/run/formation_tactics.gd, scripts/battle/battle.gd, test/test_formation_tactics.gd, tools/ui_feedback_smoke.gd, feature_list.json, progress.md, session-handoff.md, CHANGELOG.md.
 - feat-042 — docs/specs/feat-042-formation-tactics.md, scripts/run/formation_tactics.gd, scripts/resources/card_catalog.gd, scripts/battle/battle.gd, test/test_formation_tactics.gd, feature_list.json, progress.md, session-handoff.md, CHANGELOG.md.
 - feat-040 — docs/specs/feat-040-fun-reset.md, docs/superpowers/plans/2026-06-05-game-completion-multi-lane-plan.md, scripts/battle/squad_profile.gd, scripts/battle/formation_renderer.gd, scripts/run/terrain_perk_catalog.gd, scripts/run/strategy_deck_catalog.gd, scripts/run/playtest_metrics.gd, scripts/resources/card_catalog.gd, scripts/ui/card_ui_text.gd, scripts/battle/battle.gd, tools/playtest_loop_smoke.gd, tools/reward_smoke.gd, tools/shoot_battle.gd, tools/shoot_run_map.gd, tools/boss_stage_boot_smoke.gd, test/test_fun_contract.gd, test/test_squad_profile.gd, test/test_terrain_perk_catalog.gd, test/test_strategy_deck_catalog.gd, test/test_formation_renderer.gd, test/test_run_board.gd, test/test_factions.gd, test/test_run_reward.gd, init.sh, feature_list.json, progress.md, session-handoff.md.
@@ -86,6 +88,7 @@
 - 오래된 상세 파일 목록은 CHANGELOG와 `docs/specs/`를 본다.
 
 ## 검증 증거
+- [x] `./init.sh` (2026-06-05, feat-044) → 카드 **22개** 검증 OK, UI 전술 미리보기 OK, 첫 5스테이지 플레이테스트 루프 통과, 장기런 스모크 stage 1~15 통과(stage 15 result=1, **20.5s**, wins=8, board=4, rows=6), 단위 테스트 **2677 단언** green. 종료 0. Godot 종료 시 resource leak 경고 2회는 기존 headless 종료 경고 계열로 테스트 실패는 아님.
 - [x] `./init.sh` (2026-06-05, feat-043) → 카드 **22개** 검증 OK, UI 툴팁/피드백 스모크에 **전투 전술 미리보기 OK** 추가, 플레이테스트 루프 stage 1/2/5 전투 **21.1s/18.3s/14.6s**, 단위 테스트 **2677 단언** green. 종료 0. Godot 종료 시 resource leak 경고 1건은 기존 headless 종료 경고 계열로 테스트 실패는 아님.
 - [x] `./init.sh` (2026-06-05, feat-042) → 카드 **22개** 검증 OK, `FormationTactics` 전역 클래스 등록, battle/run_map/보스/result/UI 스모크 통과, 플레이테스트 루프 stage 1/2/5 전투 **21.1s/18.3s/14.6s**, 단위 테스트 **2671 단언** green. 종료 0. Godot 종료 시 resource leak 경고 1건은 기존 headless 종료 경고 계열로 테스트 실패는 아님.
 - [x] `./init.sh` (2026-06-05, feat-040) → 카드 **22개** 검증 OK, 전략 풀 12장/시작 손패 3장/드로우 9장, 플레이테스트 루프 stage 1/2/5 전투 **16.8s/18.3s/14.6s** 및 시작 병력 **10/16/26명**, stage 3 칙령·stage 4 상점, 우물 한 수 제한, battle/run_map/보스/result/UI 스모크 포함 단위 테스트 **2624 단언** green. 종료 0. Godot 종료 시 resource leak 경고 1건은 기존 headless 종료 경고 계열로 테스트 실패는 아님.
@@ -99,4 +102,4 @@
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh` 2677단언 green. **feat-043 done** — feat-042 전술 보너스를 배치 전 미리보기로 노출했다. `tools/ui_feedback_smoke.gd`는 궁병 손패 선택 시 `엄호 +15%` 타일 라벨과 tooltip을 검증하고, `tools/playtest_loop_smoke.gd`는 stage 1 enemy visible 25명·total 35명·21.1s 승리, stage 3 칙령, stage 4 상점, stage 5 보스 흐름을 계속 검증한다. Phase 4 9세력 확장은 정본 승인→CardVocab→validator→Resource→lord_select 순서가 고정됐고 G055/G056/G058/G060/G061/G062는 명칭 승인 대기 blocked. 푸시와 태그는 사용자 확인 후.
+`./init.sh` 2677단언 green. **feat-044 done** — 최종 보스까지 장기런 스모크를 추가했다. `tools/ui_feedback_smoke.gd`는 궁병 손패 선택 시 `엄호 +15%` 타일 라벨과 tooltip을 검증하고, `tools/long_run_smoke.gd`는 stage 1~15를 통과하며 stage 15 result=1·20.5s·wins=8·board=4·rows=6을 확인한다. Phase 4 9세력 확장은 정본 승인→CardVocab→validator→Resource→lord_select 순서가 고정됐고 G055/G056/G058/G060/G061/G062는 명칭 승인 대기 blocked. 푸시와 태그는 사용자 확인 후.

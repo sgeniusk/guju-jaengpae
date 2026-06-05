@@ -98,6 +98,12 @@ if [ -f tools/playtest_loop_smoke.gd ]; then
   "$GODOT_BIN" --headless --path . --log-file "$PWD/.godot/init-playtest-loop-smoke.log" --script res://tools/playtest_loop_smoke.gd
 fi
 
+# 최종 보스까지 장기런 진행 스모크 — 전투/보스/칙령/상점/사건/확장 흐름 검증
+if [ -f tools/long_run_smoke.gd ]; then
+  echo "=== 장기런 스모크 ==="
+  "$GODOT_BIN" --headless --path . --log-file "$PWD/.godot/init-long-run-smoke.log" --script res://tools/long_run_smoke.gd
+fi
+
 # 단위 테스트 — 리포 내장 러너
 if [ -d test ]; then
   echo "=== 단위 테스트 ==="
