@@ -28,17 +28,24 @@ func _run_checks(cat: CardCatalog, lord: LordData) -> int:
 	run.start_run(lord, cat)
 	if run.board_card_ids().size() != 0:
 		e += _fail("시작 보드가 비어 있지 않음: %d" % run.board_card_ids().size())
-	if run.hand.size() != 6:
-		e += _fail("시작 손패가 6장이 아님: %d" % run.hand.size())
+	if run.hand.size() != RunState.HAND_DRAW_COUNT:
+		e += _fail("시작 손패가 3장이 아님: %d" % run.hand.size())
+	var expected_draw := cat.get_lord_strategy_deck(lord).size() - RunState.HAND_DRAW_COUNT
+	if run.draw_pile.size() != expected_draw:
+		e += _fail("전술 드로우 더미가 %d장이 아님: %d" % [expected_draw, run.draw_pile.size()])
 	var elig := RewardPool.eligible(cat, run.owned_card_ids())
-	print("  시작 손패 %d장, 보상 후보 %d장" % [run.hand.size(), elig.size()])
+	print("  시작 손패 %d장, 드로우 %d장, 보상 후보 %d장" % [run.hand.size(), run.draw_pile.size(), elig.size()])
 	if elig.is_empty():
 		return e + _fail("보상 후보가 없음 (보상 카드를 추가했는지 확인)")
 	for id in elig:
 		if run.owned_card_ids().has(id):
-			e += _fail("후보 %s 가 이미 owned에 있음" % id)
-	# 한 장 획득 → owned +1, 후보에서 제거
-	var picked: StringName = elig[0]
+			var card := cat.get_card(id)
+			if not (card is UnitCardData or card is TreasureCardData):
+				e += _fail("성장/stack 불가 후보 %s 가 이미 owned에 있음" % id)
+	# 한 장 획득 → owned +1, 비유닛이면 후보에서 제거
+	var picked: StringName = &"scheme_raid"
+	if not elig.has(picked):
+		return e + _fail("테스트용 계략 후보가 없음: %s" % picked)
 	var before := run.owned_card_ids().size()
 	run.add_card(picked)
 	if not run.hand.has(picked):

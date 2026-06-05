@@ -7,6 +7,12 @@ func test_default_waves_has_three_non_empty_waves() -> void:
 	for wave in waves:
 		truthy(not wave.is_empty(), "각 파도는 비어 있지 않아야 함")
 
+func test_stage_encounter_waves_are_single_engagements() -> void:
+	for stage in [1, 2, 5]:
+		var waves: Array = WaveFactory.stage_encounter_waves(stage)
+		eq(waves.size(), 1, "런 스테이지 %d는 단일 교전" % stage)
+		truthy(not waves[0].is_empty(), "단일 교전은 적을 포함")
+
 func test_liubei_starting_openfield_deck_beats_default_waves() -> void:
 	var cat := CardCatalog.new()
 	cat.load_all()

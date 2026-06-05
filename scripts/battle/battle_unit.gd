@@ -29,6 +29,9 @@ var statuses: Array = []
 var is_castle: bool = false
 var commanded_target: BattleUnit = null
 var controllable: bool = false
+var squad_level: int = 1
+var squad_count: int = 1
+var retinue_count: int = 0
 
 static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int, p_atk: int, p_interval: float, p_range: String, p_speed: float, p_card_id: StringName = &"", p_skill_id: StringName = &"", p_troop_type: String = "infantry", p_row: int = -1, p_py: float = -1.0, p_is_castle: bool = false, p_target_rule: String = "nearest") -> BattleUnit:
 	var u := BattleUnit.new()
@@ -48,6 +51,8 @@ static func make(p_team: int, p_lane: int, p_x: float, p_name: String, p_hp: int
 	u.card_id = p_card_id
 	u.skill_id = p_skill_id
 	u.is_castle = p_is_castle
+	if p_is_castle:
+		u.squad_count = 0
 	return u
 
 static func from_card(card: UnitCardData, p_team: int, p_lane: int, p_x: float, hp_mult: float = 1.0, p_row: int = -1, p_py: float = -1.0) -> BattleUnit:

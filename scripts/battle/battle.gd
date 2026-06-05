@@ -11,6 +11,7 @@ const _BattlefieldTheme := preload("res://scripts/battle/battlefield_theme.gd")
 const _BoardEconomy := preload("res://scripts/run/board_economy.gd")
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
+const _FormationRenderer := preload("res://scripts/battle/formation_renderer.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
 
@@ -22,8 +23,12 @@ const ISO_HALF_H := 24.0
 const TILE_TEXTURE_SCALE := 0.75
 const UNIT_W := 140.0
 const UNIT_H := 130.0
-const GENERAL_W := 162.0
-const GENERAL_H := 172.0
+const UNIT_MEMBER_W := 48.0
+const UNIT_MEMBER_H := 54.0
+const GENERAL_W := 130.0
+const GENERAL_H := 148.0
+const GENERAL_BODY_W := 96.0
+const GENERAL_BODY_H := 112.0
 const BOSS_W := 204.0
 const BOSS_H := 244.0
 const CASTLE_W := 150.0
@@ -55,7 +60,7 @@ var _stage_advanced := false
 var _command_toggle_active := false
 var _commanded_target: BattleUnit = null
 var _selected_hand_index := -1
-var _speed := 1.0
+var _speed := 2.0
 var _paused := false
 var _auto_enabled := false
 var _enemy_force_max := 0
@@ -104,8 +109,10 @@ var _overlay: Control            # 승리 보상 / 패배 재시도 패널
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_lord = CardLibrary.get_lord(LORD_ID)
-	RunManager.ensure_started(LORD_ID)
+	var lord_id := RunManager.state.lord_id if RunManager.is_run_started() and RunManager.state.lord_id != &"" else LORD_ID
+	RunManager.ensure_started(lord_id)
+	RunManager.prepare_deploy_hand()
+	_lord = CardLibrary.get_lord(RunManager.state.lord_id)
 	AudioManager.play_music(&"battle")
 	_theme = _BattlefieldTheme.theme_for_stage(RunManager.stage_index(), _player_realm())
 	_bind_scene_nodes()
@@ -116,7 +123,7 @@ func _ready() -> void:
 	_spawn_board_army()
 	_build_panel()
 	if _lord == null:
-		_hint_label.text = "오류 — 군주(%s)를 불러오지 못했습니다." % LORD_ID
+		_hint_label.text = "오류 — 군주(%s)를 불러오지 못했습니다." % String(RunManager.state.lord_id)
 	if _ExportSmoke.is_first_battle_requested():
 		call_deferred("_run_export_first_battle_smoke")
 
@@ -530,6 +537,14 @@ func _build_iso_base() -> void:
 func _diamond_points() -> PackedVector2Array:
 	return PackedVector2Array([Vector2(0.0, -ISO_HALF_H), Vector2(ISO_HALF_W, 0.0), Vector2(0.0, ISO_HALF_H), Vector2(-ISO_HALF_W, 0.0)])
 
+func _ellipse_points(radius_x: float, radius_y: float, segments: int) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	var count := maxi(8, segments)
+	for idx in count:
+		var angle := TAU * float(idx) / float(count)
+		points.append(Vector2(cos(angle) * radius_x, sin(angle) * radius_y))
+	return points
+
 func field_to_screen(px: float, py: float) -> Vector2:
 	return VIEW_ORIGIN + Vector2(px * VIEW_SCALE_X, py * VIEW_SCALE_Y)
 
@@ -561,7 +576,7 @@ func _build_panel() -> void:
 
 	var title := Label.new()
 	var lord_name := _lord.display_name if _lord != null else "?"
-	title.text = "군주 — %s (촉)" % lord_name
+	title.text = "군주 — %s (%s)" % [lord_name, _nation_label()]
 	title.add_theme_font_size_override("font_size", 26)
 	_panel.add_child(title)
 
@@ -571,6 +586,13 @@ func _build_panel() -> void:
 		trait_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_panel.add_child(trait_label)
 
+	var perk := RunManager.terrain_perk_info()
+	if not perk.is_empty():
+		var perk_label := Label.new()
+		perk_label.text = "지형 특전 — %s: %s" % [String(perk.get("name", "")), String(perk.get("text", ""))]
+		perk_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_panel.add_child(perk_label)
+
 	_wave_label = Label.new()
 	_wave_label.add_theme_font_size_override("font_size", 22)
 	_wave_label.visible = false
@@ -578,7 +600,7 @@ func _build_panel() -> void:
 	_update_wave_label()
 
 	var guide := Label.new()
-	guide.text = "처음이라면 1. 손패 카드 선택 2. 빈 타일 클릭 3. 전투 시작. 승리하면 보상 한 장을 고르세요."
+	guide.text = "1. 성 위치를 먼저 고르고 2. 손패 3장 중 1장을 빈 타일에 두면 바로 교전합니다."
 	guide.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	guide.add_theme_font_size_override("font_size", 18)
 	_panel.add_child(guide)
@@ -636,8 +658,9 @@ func _make_board_row(block_key: String, card_id: StringName) -> Control:
 	slot_label.custom_minimum_size = Vector2(92.0, 0.0)
 	row.add_child(slot_label)
 	var name_label := Label.new()
+	var level := RunManager.get_board_level(block_key)
 	if card != null:
-		name_label.text = "%s (%d)" % [card.display_name, card.cost]
+		name_label.text = "%s Lv.%d (%d)" % [card.display_name, level, card.cost]
 		name_label.tooltip_text = _CardUiText.tooltip(card)
 	else:
 		name_label.text = String(card_id)
@@ -651,8 +674,16 @@ func _refresh_deploy_ui() -> void:
 	var hand := RunManager.get_hand()
 	if _selected_hand_index >= hand.size():
 		_selected_hand_index = -1
+	var has_castle := RunManager.has_castle()
+	var played_this_deploy := not RunManager.can_place_deploy_card()
 	if _board_head != null:
-		_board_head.text = "보드 군세 — %d / %d" % [RunManager.get_board().size(), RunManager.get_board_capacity()]
+		var castle_text := _block_label(RunManager.get_castle_key()) if has_castle else "미선택"
+		_board_head.text = "전장 — 성 %s · 이번 배치 %d/1 · 보드 %d / %d" % [
+			castle_text,
+			1 if played_this_deploy else 0,
+			RunManager.get_board().size(),
+			RunManager.get_board_capacity(),
+		]
 	if _gold_label != null:
 		_gold_label.text = "골드 — %d" % RunManager.get_gold()
 	_rebuild_board_summary()
@@ -662,11 +693,19 @@ func _refresh_deploy_ui() -> void:
 		_scheme_button.tooltip_text = _scheme_button_tooltip(_selected_hand_card())
 	if _well_button != null:
 		_well_button.text = "우물 +%d골드" % RunState.WELL_GOLD
-		_well_button.disabled = _phase != Phase.DEPLOY or _selected_hand_index < 0
+		_well_button.disabled = _phase != Phase.DEPLOY or _selected_hand_index < 0 or not RunManager.can_discard_from_hand(_selected_hand_index)
 		_well_button.tooltip_text = _well_button_tooltip(_selected_hand_card())
 	if _start_button != null:
-		_start_button.disabled = _phase != Phase.DEPLOY or _board_unit_count() <= 0
-		_start_button.tooltip_text = "손패 선택 후 빈 타일을 클릭해 장수나 병종을 먼저 배치하세요." if _board_unit_count() <= 0 else "현재 보드 군세로 전투를 시작합니다."
+		_start_button.text = "교전 시작"
+		_start_button.disabled = _phase != Phase.DEPLOY or not has_castle or not played_this_deploy or _board_unit_count() <= 0
+		if not has_castle:
+			_start_button.tooltip_text = "먼저 빈 타일을 클릭해 성 위치를 고르세요."
+		elif not played_this_deploy:
+			_start_button.tooltip_text = "손패 3장 중 1장을 배치하면 자동으로 교전합니다."
+		elif _board_unit_count() <= 0:
+			_start_button.tooltip_text = "전투할 아군 유닛이 없습니다."
+		else:
+			_start_button.tooltip_text = "이번 한 수로 교전을 시작합니다."
 	_refresh_board_tiles()
 	_sync_hud()
 
@@ -675,6 +714,17 @@ func _rebuild_board_summary() -> void:
 		return
 	_clear_children(_board_box)
 	var board := RunManager.get_board()
+	if RunManager.has_castle():
+		var castle_row := HBoxContainer.new()
+		var slot := Label.new()
+		slot.text = _block_label(RunManager.get_castle_key())
+		slot.custom_minimum_size = Vector2(92.0, 0.0)
+		castle_row.add_child(slot)
+		var castle_name := Label.new()
+		castle_name.text = "성"
+		castle_name.custom_minimum_size = Vector2(300.0, 0.0)
+		castle_row.add_child(castle_name)
+		_board_box.add_child(castle_row)
 	var any := false
 	for key in RunState.block_keys_for(RunManager.get_board_rows()):
 		if not board.has(key):
@@ -683,8 +733,8 @@ func _rebuild_board_summary() -> void:
 		_board_box.add_child(_make_board_row(key, StringName(board[key])))
 	if not any:
 		var empty := Label.new()
-		empty.text = "보드 군세 없음 — 손패 선택 후 빈 타일 클릭"
-		empty.tooltip_text = "손패 카드를 선택한 뒤 빈 타일을 클릭해 보드에 배치합니다."
+		empty.text = "보드 군세 없음 — 성을 고른 뒤 손패 1장을 배치"
+		empty.tooltip_text = "이번 교전에는 손패 3장 중 1장만 배치합니다."
 		_board_box.add_child(empty)
 
 func _rebuild_hand_list(hand: Array[StringName]) -> void:
@@ -696,7 +746,7 @@ func _rebuild_hand_list(hand: Array[StringName]) -> void:
 	if hand.size() > RunState.HAND_MAX:
 		head.text = "손패 — %d장 / 권장 %d장" % [hand.size(), RunState.HAND_MAX]
 	else:
-		head.text = "손패 — %d장" % hand.size()
+		head.text = "손패 — %d장 중 1장 선택" % hand.size()
 	_hand_box.add_child(head)
 	if hand.is_empty():
 		var empty := Label.new()
@@ -708,20 +758,22 @@ func _rebuild_hand_list(hand: Array[StringName]) -> void:
 		var card := CardLibrary.get_card(card_id)
 		var card_name := card.display_name if card != null else String(card_id)
 		var card_cost := card.cost if card != null else 0
-		var type_label := _card_type_label(card)
+		var upgrades_existing := RunManager.hand_card_would_upgrade(idx)
+		var action_label := _CardUiText.deploy_action_label(card, upgrades_existing)
 		var b := Button.new()
 		b.theme = _hud_theme
 		b.toggle_mode = true
 		b.button_pressed = idx == _selected_hand_index
-		b.text = "%d. [%s] %s (%d)" % [idx + 1, type_label, card_name, card_cost]
-		b.tooltip_text = _hand_card_tooltip(card)
+		b.text = "%d. %s · %s (%d)" % [idx + 1, action_label, card_name, card_cost]
+		b.tooltip_text = _hand_card_tooltip(card, upgrades_existing)
 		b.custom_minimum_size = Vector2(0.0, 36.0)
-		b.disabled = _phase != Phase.DEPLOY
+		b.disabled = _phase != Phase.DEPLOY or not RunManager.can_place_deploy_card()
 		b.pressed.connect(_select_hand.bind(idx))
 		_hand_box.add_child(b)
 
 func _refresh_board_tiles() -> void:
 	var board := RunManager.get_board()
+	var castle_key := RunManager.get_castle_key()
 	if _phase == Phase.DEPLOY and _iso_base_layer != null:
 		_iso_base_layer.visible = true
 		_iso_base_layer.modulate.a = 1.0
@@ -731,10 +783,20 @@ func _refresh_board_tiles() -> void:
 		var poly := tile.get("poly", null) as Polygon2D
 		var sprite := tile.get("sprite", null) as Sprite2D
 		var area := tile.get("area", null) as Area2D
-		if board.has(key):
+		if key == castle_key:
+			if label != null:
+				label.text = "성"
+				label.tooltip_text = "선택한 성 위치입니다."
+			if poly != null:
+				poly.color = Color(0.48, 0.28, 0.18, 0.98)
+			if sprite != null:
+				sprite.modulate = Color(1.18, 0.92, 0.62, 1.0)
+			if area != null:
+				area.input_pickable = false
+		elif board.has(key):
 			var card := CardLibrary.get_card(StringName(board[key]))
 			if label != null:
-				label.text = card.display_name if card != null else String(board[key])
+				label.text = "%s Lv.%d" % [card.display_name, RunManager.get_board_level(key)] if card != null else String(board[key])
 				label.tooltip_text = _CardUiText.tooltip(card) if card != null else String(board[key])
 			if poly != null:
 				poly.color = Color(0.24, 0.42, 0.26, 0.95)
@@ -745,9 +807,14 @@ func _refresh_board_tiles() -> void:
 		else:
 			if label != null:
 				label.text = ""
-				label.tooltip_text = "선택한 손패를 이 빈 타일에 배치합니다." if _phase == Phase.DEPLOY else ""
+				if _phase != Phase.DEPLOY:
+					label.tooltip_text = ""
+				elif not RunManager.has_castle():
+					label.tooltip_text = "이 빈 타일을 성 위치로 선택합니다."
+				else:
+					label.tooltip_text = "선택한 손패 1장을 이 빈 타일에 배치합니다."
 			if poly != null:
-				poly.color = Color(0.22, 0.38, 0.22, 0.90) if _phase == Phase.DEPLOY else Color(0.17, 0.27, 0.17, 0.0)
+				poly.color = Color(0.25, 0.42, 0.28, 0.92) if _phase == Phase.DEPLOY else Color(0.17, 0.27, 0.17, 0.0)
 			if sprite != null:
 				sprite.modulate = Color(1.0, 1.0, 1.0, 0.5) if _phase == Phase.DEPLOY else Color(1.0, 1.0, 1.0, 0.0)
 			if area != null:
@@ -762,10 +829,16 @@ func _clear_children(node: Node) -> void:
 func _select_hand(index: int) -> void:
 	if _phase != Phase.DEPLOY:
 		return
+	if not RunManager.can_place_deploy_card():
+		_hint_label.text = "이번 교전에는 이미 한 장을 냈습니다."
+		return
 	var hand := RunManager.get_hand()
 	if index < 0 or index >= hand.size():
 		_selected_hand_index = -1
 		_refresh_deploy_ui()
+		return
+	if RunManager.can_upgrade_from_hand(index):
+		_upgrade_from_hand(index)
 		return
 	if _selected_hand_index == index:
 		_selected_hand_index = -1
@@ -777,10 +850,32 @@ func _select_hand(index: int) -> void:
 		if RunManager.can_cast_scheme_from_hand(index):
 			_hint_label.text = "선택 — %s. 계략 발동으로 사용합니다." % card_name
 		elif RunManager.can_place_hand_card(index):
-			_hint_label.text = "선택 — %s. 빈 타일에 배치한 뒤 전투 시작을 누르세요." % card_name
+			if RunManager.has_castle():
+				_hint_label.text = "선택 — %s. 빈 타일에 두면 바로 교전합니다." % card_name
+			else:
+				_hint_label.text = "선택 — %s. 먼저 성 위치를 고르세요." % card_name
 		else:
 			_hint_label.text = "선택 — %s. 지금 사용할 수 없는 카드입니다." % card_name
 	_refresh_deploy_ui()
+
+func _upgrade_from_hand(index: int) -> void:
+	var hand := RunManager.get_hand()
+	if index < 0 or index >= hand.size():
+		return
+	var card_id: StringName = hand[index]
+	var card := CardLibrary.get_card(card_id)
+	var card_name := card.display_name if card != null else String(card_id)
+	var key := RunManager.upgrade_from_hand(index)
+	if key == "":
+		_hint_label.text = "증원할 부대를 찾지 못했습니다."
+		_refresh_deploy_ui()
+		return
+	_respawn_unit_for_board_key(key)
+	_selected_hand_index = -1
+	_hint_label.text = "증원 — %s Lv.%d. 교전을 시작합니다." % [card_name, RunManager.get_board_level(key)]
+	AudioManager.play_sfx(&"start")
+	_refresh_deploy_ui()
+	call_deferred("_on_start_pressed")
 
 func _on_tile_area_input(_viewport: Node, event: InputEvent, _shape_idx: int, block_key: String) -> void:
 	if not (event is InputEventMouseButton):
@@ -810,8 +905,22 @@ func _is_screen_position_on_tile(screen_pos: Vector2, center: Vector2) -> bool:
 func _on_tile_pressed(block_key: String) -> void:
 	if _phase != Phase.DEPLOY:
 		return
+	if not RunManager.has_castle():
+		if not RunManager.set_castle_key(block_key):
+			_hint_label.text = "이 칸에는 성을 둘 수 없습니다."
+			_refresh_deploy_ui()
+			return
+		_ensure_castle()
+		AudioManager.play_sfx(&"ui")
+		_hint_label.text = "성 위치 — %s. 이제 손패 3장 중 1장을 배치하세요." % _block_label(block_key)
+		_refresh_deploy_ui()
+		return
+	if not RunManager.can_place_deploy_card():
+		_hint_label.text = "이번 교전에는 이미 한 장을 냈습니다."
+		_refresh_deploy_ui()
+		return
 	if _selected_hand_index < 0:
-		_hint_label.text = "손패 카드를 먼저 선택하세요. 그 다음 빈 타일을 클릭합니다."
+		_hint_label.text = "손패 3장 중 한 장을 먼저 선택하세요."
 		return
 	var hand := RunManager.get_hand()
 	if _selected_hand_index >= hand.size():
@@ -828,6 +937,9 @@ func _on_tile_pressed(block_key: String) -> void:
 		_hint_label.text = "이 카드는 보드에 배치할 수 없습니다."
 		_refresh_deploy_ui()
 		return
+	if RunManager.can_upgrade_from_hand(_selected_hand_index):
+		_upgrade_from_hand(_selected_hand_index)
+		return
 	if not RunManager.place_from_hand(_selected_hand_index, block_key):
 		_hint_label.text = "배치할 수 없습니다."
 		_refresh_deploy_ui()
@@ -836,11 +948,20 @@ func _on_tile_pressed(block_key: String) -> void:
 	var card := CardLibrary.get_card(card_id)
 	var card_name := card.display_name if card != null else String(card_id)
 	_selected_hand_index = -1
-	_hint_label.text = "배치 — %s. 전투 시작을 누르세요." % card_name
+	_hint_label.text = "배치 — %s. 교전을 시작합니다." % card_name
 	_refresh_deploy_ui()
+	call_deferred("_on_start_pressed")
 
 func _on_scheme_pressed() -> void:
 	if _phase != Phase.DEPLOY:
+		return
+	if not RunManager.has_castle():
+		_hint_label.text = "먼저 성 위치를 고르세요."
+		_refresh_deploy_ui()
+		return
+	if not RunManager.can_place_deploy_card():
+		_hint_label.text = "이번 교전에는 이미 한 장을 냈습니다."
+		_refresh_deploy_ui()
 		return
 	var hand := RunManager.get_hand()
 	if _selected_hand_index < 0 or _selected_hand_index >= hand.size():
@@ -861,8 +982,9 @@ func _on_scheme_pressed() -> void:
 	var result := RunManager.get_last_scheme_result()
 	_apply_scheme_battle_result(result)
 	_selected_hand_index = -1
-	_hint_label.text = "계략 발동 — %s%s" % [card_name, _scheme_result_brief(result)]
+	_hint_label.text = "계략 발동 — %s%s. 교전을 시작합니다." % [card_name, _scheme_result_brief(result)]
 	_refresh_deploy_ui()
+	call_deferred("_on_start_pressed")
 
 func _on_well_pressed() -> void:
 	if _phase != Phase.DEPLOY:
@@ -880,8 +1002,9 @@ func _on_well_pressed() -> void:
 	var card := CardLibrary.get_card(card_id)
 	var card_name := card.display_name if card != null else String(card_id)
 	_selected_hand_index = -1
-	_hint_label.text = "우물 — %s, +%d골드" % [card_name, RunState.WELL_GOLD]
+	_hint_label.text = "우물 — %s, +%d골드. 교전을 시작합니다." % [card_name, RunState.WELL_GOLD]
 	_refresh_deploy_ui()
+	call_deferred("_on_start_pressed")
 
 func _on_ability_well_pressed() -> void:
 	_on_well_pressed()
@@ -913,6 +1036,14 @@ func _on_start_pressed() -> void:
 	if _phase != Phase.DEPLOY:
 		return
 	_ensure_castle()
+	if not RunManager.has_castle():
+		_hint_label.text = "성 위치를 먼저 선택하세요."
+		_refresh_deploy_ui()
+		return
+	if RunManager.can_place_deploy_card():
+		_hint_label.text = "손패 3장 중 1장을 먼저 내세요."
+		_refresh_deploy_ui()
+		return
 	if _board_unit_count() <= 0:
 		_hint_label.text = "보드 군세가 비어 있습니다."
 		_refresh_deploy_ui()
@@ -941,7 +1072,7 @@ func _run_export_first_battle_smoke() -> void:
 		_ExportSmoke.fail_and_quit(get_tree(), "battle_not_in_deploy_phase", { "phase": _phase })
 		return
 	var placement := { "ok": true, "source": "existing" }
-	if _board_unit_count() <= 0:
+	if not RunManager.has_castle() or _board_unit_count() <= 0:
 		placement = _ExportSmoke.ensure_first_battle_board()
 		if not bool(placement.get("ok", false)):
 			_ExportSmoke.fail_and_quit(get_tree(), "battle_has_no_unit", placement)
@@ -973,6 +1104,12 @@ func _spawn_visual(u: BattleUnit) -> void:
 	var root := Node2D.new()
 	root.position = field_to_screen(u.px, u.py)
 	root.y_sort_enabled = true
+	var shadow := Polygon2D.new()
+	shadow.polygon = _ellipse_points(size.x * 0.28, size.y * 0.075, 18)
+	shadow.color = Color(0.02, 0.01, 0.0, 0.34)
+	shadow.position = Vector2(0.0, -3.0)
+	shadow.z_index = -2
+	root.add_child(shadow)
 	var command_marker := Polygon2D.new()
 	command_marker.polygon = PackedVector2Array([Vector2(0.0, -18.0), Vector2(34.0, 0.0), Vector2(0.0, 18.0), Vector2(-34.0, 0.0)])
 	command_marker.color = Color(1.0, 0.85, 0.1, 0.55)
@@ -995,7 +1132,7 @@ func _spawn_visual(u: BattleUnit) -> void:
 	hp.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(hp)
 	var name_label := Label.new()
-	name_label.text = u.display_name
+	name_label.text = _unit_name_label(u)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.position = Vector2(-size.x * 0.75, -size.y - 36.0)
 	name_label.size = Vector2(size.x * 1.5, 22.0)
@@ -1003,8 +1140,19 @@ func _spawn_visual(u: BattleUnit) -> void:
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(name_label)
 	_units_layer.add_child(root)
-	_vis[u] = { "root": root, "body": body, "base_color": body.modulate, "hp": hp, "command_marker": command_marker, "hp_width": size.x, "last_px": u.px, "last_py": u.py }
+	_vis[u] = { "root": root, "body": body, "shadow": shadow, "base_color": body.modulate, "hp": hp, "command_marker": command_marker, "hp_width": size.x, "last_px": u.px, "last_py": u.py }
 	_position_visual(u)
+
+func _unit_name_label(u: BattleUnit) -> String:
+	if u == null:
+		return ""
+	if u.squad_level > 1 and u.squad_count > 1:
+		return "%s Lv.%d · %d" % [u.display_name, u.squad_level, u.squad_count]
+	if u.squad_count > 1:
+		return "%s · %d" % [u.display_name, u.squad_count]
+	if u.squad_level > 1:
+		return "%s Lv.%d" % [u.display_name, u.squad_level]
+	return u.display_name
 
 func _sync_visuals() -> void:
 	var active_units := _sim_units()
@@ -1132,22 +1280,29 @@ func _position_visual(u: BattleUnit) -> void:
 
 func _sync_unit_walk_animation(u: BattleUnit) -> void:
 	var visual: Dictionary = _vis[u]
-	var body := visual.get("body", null) as AnimatedSprite2D
-	if body == null:
-		visual["last_px"] = u.px
-		visual["last_py"] = u.py
-		return
+	var bodies := _animated_bodies(visual.get("body", null) as Node)
 	var last_px := float(visual.get("last_px", u.px))
 	var last_py := float(visual.get("last_py", u.py))
 	var delta := Vector2(u.px - last_px, u.py - last_py)
-	if delta.length_squared() > WALK_MOVE_EPSILON:
-		if not body.is_playing():
-			body.play("walk")
-	else:
-		body.stop()
-		body.frame = 0
+	for body in bodies:
+		if delta.length_squared() > WALK_MOVE_EPSILON:
+			if not body.is_playing():
+				body.play("walk")
+		else:
+			body.stop()
+			body.frame = 0
 	visual["last_px"] = u.px
 	visual["last_py"] = u.py
+
+func _animated_bodies(root: Node) -> Array[AnimatedSprite2D]:
+	var out: Array[AnimatedSprite2D] = []
+	if root == null:
+		return out
+	if root is AnimatedSprite2D:
+		out.append(root as AnimatedSprite2D)
+	for child in root.get_children():
+		out.append_array(_animated_bodies(child))
+	return out
 
 func _flash_skill_casts() -> void:
 	for cast in _sim.last_skill_casts:
@@ -1229,11 +1384,11 @@ func _sim_units() -> Array[BattleUnit]:
 
 func _spawn_board_army() -> void:
 	var board := RunManager.get_board()
-	var army := CardLibrary.catalog.build_board_army(board, _lord, RunManager.get_board_rows(), RunManager.get_edicts())
+	var army := CardLibrary.catalog.build_board_army(board, _lord, RunManager.get_board_rows(), RunManager.get_edicts(), RunManager.get_castle_key(), RunManager.get_terrain_perk_id(), RunManager.get_board_levels())
 	for unit in army:
 		_sim.add_unit(unit)
 		_spawn_visual(unit)
-		_update_tile_label(unit.lane, unit.row, unit.display_name)
+		_update_tile_label(unit.lane, unit.row, _unit_tile_label(unit))
 	_spawn_board_buildings(board)
 	_refresh_board_tiles()
 
@@ -1245,11 +1400,34 @@ func _spawn_unit_for_board_key(block_key: String) -> void:
 		return
 	var single := {}
 	single[block_key] = board[block_key]
-	var army := CardLibrary.catalog.build_board_army(single, _lord, RunManager.get_board_rows(), RunManager.get_edicts())
+	var levels := {}
+	levels[block_key] = RunManager.get_board_level(block_key)
+	var army := CardLibrary.catalog.build_board_army(single, _lord, RunManager.get_board_rows(), RunManager.get_edicts(), RunManager.get_castle_key(), RunManager.get_terrain_perk_id(), levels)
 	for unit in army:
 		_sim.add_unit(unit)
 		_spawn_visual(unit)
-		_update_tile_label(unit.lane, unit.row, unit.display_name)
+		_update_tile_label(unit.lane, unit.row, _unit_tile_label(unit))
+
+func _respawn_unit_for_board_key(block_key: String) -> void:
+	var parts := block_key.split(":")
+	if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
+		return
+	var col := int(parts[0])
+	var row := int(parts[1])
+	var removed: Array[BattleUnit] = []
+	for unit in _sim.player_units:
+		if unit == null or unit.is_castle:
+			continue
+		if unit.lane == col and unit.row == row:
+			removed.append(unit)
+	for unit in removed:
+		_sim.player_units.erase(unit)
+		if _vis.has(unit):
+			var root := _vis[unit].get("root", null) as Node
+			if root != null:
+				root.queue_free()
+			_vis.erase(unit)
+	_spawn_unit_for_board_key(block_key)
 
 func _spawn_board_buildings(board: Dictionary) -> void:
 	for entry in _BoardEconomy.buildings_on_board(board, CardLibrary.catalog):
@@ -1372,8 +1550,15 @@ func _update_building_gold_labels() -> void:
 			label.text = "+%d" % total
 
 func _ensure_castle() -> void:
+	var castle_key := RunManager.get_castle_key()
+	if castle_key == "":
+		return
+	var parts := castle_key.split(":")
+	if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
+		return
+	var pos := BattleSim.position_for_tile(int(parts[0]), int(parts[1]))
 	var hp := int(round(BattleSim.CASTLE_HP * (1.0 + _EdictCatalog.castle_hp_pct(RunManager.get_edicts()))))
-	var castle := _sim.add_castle(hp)
+	var castle := _sim.add_castle_at(pos.x, pos.y, hp)
 	if not _vis.has(castle):
 		_spawn_visual(castle)
 
@@ -1387,7 +1572,11 @@ func _unit_texture(u: BattleUnit) -> Texture2D:
 	return _placeholder_texture(int(size.x), int(size.y), _unit_color(u))
 
 func _create_unit_body(u: BattleUnit, fallback_texture: Texture2D, target_size: Vector2) -> Node2D:
-	var walk_sheet_path := _unit_walk_sheet_path(u)
+	if _uses_formation_visual(u):
+		return _create_formation_body(u)
+	return _create_single_unit_body(u, fallback_texture, target_size, _unit_walk_sheet_path(u))
+
+func _create_single_unit_body(u: BattleUnit, fallback_texture: Texture2D, target_size: Vector2, walk_sheet_path: String = "") -> Node2D:
 	if not walk_sheet_path.is_empty() and ResourceLoader.exists(walk_sheet_path):
 		var walk_sheet := load(walk_sheet_path) as Texture2D
 		if walk_sheet != null:
@@ -1405,6 +1594,42 @@ func _create_unit_body(u: BattleUnit, fallback_texture: Texture2D, target_size: 
 	sprite.texture = fallback_texture
 	_apply_unit_body_visuals(sprite, u, fallback_texture, target_size)
 	return sprite
+
+func _create_formation_body(u: BattleUnit) -> Node2D:
+	var group := Node2D.new()
+	if String(u.card_id).begins_with("general_"):
+		_add_retinue_members(group, u)
+		var main_texture := _unit_texture(u)
+		var main := _create_single_unit_body(u, main_texture, Vector2(GENERAL_BODY_W, GENERAL_BODY_H), _unit_walk_sheet_path(u))
+		main.position += Vector2(0.0, -18.0)
+		main.z_index = 20
+		group.add_child(main)
+	else:
+		var count := mini(maxi(1, u.squad_count), 14)
+		var texture_path := _unit_texture_path_for_troop_type(u, u.troop_type)
+		var texture := _texture_or_placeholder(texture_path, Vector2(UNIT_MEMBER_W, UNIT_MEMBER_H), _unit_color(u))
+		var walk_path := _walk_sheet_path_for_texture(texture_path)
+		var offsets := _FormationRenderer.troop_offsets(count)
+		for i in count:
+			var member := _create_single_unit_body(u, texture, Vector2(UNIT_MEMBER_W, UNIT_MEMBER_H), walk_path)
+			member.position += offsets[i]
+			member.z_index = i
+			group.add_child(member)
+	return group
+
+func _add_retinue_members(group: Node2D, u: BattleUnit) -> void:
+	var retinue := mini(maxi(0, u.retinue_count), 8)
+	if retinue <= 0:
+		return
+	var texture_path := _unit_texture_path_for_troop_type(u, u.troop_type)
+	var texture := _texture_or_placeholder(texture_path, Vector2(UNIT_MEMBER_W, UNIT_MEMBER_H), _unit_color(u))
+	var walk_path := _walk_sheet_path_for_texture(texture_path)
+	var offsets := _FormationRenderer.retinue_offsets(retinue)
+	for i in retinue:
+		var member := _create_single_unit_body(u, texture, Vector2(42.0, 48.0), walk_path)
+		member.position += offsets[i]
+		member.z_index = i
+		group.add_child(member)
 
 func _apply_unit_body_visuals(body: Node2D, u: BattleUnit, texture: Texture2D, target_size: Vector2) -> void:
 	if body == null:
@@ -1438,9 +1663,31 @@ func _unit_walk_sheet_path(u: BattleUnit) -> String:
 	if u.is_castle:
 		return ""
 	var texture_path := _unit_texture_path(u)
+	return _walk_sheet_path_for_texture(texture_path)
+
+func _walk_sheet_path_for_texture(texture_path: String) -> String:
 	if texture_path.ends_with(".png"):
 		return texture_path.trim_suffix(".png") + "_walk.png"
 	return ""
+
+func _uses_formation_visual(u: BattleUnit) -> bool:
+	if u == null or u.is_castle or _is_boss(u):
+		return false
+	return u.squad_count > 1 or u.retinue_count > 0
+
+func _texture_or_placeholder(path: String, size: Vector2, color: Color) -> Texture2D:
+	if not path.is_empty() and ResourceLoader.exists(path):
+		var tex := load(path) as Texture2D
+		if tex != null:
+			return tex
+	return _placeholder_texture(int(size.x), int(size.y), color)
+
+func _unit_texture_path_for_troop_type(u: BattleUnit, troop_type: String) -> String:
+	var faction := String(RunManager.player_faction()) if u.team == BattleUnit.Team.PLAYER else "demon"
+	return "res://assets/sprites/units/%s/%s.png" % [faction, troop_type]
+
+func _formation_offsets(count: int, columns: int, dx: float, dy: float) -> Array[Vector2]:
+	return _FormationRenderer.member_offsets(count, columns, dx, dy)
 
 func _load_texture(path: String) -> Texture2D:
 	if ResourceLoader.exists(path):
@@ -1578,6 +1825,13 @@ func _update_tile_label(col: int, row: int, text: String) -> void:
 	if label != null:
 		label.text = text
 
+func _unit_tile_label(unit: BattleUnit) -> String:
+	if unit == null:
+		return ""
+	if unit.squad_level > 1:
+		return "%s Lv.%d" % [unit.display_name, unit.squad_level]
+	return unit.display_name
+
 func _unit_visual_offset(u: BattleUnit) -> Vector2:
 	var index := 0
 	for other in _sim_units():
@@ -1605,10 +1859,10 @@ func _update_wave_label() -> void:
 	if _wave_label == null:
 		return
 	if _sim.wave_total <= 0:
-		_wave_label.text = "파도 - / -"
+		_wave_label.text = "교전 - / -"
 		_wave_label.visible = false
 		return
-	_wave_label.text = "파도 %d / %d" % [_sim.wave_index, _sim.wave_total]
+	_wave_label.text = "교전 %d / %d" % [_sim.wave_index, _sim.wave_total]
 	_wave_label.visible = _phase != Phase.DEPLOY
 
 # ── 종료 · 전리(보상) ───────────────────────────────────────
@@ -1805,16 +2059,29 @@ func _card_brief(card: CardData) -> String:
 func _card_type_label(card: CardData) -> String:
 	return _CardUiText.type_label(card)
 
+func _nation_label() -> String:
+	if _lord == null:
+		return "?"
+	match _lord.nation:
+		&"wei":
+			return "위"
+		&"wu":
+			return "오"
+		_:
+			return "촉"
+
 func _selected_hand_card() -> CardData:
 	var hand := RunManager.get_hand()
 	if _selected_hand_index < 0 or _selected_hand_index >= hand.size():
 		return null
 	return CardLibrary.get_card(StringName(hand[_selected_hand_index]))
 
-func _hand_card_tooltip(card: CardData) -> String:
+func _hand_card_tooltip(card: CardData, upgrades_existing: bool = false) -> String:
 	var text := _CardUiText.tooltip(card)
 	if card == null:
 		return text
+	var action := _CardUiText.deploy_action_label(card, upgrades_existing)
+	text = "%s\n행동 — %s" % [text, action]
 	match String(card.get("card_type")):
 		"scheme":
 			return "%s\n계략 발동 버튼으로 사용합니다." % text
@@ -1839,7 +2106,13 @@ func _well_button_tooltip(card: CardData) -> String:
 		return "전투 중에는 우물을 사용할 수 없습니다."
 	if card == null:
 		return "손패 카드를 선택하면 버리고 +%d골드를 얻을 수 있습니다." % RunState.WELL_GOLD
-	return "선택한 카드를 우물에 보내고 +%d골드를 얻습니다.\n%s" % [RunState.WELL_GOLD, _CardUiText.tooltip(card)]
+	if not RunManager.has_castle():
+		return "먼저 성 위치를 고르세요.\n%s" % _CardUiText.tooltip(card)
+	if not RunManager.can_place_deploy_card():
+		return "이번 교전에는 이미 한 장을 냈습니다.\n%s" % _CardUiText.tooltip(card)
+	if RunManager.board_unit_count() <= 0:
+		return "우물은 이미 전투할 보드 군세가 있을 때만 이번 한 수로 사용할 수 있습니다.\n%s" % _CardUiText.tooltip(card)
+	return "선택한 카드를 우물에 보내고 +%d골드를 얻은 뒤 이번 한 수로 교전합니다.\n%s" % [RunState.WELL_GOLD, _CardUiText.tooltip(card)]
 
 func _scheme_result_brief(result: Dictionary) -> String:
 	if result.is_empty():

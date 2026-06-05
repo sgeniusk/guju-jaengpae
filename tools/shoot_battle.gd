@@ -21,10 +21,14 @@ func _ready() -> void:
 	RunManager.hand_add(&"building_mangru")
 	# 손패를 보드에 가득 배치(군세·건물이 보이도록)
 	var blocks := ["0:0", "1:0", "2:0", "0:1", "1:1", "2:1", "0:2", "1:2", "2:2"]
+	if not RunManager.has_castle():
+		RunManager.set_castle_key("1:1")
 	for key in blocks:
 		if RunManager.get_hand().is_empty():
 			break
-		RunManager.place_from_hand(0, key)
+		if key == RunManager.get_castle_key():
+			continue
+		RunManager.state.place_from_hand(0, key)
 	var battle = load("res://scenes/battle/battle.tscn").instantiate()
 	add_child(battle)
 	await _frames(25)

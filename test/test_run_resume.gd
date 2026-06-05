@@ -11,6 +11,7 @@ func before_each() -> void:
 
 func test_save_load_run_preserves_board_hand_gold_stage_edicts_treasures() -> void:
 	RunManager.ensure_started(&"lord_liubei")
+	truthy(RunManager.set_castle_key("1:1"), "성 위치 저장")
 	var placed: StringName = RunManager.get_hand()[0]
 	truthy(RunManager.place_from_hand(0, "0:0"), "보드 배치")
 	RunManager.hand_add(&"scheme_raid")
@@ -27,6 +28,7 @@ func test_save_load_run_preserves_board_hand_gold_stage_edicts_treasures() -> vo
 
 	truthy(RunManager.is_run_started(), "로드 후 started")
 	eq(RunManager.state.lord_id, &"lord_liubei", "군주 보존")
+	eq(RunManager.get_castle_key(), "1:1", "성 위치 보존")
 	eq(RunManager.get_board().get("0:0"), placed, "보드 보존")
 	eq(RunManager.get_hand(), expected_hand, "손패 보존")
 	eq(RunManager.get_gold(), 41, "골드 보존")
@@ -38,6 +40,7 @@ func test_save_load_run_preserves_board_hand_gold_stage_edicts_treasures() -> vo
 
 func test_autosave_default_run_can_resume_after_state_recreation() -> void:
 	RunManager.ensure_started(&"lord_liubei")
+	truthy(RunManager.set_castle_key("2:2"), "성 위치 autosave")
 	truthy(RunManager.place_from_hand(0, "1:1"), "배치 autosave")
 	RunManager.add_gold(12)
 	RunManager.advance_stage()
@@ -48,6 +51,7 @@ func test_autosave_default_run_can_resume_after_state_recreation() -> void:
 	RunManager.state = RunState.new()
 	truthy(RunManager.load_run(), "기본 저장에서 재개")
 	eq(RunManager.get_board(), expected_board, "autosave 보드 복원")
+	eq(RunManager.get_castle_key(), "2:2", "autosave 성 위치 복원")
 	eq(RunManager.get_hand(), expected_hand, "autosave 손패 복원")
 	eq(RunManager.get_gold(), 12, "autosave 골드 복원")
 	eq(RunManager.stage_index(), 2, "autosave 스테이지 복원")

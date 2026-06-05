@@ -36,6 +36,7 @@ func _boot_stage(stage: int) -> int:
 	run_manager.state.stage_index = stage
 	run_manager.state.board_rows = run_state_script.BOARD_ROWS_MAX
 	run_manager.state.hand.clear()
+	run_manager.state.castle_key = "1:1"
 	run_manager.state.board = {
 		"0:0": &"general_guanyu",
 		"1:0": &"general_zhangfei",

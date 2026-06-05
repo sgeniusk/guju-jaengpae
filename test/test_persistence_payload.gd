@@ -5,6 +5,7 @@ func test_run_state_to_dict_uses_only_primitive_values() -> void:
 	var run := RunState.new()
 	run.lord_id = &"lord_liubei"
 	run.board = {"0:0": &"general_zhaoyun", "1:0": &"troop_infantry"}
+	run.board_levels = {"0:0": 2, "1:0": 3}
 	run.hand = [&"scheme_raid"]
 	run.gold = 17
 	run.board_rows = 5
@@ -20,6 +21,7 @@ func test_run_state_to_dict_uses_only_primitive_values() -> void:
 	eq(payload.get("save_version"), RunState.SAVE_VERSION, "RunState save_version 기록")
 	eq(payload.get("lord_id"), "lord_liubei", "lord id는 String")
 	eq((payload.get("board") as Dictionary).get("0:0"), "general_zhaoyun", "board card id는 String")
+	eq((payload.get("board_levels") as Dictionary).get("1:0"), 3, "board level은 int")
 	eq((payload.get("hand") as Array)[0], "scheme_raid", "hand id는 String")
 	eq((payload.get("treasures") as Array)[0], "treasure_bingfashu", "treasure id는 String")
 
@@ -28,6 +30,7 @@ func test_run_state_from_dict_restores_runtime_id_types() -> void:
 		"save_version": RunState.SAVE_VERSION,
 		"lord_id": "lord_sunquan",
 		"board": {"0:0": "general_zhouyu"},
+		"board_levels": {"0:0": 4},
 		"hand": ["troop_navy", "scheme_levy"],
 		"gold": 21,
 		"board_rows": 6,
@@ -42,6 +45,7 @@ func test_run_state_from_dict_restores_runtime_id_types() -> void:
 	truthy(run.from_dict(payload), "from_dict 성공")
 	eq(run.lord_id, &"lord_sunquan", "lord id 복원")
 	eq(run.board.get("0:0"), &"general_zhouyu", "board id StringName 복원")
+	eq(run.board_level("0:0"), 4, "board level 복원")
 	eq(run.hand, [&"troop_navy", &"scheme_levy"], "hand 복원")
 	eq(run.gold, 21, "gold 복원")
 	eq(run.board_rows, 6, "board_rows 복원")

@@ -3,6 +3,7 @@ extends TestCase
 
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 const _BoardEconomy := preload("res://scripts/run/board_economy.gd")
+const StrategyDeckCatalog := preload("res://scripts/run/strategy_deck_catalog.gd")
 
 var cat: CardCatalog
 var lord: LordData
@@ -60,23 +61,30 @@ func test_block_keys_follow_board_rows() -> void:
 		truthy(keys.has("2:%d" % (rows - 1)), "%d행은 마지막 행 키 포함" % rows)
 		falsy(keys.has("0:%d" % rows), "%d행 밖 키 제외" % rows)
 
-func test_start_run_places_lord_deck_in_hand_and_resets_board_gold() -> void:
+func test_start_run_draws_three_card_strategy_hand_and_resets_board_gold() -> void:
 	run.edicts.append(&"edict_might")
 	run.add_treasure(&"treasure_old")
 	run.start_run(lord, cat)
 	truthy(_has_property(run, "board"), "RunState.board 존재")
 	truthy(_has_property(run, "hand"), "RunState.hand 존재")
+	truthy(_has_property(run, "draw_pile"), "RunState.draw_pile 존재")
 	truthy(_has_property(run, "gold"), "RunState.gold 존재")
 	truthy(_has_property(run, "treasures"), "RunState.treasures 존재")
 	truthy(run.has_method("board_card_ids"), "RunState.board_card_ids 존재")
-	if not _has_property(run, "board") or not _has_property(run, "hand") or not _has_property(run, "gold") or not _has_property(run, "treasures") or not run.has_method("board_card_ids"):
+	if not _has_property(run, "board") or not _has_property(run, "hand") or not _has_property(run, "draw_pile") or not _has_property(run, "gold") or not _has_property(run, "treasures") or not run.has_method("board_card_ids"):
 		return
 	eq(run.board.size(), 0, "시작 보드는 비어 있음")
-	eq(run.hand, cat.get_lord_deck(lord), "유비 시작 카드 6장은 손패에 들어감")
+	var strategy_deck := cat.get_lord_strategy_deck(lord)
+	eq(strategy_deck.size(), StrategyDeckCatalog.TARGET_POOL_SIZE, "유비 전략 풀은 12장")
+	eq(run.hand.size(), RunState.HAND_DRAW_COUNT, "시작 손패는 3장")
+	eq(run.draw_pile.size(), strategy_deck.size() - RunState.HAND_DRAW_COUNT, "남은 전략 카드는 드로우 더미")
+	eq(run.hand, [&"general_guanyu", &"troop_infantry", &"troop_archer"], "첫 선택지는 장수와 병종이 섞인 3장")
 	eq(run.gold, 0, "시작 골드는 0")
 	eq(run.board_card_ids(), [], "시작 보드 카드 없음")
 	eq(run.edicts, [], "시작 시 칙령 누적 초기화")
 	eq(run.treasures, [], "시작 시 보패 초기화")
+	eq(run.castle_key, "", "성 위치는 시작 시 고정하지 않음")
+	eq(run.terrain_perk_id, cat.terrain_perk_id_for_lord(lord), "군주별 지형 특전 저장")
 
 func test_edict_catalog_sums_stacked_modifiers() -> void:
 	var edicts := [&"edict_might", &"edict_might", &"edict_economy", &"edict_fortify", &"missing"]
@@ -118,6 +126,40 @@ func test_place_from_hand_moves_card_to_free_block_only() -> void:
 	falsy(run.place_from_hand(0, first_key), "점유 블록 배치 실패")
 	falsy(run.place_from_hand(7, keys[1]), "잘못된 손패 index 실패")
 	eq(run.hand, [&"general_huangzhong"], "실패한 배치는 상태 불변")
+
+func test_duplicate_unit_card_upgrades_existing_board_slot() -> void:
+	if not _require_methods(["hand_add", "place_from_hand", "can_upgrade_from_hand", "upgrade_from_hand", "board_level"]):
+		return
+	run.hand_add(&"troop_archer")
+	run.hand_add(&"troop_archer")
+	truthy(run.place_from_hand(0, "1:1"), "첫 궁병 배치")
+	eq(run.board_level("1:1"), 1, "첫 배치는 Lv.1")
+	truthy(run.can_upgrade_from_hand(0), "같은 궁병 카드는 증원 가능")
+	var upgraded_key := run.upgrade_from_hand(0)
+	eq(upgraded_key, "1:1", "기존 궁병 칸을 증원")
+	eq(run.board.size(), 1, "증원은 새 칸을 차지하지 않음")
+	eq(run.board_level("1:1"), 2, "증원 후 Lv.2")
+	eq(run.hand.size(), 0, "증원 카드는 손패에서 제거")
+
+func test_castle_key_reserves_a_board_block() -> void:
+	truthy(run.set_castle_key("1:1"), "성 위치 선택")
+	eq(run.castle_key, "1:1", "성 key 저장")
+	falsy(run.set_castle_key("0:0"), "성은 한 번만 선택")
+	falsy(run.is_block_free("1:1"), "성 칸은 카드 배치 불가")
+	run.hand_add(&"general_zhaoyun")
+	falsy(run.place_from_hand(0, "1:1"), "성 칸 배치 실패")
+	truthy(run.place_from_hand(0, "0:0"), "성 아닌 빈 칸 배치 성공")
+
+func test_prepare_deploy_recycles_unpicked_hand_into_next_three_choices() -> void:
+	run.start_run(lord, cat)
+	truthy(run.set_castle_key("1:1"), "성 위치 선택")
+	truthy(run.place_from_hand(0, "0:0"), "첫 교전 카드 1장 배치")
+	run.mark_deploy_card_played()
+	eq(run.hand.size(), 2, "배치 후 선택하지 않은 2장 남음")
+	run.advance_stage()
+	truthy(run.prepare_deploy_hand(), "다음 스테이지 배치 손패 준비")
+	eq(run.hand.size(), RunState.HAND_DRAW_COUNT, "다음 배치도 3장 제시")
+	eq(run.deploy_cards_played, 0, "다음 교전 배치 수 초기화")
 
 func test_board_full_and_first_free_block_track_capacity() -> void:
 	if not _require_methods(["hand_add", "place_from_hand", "board_full", "first_free_block"]):
@@ -212,12 +254,12 @@ func test_run_state_persistent_fields_remain_id_or_primitive_values() -> void:
 	eq(typeof(run.command_points), TYPE_INT, "command_points는 primitive int")
 	eq(typeof(run.started), TYPE_BOOL, "started는 primitive bool")
 
-func test_starting_hand_can_exceed_soft_limit() -> void:
+func test_starting_hand_is_capped_to_three_card_choice() -> void:
 	if not _require_methods(["hand_over_limit"]):
 		return
 	run.start_run(lord, cat)
-	eq(run.hand.size(), 6, "시작 손패는 시작 카드 수만큼 허용")
-	truthy(run.hand_over_limit(), "손패 한도 3은 소프트 경고")
+	eq(run.hand.size(), RunState.HAND_DRAW_COUNT, "시작 손패는 3장")
+	falsy(run.hand_over_limit(), "시작부터 손패 초과하지 않음")
 
 func test_run_manager_deck_and_add_card_bridge_to_hand() -> void:
 	RunManager.reset_run()
@@ -243,7 +285,7 @@ func test_run_manager_deck_and_add_card_bridge_to_hand() -> void:
 
 func test_run_manager_delegates_hand_board_and_gold_operations() -> void:
 	RunManager.reset_run()
-	for method in ["add_card", "get_gold", "add_gold", "spend_gold", "place_from_hand", "discard_from_hand", "board_full", "hand_card_type", "can_place_hand_card", "can_cast_scheme_from_hand", "cast_scheme_from_hand"]:
+	for method in ["add_card", "get_gold", "add_gold", "spend_gold", "place_from_hand", "can_discard_from_hand", "discard_from_hand", "board_full", "hand_card_type", "can_place_hand_card", "can_cast_scheme_from_hand", "cast_scheme_from_hand"]:
 		truthy(RunManager.has_method(method), "RunManager.%s 존재" % method)
 	if not RunManager.has_method("get_gold") or not RunManager.has_method("add_gold") or not RunManager.has_method("spend_gold"):
 		return
@@ -254,9 +296,12 @@ func test_run_manager_delegates_hand_board_and_gold_operations() -> void:
 	falsy(RunManager.spend_gold(6), "RunManager.spend_gold 부족 실패")
 	RunManager.state.hand_add(&"general_zhaoyun")
 	var block_key: String = RunManager.state.block_keys()[0]
+	truthy(RunManager.state.set_castle_key("1:1"), "RunManager 배치 전 성 위치 선택")
 	truthy(RunManager.place_from_hand(0, block_key), "RunManager.place_from_hand 위임")
 	eq(RunManager.get_deck(), [&"general_zhaoyun"], "손패 배치 후 보드 브리지 반영")
 	RunManager.state.hand_add(&"general_huangzhong")
+	falsy(RunManager.discard_from_hand(0), "한 장 배치 후 같은 교전 우물 실패")
+	RunManager.state.deploy_cards_played = 0
 	truthy(RunManager.discard_from_hand(0), "RunManager.discard_from_hand 위임")
 	eq(RunManager.get_gold(), 15, "우물 버리기 골드 반영")
 
@@ -271,6 +316,7 @@ func test_run_manager_separates_scheme_casting_from_board_placement() -> void:
 	CardLibrary.catalog.cards[scheme.id] = scheme
 	RunManager.state.hand_add(scheme.id)
 	RunManager.state.hand_add(&"troop_infantry")
+	truthy(RunManager.state.set_castle_key("2:2"), "계략 발동 전 성 위치 선택")
 
 	eq(RunManager.hand_card_type(0), "scheme", "손패 0번은 계략")
 	truthy(RunManager.can_cast_scheme_from_hand(0), "계략은 발동 가능")
@@ -283,6 +329,8 @@ func test_run_manager_separates_scheme_casting_from_board_placement() -> void:
 	eq(RunManager.get_gold(), 7, "징발 계략은 런 골드를 즉시 올림")
 	eq(RunManager.get_hand(), [&"troop_infantry"], "계략 소비 후 유닛만 남음")
 	truthy(RunManager.can_place_hand_card(0), "남은 유닛은 배치 가능")
+	falsy(RunManager.place_from_hand(0, "0:0"), "계략도 이번 교전 한 장으로 계산")
+	RunManager.state.deploy_cards_played = 0
 	truthy(RunManager.place_from_hand(0, "0:0"), "유닛 배치 성공")
 	eq(RunManager.get_board().get("0:0"), &"troop_infantry", "유닛만 보드 배치")
 	CardLibrary.catalog.cards.erase(scheme.id)
@@ -354,9 +402,9 @@ func test_mixed_card_types_preserve_unit_troop_and_building_flow() -> void:
 	truthy(RunManager.can_place_hand_card(2), "건물은 기존처럼 배치 가능")
 	falsy(RunManager.can_place_hand_card(3), "계략은 보드 배치 흐름을 타지 않음")
 	truthy(RunManager.can_cast_scheme_from_hand(3), "계략은 발동 흐름을 유지")
-	truthy(RunManager.place_from_hand(0, "0:0"), "장수 배치")
-	truthy(RunManager.place_from_hand(0, "1:0"), "병종 배치")
-	truthy(RunManager.place_from_hand(0, "2:0"), "건물 배치")
+	truthy(RunManager.state.place_from_hand(0, "0:0"), "장수 배치")
+	truthy(RunManager.state.place_from_hand(0, "1:0"), "병종 배치")
+	truthy(RunManager.state.place_from_hand(0, "2:0"), "건물 배치")
 
 	eq(RunManager.get_hand(), [&"scheme_raid"], "배치 후 계략만 손패에 남음")
 	var board := RunManager.get_board()
@@ -415,26 +463,32 @@ func test_run_manager_starting_hand_place_and_well_flow() -> void:
 	if not RunManager.has_method("get_board") or not RunManager.has_method("get_hand"):
 		return
 	var starting_hand := RunManager.get_hand()
-	eq(starting_hand.size(), 6, "시작 손패 6장")
+	eq(starting_hand.size(), 3, "시작 손패 3장")
 	eq(RunManager.get_board().size(), 0, "시작 보드 비어 있음")
+	falsy(RunManager.discard_from_hand(0), "성 전 우물 실패")
+	truthy(RunManager.set_castle_key("1:1"), "전투 전 성 위치 선택")
+	falsy(RunManager.discard_from_hand(0), "보드 군세 전 우물 실패")
 	var placed: StringName = starting_hand[0]
 	truthy(RunManager.place_from_hand(0, "2:1"), "시작 손패에서 보드 배치")
 	eq(RunManager.get_board().get("2:1"), placed, "선택 블록에 배치")
-	eq(RunManager.get_hand().size(), 5, "배치 후 손패 -1")
+	eq(RunManager.get_hand().size(), 2, "배치 후 손패 -1")
 	var discarded: StringName = RunManager.get_hand()[0]
+	falsy(RunManager.discard_from_hand(0), "같은 교전 두 번째 우물 실패")
+	RunManager.state.deploy_cards_played = 0
 	truthy(RunManager.discard_from_hand(0), "남은 손패 우물 처리")
 	falsy(RunManager.get_hand().has(discarded), "우물 처리 카드 제거")
 	eq(RunManager.get_gold(), RunState.WELL_GOLD, "우물 골드 반영")
 
-func test_reward_pool_excludes_owned_board_and_hand_cards() -> void:
+func test_reward_pool_excludes_owned_non_unit_hand_cards() -> void:
 	if not _require_methods(["hand_add", "owned_card_ids"]):
 		return
 	run.start_run(lord, cat)
 	var before := RewardPool.eligible(cat, run.owned_card_ids())
-	var picked: StringName = before[0]
+	var picked: StringName = &"scheme_raid"
+	truthy(before.has(picked), "테스트용 계략 후보 존재")
 	run.hand_add(picked)
 	var after := RewardPool.eligible(cat, run.owned_card_ids())
-	falsy(after.has(picked), "손패 owned 카드도 후보 제외")
+	falsy(after.has(picked), "손패 owned 계략은 후보 제외")
 	eq(after.size(), before.size() - 1, "owned 증가만큼 후보 감소")
 
 func _has_property(obj: Object, property_name: String) -> bool:

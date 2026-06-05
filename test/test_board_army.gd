@@ -64,20 +64,35 @@ func test_build_board_army_respects_run_board_rows() -> void:
 	if six_row_army.size() == 3:
 		_assert_unit_at_tile(six_row_army[2], &"troop_infantry", 2, 5)
 
+func test_build_board_army_applies_squad_level_growth() -> void:
+	if not _require_build_board_army():
+		return
+	var board := {"1:1": &"troop_archer"}
+	var levels := {"1:1": 2}
+	var army: Array = cat.call("build_board_army", board, lord, RunState.BOARD_ROWS_START, [], "", &"", levels)
+	eq(army.size(), 1, "Lv.2 궁병 부대 생성")
+	if army.size() != 1:
+		return
+	var archer: BattleUnit = army[0]
+	eq(archer.squad_level, 2, "squad_level 운반")
+	eq(archer.squad_count, 14, "궁병 Lv.2는 병력 14명")
+	truthy(archer.max_hp > cat.get_card(&"troop_archer").max_hp, "병력 증가로 총 체력 증가")
+	truthy(archer.attack > cat.get_card(&"troop_archer").attack, "레벨업으로 공격 증가")
+
 func test_start_run_waits_for_manual_board_placement_before_building_army() -> void:
 	if not _require_build_board_army():
 		return
 	var run := RunState.new()
 	run.start_run(lord, cat)
 	var army: Array = cat.call("build_board_army", run.board, lord)
-	var deck := cat.get_lord_deck(lord)
+	var hand := run.hand.duplicate()
 	eq(army.size(), 0, "시작 보드는 비어 있어 군세가 없음")
-	eq(run.hand, deck, "시작 카드는 손패에서 수동 배치를 기다림")
+	eq(run.hand.size(), RunState.HAND_DRAW_COUNT, "시작 카드는 3장 선택지로 수동 배치를 기다림")
 	truthy(run.place_from_hand(0, "1:2"), "손패 첫 카드 수동 배치")
 	army = cat.call("build_board_army", run.board, lord)
 	eq(army.size(), 1, "배치한 보드 카드만 군세 생성")
 	if army.size() == 1:
-		_assert_unit_at_tile(army[0], deck[0], 1, 2)
+		_assert_unit_at_tile(army[0], hand[0], 1, 2)
 
 func test_run_manager_get_board_returns_copy_of_current_board() -> void:
 	CardLibrary.catalog.load_all()

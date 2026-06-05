@@ -12,28 +12,39 @@ func before_each() -> void:
 	run = RunState.new()
 	run.start_run(lord, cat)
 
-func test_hand_add_updates_owned_and_removes_from_eligible() -> void:
+func test_hand_add_updates_owned_and_removes_non_unit_from_eligible() -> void:
 	if not _require_methods(["owned_card_ids", "hand_add"]):
 		return
 	var elig := RewardPool.eligible(cat, run.owned_card_ids())
-	var picked: StringName = elig[0]
+	var picked: StringName = &"scheme_raid"
+	truthy(elig.has(picked), "테스트용 계략 후보 존재")
 	var before: int = run.owned_card_ids().size()
 	run.hand_add(picked)
 	eq(run.owned_card_ids().size(), before + 1, "획득 후 owned 크기 증가")
 	truthy(run.has_card(picked), "획득 카드 보유")
 	var after := RewardPool.eligible(cat, run.owned_card_ids())
 	eq(after.size(), elig.size() - 1, "후보 수 감소")
-	falsy(after.has(picked), "획득 카드는 후보에서 제외")
+	falsy(after.has(picked), "계략은 획득 후 후보에서 제외")
 
 func test_eligible_excludes_owned_and_is_deterministic() -> void:
 	if not _require_methods(["owned_card_ids"]):
 		return
 	var elig := RewardPool.eligible(cat, run.owned_card_ids())
 	var elig_again := RewardPool.eligible(cat, run.owned_card_ids())
-	eq(elig.size(), 14, "시작 손패 제외 후 후보 14장")
+	truthy(elig.size() > 0, "전략 덱 owned 제외 후에도 보상 후보 존재")
 	eq(elig, elig_again, "같은 입력의 후보 순서 결정적")
 	for id in elig:
-		falsy(run.owned_card_ids().has(id), "owned에 있는 카드는 후보가 아님")
+		if run.owned_card_ids().has(id):
+			var card := cat.get_card(id)
+			truthy(card is UnitCardData or card is TreasureCardData, "owned 재등장은 성장/stack 가능 카드만 허용")
+
+func test_unit_cards_remain_eligible_until_level_cap() -> void:
+	if not _require_methods(["owned_card_ids", "hand_add"]):
+		return
+	truthy(RewardPool.eligible(cat, run.owned_card_ids()).has(&"troop_archer"), "초기 궁병은 중복 성장 후보")
+	while _owned_count(&"troop_archer") < RunState.CARD_LEVEL_MAX:
+		run.hand_add(&"troop_archer")
+	falsy(RewardPool.eligible(cat, run.owned_card_ids()).has(&"troop_archer"), "최대 레벨 수량이면 성장 후보 제외")
 
 func test_roll_returns_requested_count_when_pool_has_enough() -> void:
 	if not _require_methods(["owned_card_ids"]):
@@ -65,7 +76,7 @@ func test_reward_pool_uses_card_type_policy_and_owned_treasures() -> void:
 func test_reward_pool_filters_by_profile_lord_nation_and_card_unlocks() -> void:
 	var profile := ProfileState.new_default()
 	var shu_only := RewardPool.eligible_for_profile(cat, run.owned_card_ids(), profile)
-	truthy(shu_only.has(&"general_huangzhong"), "기본 프로필은 촉 보상 유지")
+	truthy(shu_only.has(&"scheme_raid"), "기본 프로필은 시작 풀 밖 촉 계략 보상 유지")
 	falsy(shu_only.has(&"general_caocao"), "조조 해금 전 위 장수 제외")
 	falsy(shu_only.has(&"general_sunquan"), "손권 해금 전 오 장수 제외")
 
@@ -107,9 +118,17 @@ func test_start_run_sets_initial_hand_and_started() -> void:
 	if not _require_methods(["board_card_ids"]):
 		return
 	eq(run.board_card_ids().size(), 0, "시작 보드 0장")
-	eq(run.hand.size(), 6, "시작 손패 6장")
+	eq(run.hand.size(), RunState.HAND_DRAW_COUNT, "시작 손패 3장")
+	eq(run.draw_pile.size(), cat.get_lord_strategy_deck(lord).size() - RunState.HAND_DRAW_COUNT, "나머지 전략 카드는 드로우 더미")
 	truthy(run.started, "런 시작 상태")
 	eq(run.lord_id, &"lord_liubei", "군주 id 기록")
+
+func _owned_count(id: StringName) -> int:
+	var count := 0
+	for owned_id in run.owned_card_ids():
+		if owned_id == id:
+			count += 1
+	return count
 
 func _require_methods(methods: Array[String]) -> bool:
 	var ok := true

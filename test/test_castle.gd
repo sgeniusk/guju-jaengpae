@@ -19,6 +19,20 @@ func test_add_castle_creates_static_inner_objective() -> void:
 	almost(castle.px, before.x, 0.001, "step 이후 성 x 불변")
 	almost(castle.py, before.y, 0.001, "step 이후 성 y 불변")
 
+func test_add_castle_at_uses_selected_tile_position() -> void:
+	var sim := BattleSim.new()
+	truthy(sim.has_method("add_castle_at"), "BattleSim.add_castle_at API")
+	if not sim.has_method("add_castle_at"):
+		return
+	var tile := BattleSim.position_for_tile(2, 1)
+	var castle = sim.call("add_castle_at", tile.x, tile.y, 900)
+	if castle == null or not (castle is BattleUnit):
+		_add_failure("add_castle_at은 BattleUnit을 반환해야 함")
+		return
+	almost(castle.px, tile.x, 0.001, "성 x는 선택 타일")
+	almost(castle.py, tile.y, 0.001, "성 y는 선택 타일")
+	eq(castle.max_hp, 900, "선택 성 HP 반영")
+
 func test_enemy_attacks_castle_when_no_other_targets() -> void:
 	var sim := BattleSim.new()
 	var castle := _add_castle(sim, 120)

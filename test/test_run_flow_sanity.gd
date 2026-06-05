@@ -28,13 +28,13 @@ func test_three_lords_reach_and_clear_first_boss_flow() -> void:
 		RunManager.reset_run()
 		RunManager.ensure_started(lord_id)
 		eq(RunManager.stage_index(), 1, "%s stage 1 시작" % lord_id)
-		_place_all_hand()
+		_place_one_deploy_card()
 		var battle := _battle_current_stage(lord_id)
 		truthy(battle["won"], "%s stage 1 전투 승리 — %s" % [lord_id, battle["summary"]])
 		_take_first_reward_and_advance(lord_id, "stage 1")
 
 		eq(RunManager.stage_index(), 2, "%s stage 2 도달" % lord_id)
-		_place_all_hand()
+		_place_one_deploy_card()
 		battle = _battle_current_stage(lord_id)
 		truthy(battle["won"], "%s stage 2 전투 승리 — %s" % [lord_id, battle["summary"]])
 		_take_first_reward_and_advance(lord_id, "stage 2")
@@ -54,7 +54,7 @@ func test_three_lords_reach_and_clear_first_boss_flow() -> void:
 
 		eq(RunManager.stage_index(), 5, "%s stage 5 도달" % lord_id)
 		truthy(RunManager.is_boss_stage(), "%s stage 5 보스" % lord_id)
-		_place_all_hand()
+		_place_one_deploy_card()
 		battle = _battle_current_stage(lord_id)
 		truthy(battle["won"], "%s stage 5 보스 승리 — %s" % [lord_id, battle["summary"]])
 		truthy(RunManager.expand_board(), "%s 보스 보상으로 보드 확장" % lord_id)
@@ -63,11 +63,19 @@ func test_three_lords_reach_and_clear_first_boss_flow() -> void:
 		eq(RunManager.stage_index(), 6, "%s 첫 보스 이후 stage 6" % lord_id)
 		truthy(RunManager.get_board_rows() >= 4, "%s 보드 4행 이상" % lord_id)
 
-func _place_all_hand() -> void:
-	for key in _preferred_block_keys():
-		if RunManager.get_hand().is_empty():
-			return
-		RunManager.place_from_hand(0, key)
+func _place_one_deploy_card() -> void:
+	RunManager.prepare_deploy_hand()
+	if not RunManager.has_castle():
+		truthy(RunManager.set_castle_key("1:1"), "성 위치 선택")
+	var hand_index := _pick_hand_combat_index()
+	truthy(hand_index >= 0, "배치할 전투 카드 존재")
+	if hand_index < 0:
+		return
+	var block_key := _first_free_preferred_block()
+	truthy(block_key != "", "배치할 빈 칸 존재")
+	if block_key == "":
+		return
+	truthy(RunManager.place_from_hand(hand_index, block_key), "교전당 카드 1장 배치")
 
 func _preferred_block_keys() -> Array[String]:
 	var keys: Array[String] = []
@@ -81,13 +89,35 @@ func _preferred_block_keys() -> Array[String]:
 			keys.append("%d:%d" % [col, row])
 	return keys
 
+func _first_free_preferred_block() -> String:
+	var board := RunManager.get_board()
+	for key in _preferred_block_keys():
+		if key == RunManager.get_castle_key():
+			continue
+		if board.has(key):
+			continue
+		return key
+	return ""
+
+func _pick_hand_combat_index() -> int:
+	var hand := RunManager.get_hand()
+	for wanted in COMBAT_PICK_PRIORITY:
+		for idx in hand.size():
+			if hand[idx] == wanted and RunManager.can_place_hand_card(idx):
+				return idx
+	for idx in hand.size():
+		if RunManager.can_place_hand_card(idx):
+			return idx
+	return -1
+
 func _battle_current_stage(lord_id: StringName) -> Dictionary:
 	var lord := cat.get_lord(lord_id)
-	var army := cat.build_board_army(RunManager.get_board(), lord, RunManager.get_board_rows(), RunManager.get_edicts())
+	var army := cat.build_board_army(RunManager.get_board(), lord, RunManager.get_board_rows(), RunManager.get_edicts(), RunManager.get_castle_key(), RunManager.get_terrain_perk_id())
 	if army.is_empty():
 		return {"won": false, "summary": "army empty"}
 	var sim := BattleSim.new()
-	var castle := sim.add_castle()
+	var castle_pos := _castle_pos()
+	var castle := sim.add_castle_at(castle_pos.x, castle_pos.y)
 	for unit in army:
 		sim.add_unit(unit)
 	sim.set_waves(RunManager.current_waves())
@@ -107,6 +137,13 @@ func _battle_current_stage(lord_id: StringName) -> Dictionary:
 			_unit_hp_summary(sim.enemy_units),
 		],
 	}
+
+func _castle_pos() -> Vector2:
+	var key := RunManager.get_castle_key()
+	var parts := key.split(":")
+	if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
+		return BattleSim.castle_position()
+	return BattleSim.position_for_tile(int(parts[0]), int(parts[1]))
 
 func _unit_hp_summary(units: Array) -> String:
 	var parts: Array[String] = []

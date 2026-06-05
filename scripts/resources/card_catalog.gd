@@ -5,6 +5,9 @@ extends RefCounted
 const CARDS_DIR := "res://resources/cards"
 const LORDS_DIR := "res://resources/lords"
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
+const _SquadProfile := preload("res://scripts/battle/squad_profile.gd")
+const _TerrainPerkCatalog := preload("res://scripts/run/terrain_perk_catalog.gd")
+const _StrategyDeckCatalog := preload("res://scripts/run/strategy_deck_catalog.gd")
 
 const _REALM_SORT := {
 	"mortal": 0,
@@ -16,6 +19,10 @@ const _NATION_SORT := {
 	"wei": 1,
 	"wu": 2,
 }
+
+const TERRAIN_SHU := &"terrain_shu_hometown"
+const TERRAIN_WEI := &"terrain_wei_commandery"
+const TERRAIN_WU := &"terrain_wu_waterway"
 
 var cards: Dictionary = {}   # StringName -> CardData
 var building_cards: Dictionary = {}   # StringName -> BuildingCardData
@@ -116,8 +123,18 @@ func get_lord_deck(lord: LordData) -> Array[StringName]:
 		deck.append(StringName(t))
 	return deck
 
+# 전술 런 덱 — 12장 전략 풀에서 매 교전마다 3장만 제시하고 1장을 배치한다.
+func get_lord_strategy_deck(lord: LordData) -> Array[StringName]:
+	return _StrategyDeckCatalog.deck_for_lord(lord)
+
+func terrain_perk_id_for_lord(lord: LordData) -> StringName:
+	return _TerrainPerkCatalog.id_for_lord(lord)
+
+func terrain_perk_info(id: StringName) -> Dictionary:
+	return _TerrainPerkCatalog.info(id)
+
 # 군주 특성을 반영해 아군 유닛을 생성한다.
-func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData, edicts: Array = []) -> BattleUnit:
+func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData, edicts: Array = [], squad_level: int = 1) -> BattleUnit:
 	var card := get_card(card_id)
 	if card == null or not (card is UnitCardData):
 		return null
@@ -125,6 +142,7 @@ func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData,
 	if lord != null and lord.trait_id == &"trait_rende" and card.card_type == "troop":
 		hp_mult = 1.15
 	var unit := BattleUnit.from_card(card, BattleUnit.Team.PLAYER, lane, x, hp_mult)
+	_SquadProfile.apply_to_unit(unit, card, squad_level)
 	if lord != null and lord.trait_id == &"trait_hopae" and card.troop_type == "cavalry":
 		unit.attack = int(round(unit.attack * 1.25))
 	if lord != null and lord.trait_id == &"trait_suseon" and (card.troop_type == "archer" or card.troop_type == "navy"):
@@ -135,7 +153,7 @@ func build_player_unit(card_id: StringName, lane: int, x: float, lord: LordData,
 	return unit
 
 # 영속 보드 블록을 전투 시작 위치의 아군 군세로 변환한다.
-func build_board_army(board: Dictionary, lord: LordData, run_board_rows: int = RunState.BOARD_ROWS_START, edicts: Array = []) -> Array[BattleUnit]:
+func build_board_army(board: Dictionary, lord: LordData, run_board_rows: int = RunState.BOARD_ROWS_START, edicts: Array = [], castle_key: String = "", terrain_perk_id: StringName = &"", board_levels: Dictionary = {}) -> Array[BattleUnit]:
 	var army: Array[BattleUnit] = []
 	var rows := clampi(run_board_rows, RunState.BOARD_ROWS_START, RunState.BOARD_ROWS_MAX)
 	for row in rows:
@@ -144,11 +162,12 @@ func build_board_army(board: Dictionary, lord: LordData, run_board_rows: int = R
 			if not board.has(key):
 				continue
 			var start := BattleSim.position_for_tile(col, row)
-			var unit := build_player_unit(StringName(board[key]), col, start.x, lord, edicts)
+			var unit := build_player_unit(StringName(board[key]), col, start.x, lord, edicts, int(board_levels.get(key, 1)))
 			if unit == null:
 				continue
 			unit.row = row
 			unit.set_position(start.x, start.y)
+			_TerrainPerkCatalog.apply_to_unit(unit, terrain_perk_id, col, row, castle_key)
 			army.append(unit)
 	return army
 

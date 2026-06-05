@@ -1,6 +1,8 @@
 # 위·오 진영 활성화 검증 — 신규 군주·장수 카드 로드, 진영 일치, player_faction() 반환.
 extends TestCase
 
+const StrategyDeckCatalog := preload("res://scripts/run/strategy_deck_catalog.gd")
+
 var cat: CardCatalog
 
 func before_each() -> void:
@@ -21,6 +23,9 @@ func test_new_lord_decks_are_non_empty() -> void:
 	var sunquan := cat.get_lord(&"lord_sunquan")
 	truthy(cat.get_lord_deck(caocao).size() > 0, "조조 시작 덱 비어있지 않음")
 	truthy(cat.get_lord_deck(sunquan).size() > 0, "손권 시작 덱 비어있지 않음")
+	eq(cat.get_lord_strategy_deck(cat.get_lord(&"lord_liubei")).size(), StrategyDeckCatalog.TARGET_POOL_SIZE, "유비 전술 풀 12장")
+	eq(cat.get_lord_strategy_deck(caocao).size(), StrategyDeckCatalog.TARGET_POOL_SIZE, "조조 전술 풀 12장")
+	eq(cat.get_lord_strategy_deck(sunquan).size(), StrategyDeckCatalog.TARGET_POOL_SIZE, "손권 전술 풀 12장")
 
 func test_lord_trait_texts_describe_implemented_effects() -> void:
 	var expected_fragments := {
@@ -60,6 +65,28 @@ func test_player_faction_matches_started_lord() -> void:
 	RunManager.reset_run()
 	RunManager.ensure_started(&"lord_sunquan")
 	eq(RunManager.player_faction(), &"wu", "오 군주 → wu")
+
+func test_nation_terrain_perks_change_board_position_value() -> void:
+	var liubei := cat.get_lord(&"lord_liubei")
+	var shu_board := {"1:0": &"troop_infantry"}
+	var shu_army: Array = cat.build_board_army(shu_board, liubei, RunState.BOARD_ROWS_START, [], "1:1", cat.terrain_perk_id_for_lord(liubei))
+	eq(shu_army.size(), 1, "촉 지형 군세 생성")
+	if shu_army.size() == 1:
+		truthy(shu_army[0].max_hp > cat.build_player_unit(&"troop_infantry", 1, 0.0, liubei).max_hp, "촉은 성 인접 체력 보정")
+
+	var caocao := cat.get_lord(&"lord_caocao")
+	var wei_board := {"0:1": &"troop_infantry"}
+	var wei_army: Array = cat.build_board_army(wei_board, caocao, RunState.BOARD_ROWS_START, [], "1:1", cat.terrain_perk_id_for_lord(caocao))
+	eq(wei_army.size(), 1, "위 지형 군세 생성")
+	if wei_army.size() == 1:
+		truthy(wei_army[0].attack > cat.build_player_unit(&"troop_infantry", 0, 0.0, caocao).attack, "위는 성 같은 행 공격 보정")
+
+	var sunquan := cat.get_lord(&"lord_sunquan")
+	var wu_board := {"0:0": &"troop_archer"}
+	var wu_army: Array = cat.build_board_army(wu_board, sunquan, RunState.BOARD_ROWS_START, [], "1:1", cat.terrain_perk_id_for_lord(sunquan))
+	eq(wu_army.size(), 1, "오 지형 군세 생성")
+	if wu_army.size() == 1:
+		truthy(wu_army[0].attack > cat.build_player_unit(&"troop_archer", 0, 0.0, sunquan).attack, "오는 가장자리 공격 보정")
 
 func test_player_faction_falls_back_to_shu_when_unstarted() -> void:
 	RunManager.reset_run()

@@ -54,10 +54,14 @@ func _prepare_run(lord: StringName, target_stage: int) -> void:
 		RunManager.add_gold(60)
 
 func _place_all_hand_front_first() -> void:
+	if not RunManager.has_castle():
+		RunManager.set_castle_key("1:1")
 	for key in RunState.block_keys_for(RunManager.get_board_rows()):
 		if RunManager.get_hand().is_empty():
 			return
-		RunManager.place_from_hand(0, key)
+		if key == RunManager.get_castle_key():
+			continue
+		RunManager.state.place_from_hand(0, key)
 
 func _take_combat_reward() -> void:
 	var eligible := RewardPool.eligible(_catalog, RunManager.state.owned_card_ids())

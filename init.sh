@@ -92,6 +92,12 @@ if [ -f tools/ui_feedback_smoke.gd ]; then
   "$GODOT_BIN" --headless --path . --log-file "$PWD/.godot/init-ui-feedback-smoke.log" --script res://tools/ui_feedback_smoke.gd
 fi
 
+# 첫 5스테이지 루프 메트릭 — 3장 선택/1장 플레이/분대 밀도/교전 템포 검증
+if [ -f tools/playtest_loop_smoke.gd ]; then
+  echo "=== 플레이테스트 루프 스모크 ==="
+  "$GODOT_BIN" --headless --path . --log-file "$PWD/.godot/init-playtest-loop-smoke.log" --script res://tools/playtest_loop_smoke.gd
+fi
+
 # 단위 테스트 — 리포 내장 러너
 if [ -d test ]; then
   echo "=== 단위 테스트 ==="

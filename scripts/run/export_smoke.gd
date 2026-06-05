@@ -15,8 +15,18 @@ static func lord_id() -> StringName:
 	return StringName(raw)
 
 static func ensure_first_battle_board() -> Dictionary:
+	if not RunManager.has_castle():
+		var castle_key := _first_empty_block()
+		if castle_key != "" and not RunManager.set_castle_key(castle_key):
+			return {
+				"ok": false,
+				"source": "castle_failed",
+				"castle_key": castle_key,
+			}
 	var existing_key := _first_unit_board_key()
 	if existing_key != "":
+		if RunManager.can_place_deploy_card():
+			RunManager.state.mark_deploy_card_played()
 		return {
 			"ok": true,
 			"source": "existing",
@@ -32,6 +42,8 @@ static func ensure_first_battle_board() -> Dictionary:
 			continue
 		for block_key in RunState.block_keys_for(RunManager.get_board_rows()):
 			if RunManager.get_board().has(block_key):
+				continue
+			if block_key == RunManager.get_castle_key():
 				continue
 			if RunManager.place_from_hand(hand_index, block_key):
 				return {
@@ -69,4 +81,12 @@ static func _first_unit_board_key() -> String:
 		var card := CardLibrary.get_card(StringName(board[block_key]))
 		if card is UnitCardData:
 			return block_key
+	return ""
+
+static func _first_empty_block() -> String:
+	var board := RunManager.get_board()
+	for block_key in RunState.block_keys_for(RunManager.get_board_rows()):
+		if board.has(block_key):
+			continue
+		return block_key
 	return ""

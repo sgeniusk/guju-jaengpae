@@ -15,8 +15,8 @@ const CASTLE_HP := 1200
 # row 0~2 = 기본 진형(성 앞 360~120), row 3~5 = 확장 행(480~720, 적 쪽 전방). 성 공간(x40~120)이 좁아 후방 증설은 타일이 겹쳐 불가 → 확장 = 전열 전진(공세) 의도(feat-020).
 const ROW_X := [360.0, 240.0, 120.0, 480.0, 600.0, 720.0]
 const COL_Y := [150.0, 300.0, 450.0]
-const MELEE_REACH := 36.0
-const RANGED_REACH := 280.0
+const MELEE_REACH := 48.0
+const RANGED_REACH := 340.0
 const _SkillSystem := preload("res://scripts/battle/skill_system.gd")
 const _TargetRules := preload("res://scripts/battle/target_rules.gd")
 
@@ -50,7 +50,12 @@ func add_castle(hp: int = CASTLE_HP, display_name: String = "성") -> BattleUnit
 	if castle != null and castle.is_alive():
 		return castle
 	var p := castle_position()
-	var u := BattleUnit.make_castle(p.x, p.y, hp, display_name)
+	return add_castle_at(p.x, p.y, hp, display_name)
+
+func add_castle_at(px: float, py: float, hp: int = CASTLE_HP, display_name: String = "성") -> BattleUnit:
+	if castle != null and castle.is_alive():
+		return castle
+	var u := BattleUnit.make_castle(px, py, hp, display_name)
 	add_unit(u)
 	return u
 

@@ -1,4 +1,4 @@
-# 전리(戰利) 보상 후보를 고르는 순수 로직. 타입별 pool 정책과 owned 제외 규칙만 다룬다.
+# 전리(戰利) 보상 후보를 고르는 순수 로직. 타입별 pool 정책과 유닛 성장 반복 제안을 다룬다.
 class_name RewardPool
 extends RefCounted
 
@@ -106,6 +106,8 @@ static func _can_offer(card: CardData, owned_counts: Dictionary) -> bool:
 	var count := int(owned_counts.get(card.id, 0))
 	if card is TreasureCardData:
 		return count < maxi(1, card.stack_limit)
+	if card is UnitCardData:
+		return count < RunState.CARD_LEVEL_MAX
 	return count == 0
 
 static func _profile_unlock_filter(catalog: CardCatalog, profile: ProfileState) -> Dictionary:

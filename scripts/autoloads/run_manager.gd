@@ -18,6 +18,8 @@ func ensure_started(lord_id: StringName) -> void:
 	if not state.started:
 		state.start_run(CardLibrary.get_lord(lord_id), CardLibrary.catalog)
 		_autosave_run()
+	else:
+		_repair_run_contract()
 
 func is_run_started() -> bool:
 	return state != null and state.started
@@ -39,6 +41,7 @@ func load_run(path: String = _PersistenceStore.RUN_SAVE_PATH) -> bool:
 	state = loaded
 	last_scheme_result.clear()
 	last_battle_outcome.clear()
+	_repair_run_contract()
 	return true
 
 func has_run_save(path: String = _PersistenceStore.RUN_SAVE_PATH) -> bool:
@@ -92,6 +95,12 @@ func get_deck() -> Array[StringName]:
 func get_board() -> Dictionary:
 	return state.board.duplicate()
 
+func get_board_levels() -> Dictionary:
+	return state.board_levels_copy()
+
+func get_board_level(block_key: String) -> int:
+	return state.board_level(block_key)
+
 func add_card(id: StringName) -> void:
 	acquire_card(id)
 
@@ -113,6 +122,64 @@ func get_hand() -> Array[StringName]:
 	for id in state.hand:
 		out.append(id)
 	return out
+
+func get_draw_pile() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for id in state.draw_pile:
+		out.append(id)
+	return out
+
+func prepare_deploy_hand() -> bool:
+	var changed := state.prepare_deploy_hand()
+	if changed:
+		_autosave_run()
+	return changed
+
+func get_castle_key() -> String:
+	return state.castle_key
+
+func has_castle() -> bool:
+	return state.has_castle()
+
+func can_place_castle(block_key: String) -> bool:
+	return state.can_place_castle(block_key)
+
+func set_castle_key(block_key: String) -> bool:
+	if not state.set_castle_key(block_key):
+		return false
+	_autosave_run()
+	return true
+
+func get_terrain_perk_id() -> StringName:
+	return state.terrain_perk_id
+
+func terrain_perk_info() -> Dictionary:
+	return CardLibrary.catalog.terrain_perk_info(state.terrain_perk_id)
+
+func can_place_deploy_card() -> bool:
+	return state.can_place_deploy_card()
+
+func can_upgrade_from_hand(hand_index: int) -> bool:
+	if not state.has_castle():
+		return false
+	if not state.can_place_deploy_card():
+		return false
+	if not can_place_hand_card(hand_index):
+		return false
+	var card := _hand_card(hand_index)
+	if card == null or not (card is UnitCardData):
+		return false
+	return state.can_upgrade_from_hand(hand_index)
+
+func upgrade_from_hand(hand_index: int) -> String:
+	if not can_upgrade_from_hand(hand_index):
+		return ""
+	var key := state.upgrade_from_hand(hand_index)
+	if key == "":
+		return ""
+	state.mark_deploy_card_played()
+	_autosave_run()
+	return key
 
 func hand_card_type(hand_index: int) -> String:
 	var card := _hand_card(hand_index)
@@ -149,19 +216,31 @@ func get_gold() -> int:
 	return state.gold
 
 func place_from_hand(hand_index: int, block_key: String) -> bool:
+	if not state.has_castle():
+		return false
+	if not state.can_place_deploy_card():
+		return false
 	if not can_place_hand_card(hand_index):
 		return false
+	if state.can_upgrade_from_hand(hand_index):
+		return upgrade_from_hand(hand_index) != ""
 	if not state.place_from_hand(hand_index, block_key):
 		return false
+	state.mark_deploy_card_played()
 	_autosave_run()
 	return true
 
 func cast_scheme_from_hand(hand_index: int) -> bool:
+	if not state.has_castle():
+		return false
+	if not state.can_place_deploy_card():
+		return false
 	var result := scheme_result_from_hand(hand_index)
 	if not bool(result.get("ok", false)):
 		return false
 	if state.consume_from_hand(hand_index) == &"":
 		return false
+	state.mark_deploy_card_played()
 	last_scheme_result = result.duplicate(true)
 	_apply_scheme_run_result(last_scheme_result.get("run", {}))
 	_autosave_run()
@@ -218,9 +297,35 @@ func apply_treasure_battle_modifiers(units: Array) -> void:
 			continue
 		unit.attack = maxi(0, int(round(unit.attack * (1.0 + attack_pct))))
 
+func board_unit_count() -> int:
+	var count := 0
+	for key in state.board.keys():
+		var card := CardLibrary.get_card(StringName(state.board[key]))
+		if card is UnitCardData:
+			count += 1
+	return count
+
+func hand_card_would_upgrade(hand_index: int) -> bool:
+	if hand_index < 0 or hand_index >= state.hand.size():
+		return false
+	var card := _hand_card(hand_index)
+	return card is UnitCardData and state.can_upgrade_from_hand(hand_index)
+
+func can_discard_from_hand(hand_index: int) -> bool:
+	if not state.has_castle():
+		return false
+	if not state.can_place_deploy_card():
+		return false
+	if hand_index < 0 or hand_index >= state.hand.size():
+		return false
+	return board_unit_count() > 0
+
 func discard_from_hand(hand_index: int) -> bool:
+	if not can_discard_from_hand(hand_index):
+		return false
 	if not state.discard_from_hand(hand_index):
 		return false
+	state.mark_deploy_card_played()
 	_autosave_run()
 	return true
 
@@ -314,7 +419,7 @@ func difficulty_scale() -> float:
 	return _StageCadence.difficulty_scale(state.stage_index)
 
 func current_waves() -> Array:
-	return WaveFactory.stage_waves(state.stage_index)
+	return WaveFactory.stage_encounter_waves(state.stage_index)
 
 func advance_stage() -> void:
 	state.advance_stage()
@@ -409,6 +514,25 @@ func _autosave_run() -> void:
 func _autosave_profile() -> void:
 	if profile != null:
 		save_profile()
+
+func _repair_run_contract() -> void:
+	if state == null or not state.started:
+		return
+	if state.terrain_perk_id == &"":
+		state.terrain_perk_id = CardLibrary.catalog.terrain_perk_id_for_lord(CardLibrary.get_lord(state.lord_id))
+	if state.hand.size() > RunState.HAND_DRAW_COUNT:
+		var kept: Array[StringName] = []
+		var overflow: Array[StringName] = []
+		for idx in state.hand.size():
+			if idx < RunState.HAND_DRAW_COUNT:
+				kept.append(state.hand[idx])
+			else:
+				overflow.append(state.hand[idx])
+		state.hand = kept
+		for card_id in overflow:
+			state.draw_pile.append(card_id)
+		_autosave_run()
+	state._sanitize_board_levels()
 
 func _battle_score(win: bool) -> int:
 	var win_bonus := 500 if win else 0

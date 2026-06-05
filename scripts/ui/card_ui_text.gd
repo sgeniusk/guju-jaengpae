@@ -4,6 +4,7 @@ extends RefCounted
 
 const _SchemeCatalog := preload("res://scripts/run/scheme_catalog.gd")
 const _TreasureCatalog := preload("res://scripts/run/treasure_catalog.gd")
+const _SquadProfile := preload("res://scripts/battle/squad_profile.gd")
 
 static func type_label(card: CardData) -> String:
 	if card == null:
@@ -39,6 +40,27 @@ static func battle_brief(card: CardData) -> String:
 			return "보패 장착/%s" % _treasure_effect_brief(card as TreasureCardData)
 		_:
 			return card.card_type
+
+static func deploy_action_label(card: CardData, upgrades_existing: bool = false) -> String:
+	if card == null:
+		return "선택 불가"
+	var card_type := String(card.get("card_type"))
+	if upgrades_existing and card is UnitCardData:
+		return "증원 · 기존 부대 Lv.+1"
+	if card is UnitCardData:
+		var unit := card as UnitCardData
+		if card_type == "general":
+			return "배치 · 장수와 호위병"
+		return "배치 · %s 분대" % _troop_squad_label(unit.troop_type)
+	match card_type:
+		"building":
+			return "건물 배치 · 지형 시너지"
+		"scheme":
+			return "계략 발동 · 즉시 한 수"
+		"treasure":
+			return "보패 장착 · 지속 효과"
+		_:
+			return "손패 사용"
 
 static func shop_route_label(card: CardData) -> String:
 	if card == null:
@@ -115,3 +137,6 @@ static func _building_effect_brief(card: CardData) -> String:
 	if float(card.get("aura_attack_pct")) > 0.0:
 		return "공격 +%d%%" % int(round(float(card.get("aura_attack_pct")) * 100.0))
 	return "보드 지속"
+
+static func _troop_squad_label(troop_type: String) -> String:
+	return "%d명" % _SquadProfile.base_squad_count(troop_type)

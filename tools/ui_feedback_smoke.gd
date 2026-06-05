@@ -80,7 +80,6 @@ func _run_map_shop_case() -> int:
 	var errors := 0
 	errors += _assert_button_tooltip(screen, "상점 떠나기", "다음 스테이지", "상점 떠나기 tooltip")
 	errors += _assert_any_tooltip(screen, "손패 구매", "상점 카드 구매 경로 tooltip")
-	errors += _assert_any_tooltip(screen, "손패 권장치", "손패 초과 feedback tooltip")
 	errors += _assert_any_tooltip(screen, "보드 배치", "보드 요약 카드 tooltip")
 	screen.queue_free()
 	await _frames(2)
@@ -142,16 +141,16 @@ func _battle_deploy_case() -> int:
 	var errors := 0
 	errors += _assert_button_tooltip(battle, "계략 발동", "손패에서 계략", "계략 버튼 기본 tooltip")
 	errors += _assert_button_tooltip(battle, "우물", "+10골드", "우물 버튼 tooltip")
-	errors += _assert_button_tooltip(battle, "전투 시작", "장수나 병종", "전투 시작 비활성 tooltip")
-	errors += _assert_button_tooltip(battle, "[계략]", "계략 발동 버튼", "계략 손패 tooltip")
-	errors += _assert_button_tooltip(battle, "[병종]", "빈 타일", "병종 손패 tooltip")
+	errors += _assert_button_tooltip(battle, "교전 시작", "성 위치", "교전 시작 비활성 tooltip")
+	errors += _assert_button_tooltip(battle, "계략 발동", "계략 발동 버튼", "계략 손패 tooltip")
+	errors += _assert_button_tooltip(battle, "10명 분대", "빈 타일", "병종 손패 tooltip")
 	if battle.has_method("_select_hand"):
 		battle._select_hand(0)
 		await _frames(2)
 		errors += _assert_button_tooltip(battle, "계략 발동", "선택한 계략", "선택 계략 tooltip")
 		battle._select_hand(1)
 		await _frames(2)
-		errors += _assert_button_tooltip(battle, "우물", "선택한 카드", "선택 우물 tooltip")
+		errors += _assert_button_tooltip(battle, "우물", "먼저 성", "선택 우물 tooltip")
 	battle.queue_free()
 	await _frames(2)
 	if errors == 0:
