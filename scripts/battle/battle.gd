@@ -2144,6 +2144,12 @@ func _build_outcome_ui(win: bool) -> void:
 		RunManager.get_gold(),
 		CardLibrary.catalog
 	)
+	candidates = _CardChoiceAdvisor.ranked_ids(
+		candidates,
+		choice_context,
+		CardLibrary.catalog,
+		_CardChoiceAdvisor.MODE_REWARD
+	)
 	for id in candidates:
 		var card := CardLibrary.get_card(id)
 		var advice_line := _CardChoiceAdvisor.line_for_card(card, choice_context, _CardChoiceAdvisor.MODE_REWARD)

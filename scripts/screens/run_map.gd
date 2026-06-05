@@ -187,7 +187,13 @@ func _build_shop_panel() -> void:
 		CardLibrary.catalog
 	)
 
-	for id in RunManager.shop_card_ids():
+	var shop_ids := _CardChoiceAdvisor.ranked_ids(
+		RunManager.shop_card_ids(),
+		choice_context,
+		CardLibrary.catalog,
+		_CardChoiceAdvisor.MODE_SHOP
+	)
+	for id in shop_ids:
 		var card := CardLibrary.get_card(id)
 		if card == null:
 			continue

@@ -86,6 +86,7 @@ func _run_map_shop_case() -> int:
 	errors += _assert_any_tooltip(screen, "손패 구매", "상점 카드 구매 경로 tooltip")
 	errors += _assert_any_text(screen, "추천 —", "상점 전략 추천 문구")
 	errors += _assert_any_tooltip(screen, "추천 —", "상점 전략 추천 tooltip")
+	errors += _assert_first_recommended_button(screen, "추천 — 증원 후보", "상점 추천순 첫 카드")
 	errors += _assert_any_tooltip(screen, "보드 배치", "보드 요약 카드 tooltip")
 	screen.queue_free()
 	await _frames(2)
@@ -369,6 +370,15 @@ func _assert_button_text(node: Node, text_needle: String, msg: String) -> int:
 			return 0
 	return _fail("%s 누락: button text~=%s" % [msg, text_needle])
 
+func _assert_first_recommended_button(node: Node, text_needle: String, msg: String) -> int:
+	for button in _buttons(node):
+		if not _control_text_contains(button, "추천 —"):
+			continue
+		if _control_text_contains(button, text_needle):
+			return 0
+		return _fail("%s 실패: first=%s expected~=%s" % [msg, _joined_texts(button), text_needle])
+	return _fail("%s 누락: 추천 카드 버튼 없음" % msg)
+
 func _assert_tile_label_and_tooltip(battle: Node, block_key: String, text_needle: String, tooltip_needle: String, msg: String) -> int:
 	var tiles: Dictionary = battle._tile_buttons
 	if not tiles.has(block_key):
@@ -485,6 +495,14 @@ func _collect_texts(node: Node) -> Array[String]:
 	for child in node.get_children():
 		out.append_array(_collect_texts(child))
 	return out
+
+func _joined_texts(node: Node) -> String:
+	var texts := _collect_texts(node)
+	var parts: Array[String] = []
+	for text in texts:
+		if not text.is_empty():
+			parts.append(text)
+	return " | ".join(parts)
 
 func _frames(n: int) -> void:
 	for _i in n:

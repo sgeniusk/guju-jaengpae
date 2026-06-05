@@ -84,6 +84,29 @@ static func tooltip_for_card(card: CardData, choice_context: Dictionary, mode: S
 		String(advice.get("detail", "")),
 	]
 
+static func ranked_ids(ids: Array, choice_context: Dictionary, catalog: CardCatalog, mode: String = MODE_REWARD) -> Array[StringName]:
+	var ranked: Array[Dictionary] = []
+	for index in ids.size():
+		var id := StringName(ids[index])
+		var card := catalog.get_card(id) if catalog != null else null
+		var advice := advice_for_card(card, choice_context, mode)
+		ranked.append({
+			"id": id,
+			"score": int(advice.get("score", 0)),
+			"index": index,
+		})
+	ranked.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var a_score := int(a.get("score", 0))
+		var b_score := int(b.get("score", 0))
+		if a_score == b_score:
+			return int(a.get("index", 0)) < int(b.get("index", 0))
+		return a_score > b_score
+	)
+	var out: Array[StringName] = []
+	for entry in ranked:
+		out.append(StringName(entry.get("id", &"")))
+	return out
+
 static func _unit_advice(card: UnitCardData, choice_context: Dictionary) -> Dictionary:
 	var max_level_by_card: Dictionary = choice_context.get("max_level_by_card", {})
 	var current_level := int(max_level_by_card.get(card.id, 0))

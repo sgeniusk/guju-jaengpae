@@ -55,3 +55,35 @@ func test_shop_mode_marks_unaffordable_cards() -> void:
 	eq(advice.get("label"), "자금 부족", "상점에서 골드 부족 표시")
 	truthy(String(advice.get("detail")).contains("금 더 필요"), "부족 골드 설명")
 	truthy(CardChoiceAdvisor.tooltip_for_card(cat.get_card(&"building_mangru"), ctx, CardChoiceAdvisor.MODE_SHOP).contains("추천 — 자금 부족"), "tooltip 추천 표시")
+
+func test_ranked_ids_put_upgrade_and_stronger_advice_first() -> void:
+	var ctx := CardChoiceAdvisor.context(
+		{"0:0": &"troop_archer"},
+		{"0:0": 2},
+		[],
+		99,
+		cat
+	)
+	var ranked := CardChoiceAdvisor.ranked_ids(
+		[&"scheme_raid", &"building_dunjeon", &"troop_archer"],
+		ctx,
+		cat,
+		CardChoiceAdvisor.MODE_REWARD
+	)
+
+	eq(ranked[0], &"troop_archer", "증원 후보가 가장 먼저")
+	eq(ranked[1], &"building_dunjeon", "경제 확장은 즉시 계략보다 먼저")
+	eq(ranked[2], &"scheme_raid", "낮은 점수는 뒤로")
+
+func test_shop_ranking_keeps_unaffordable_cards_late() -> void:
+	var ctx := CardChoiceAdvisor.context({}, {}, [], 2, cat)
+	var ranked := CardChoiceAdvisor.ranked_ids(
+		[&"building_mangru", &"troop_infantry", &"troop_archer"],
+		ctx,
+		cat,
+		CardChoiceAdvisor.MODE_SHOP
+	)
+
+	eq(ranked[0], &"troop_infantry", "살 수 있는 전열 보강 카드가 먼저")
+	eq(ranked[1], &"troop_archer", "동점은 기존 순서 유지")
+	eq(ranked[2], &"building_mangru", "살 수 없는 카드는 뒤로")

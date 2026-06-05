@@ -469,6 +469,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-049-battle-tempo-budget.md 추가. battle.gd 기본 전투 속도 x3, tools/ui_feedback_smoke.gd 기본 x3 버튼 선택 검증, PlaytestMetrics 첫 5스테이지 개별 24초/평균 20초 예산과 test_fun_contract 회귀 테스트 추가. ./init.sh 카드 22개 / 2734 단언 green."
+    },
+    {
+      "id": "feat-050",
+      "name": "카드 선택 추천순 정렬",
+      "description": "상점과 전리품 선택지가 현재 보드·손패·골드 맥락에서 추천 점수가 높은 카드부터 보이도록 정렬한다.",
+      "dependencies": ["feat-046", "feat-049"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-050-card-choice-priority.md 추가. CardChoiceAdvisor.ranked_ids가 추천 점수순 stable sort를 제공하고, run_map 상점과 battle 전리품 버튼이 이 순서로 렌더된다. UI smoke가 상점 첫 추천 카드를 증원 후보로 검증한다. ./init.sh 카드 22개 / 2740 단언 green."
     }
   ]
 }
