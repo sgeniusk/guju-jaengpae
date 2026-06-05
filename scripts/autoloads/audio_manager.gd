@@ -14,6 +14,7 @@ const SFX := {
 	&"ui": "res://assets/audio/sfx/ui_click.wav",
 	&"gold": "res://assets/audio/sfx/coin.wav",
 	&"start": "res://assets/audio/sfx/battle_start.wav",
+	&"rally": "res://assets/audio/sfx/battle_start.wav",
 	&"victory": "res://assets/audio/sfx/victory.wav",
 	&"defeat": "res://assets/audio/sfx/defeat.wav",
 }

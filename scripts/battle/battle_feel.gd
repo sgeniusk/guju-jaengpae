@@ -4,6 +4,9 @@ extends RefCounted
 
 const PLAYER_RALLY := "전군 돌격!"
 const BOSS_RALLY := "결전 개시!"
+const TROOP_VISIBLE_CAP := 18
+const RETINUE_VISIBLE_CAP := 10
+const RALLY_SFX_ID := &"rally"
 
 static func visible_count_for_unit(unit: BattleUnit) -> int:
 	if unit == null or not unit.is_alive() or unit.is_castle:
@@ -11,9 +14,9 @@ static func visible_count_for_unit(unit: BattleUnit) -> int:
 	if WaveFactory.is_boss_name(unit.display_name):
 		return 1
 	if unit.retinue_count > 0:
-		return 1 + mini(maxi(0, unit.retinue_count), 8)
+		return 1 + mini(maxi(0, unit.retinue_count), RETINUE_VISIBLE_CAP)
 	if unit.squad_count > 0:
-		return mini(maxi(1, unit.squad_count), 14)
+		return mini(maxi(1, unit.squad_count), TROOP_VISIBLE_CAP)
 	return 1
 
 static func force_metrics(units: Array) -> Dictionary:
@@ -51,3 +54,6 @@ static func rally_text(stage: int, enemy_units: Array) -> String:
 	if stage <= 1:
 		return PLAYER_RALLY
 	return "군세 충돌!"
+
+static func rally_sfx_id(_stage: int, _enemy_units: Array) -> StringName:
+	return RALLY_SFX_ID

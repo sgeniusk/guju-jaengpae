@@ -2,6 +2,14 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-052 병력 밀도/함성 체감 패스
+삼국지 전투가 더 많은 군세의 충돌로 읽히도록 렌더 밀도와 시작 연출을 보강했다.
+- **분대 밀도 cap 상향** — `BattleFeel`과 `FormationRenderer`의 병종 분대 렌더/visible cap을 18명으로 올렸다. Lv.3 병종 18명 성장 체감이 화면과 metric에 그대로 남는다.
+- **장수 호위 cap 상향** — 장수 호위는 10명까지 렌더/visible metric에 반영한다. 장수 본체만 떠 있는 느낌을 줄이고 주변 병사감을 강화한다.
+- **함성 cue 분리** — `AudioManager`에 `rally` SFX id를 추가했다. 새 파일을 만들지 않고 기존 `battle_start.wav`를 재사용해 전투 시작 사운드의 의미를 분리했다.
+- **시작 충돌 VFX** — battle 화면 시작 순간 `RallyBanner`, `ChargeLine`, `ClashPulse`를 meta 태그가 있는 VFX로 띄운다. UI smoke가 첫 수동 플레이에서 이 VFX가 실제 생성되는지 검증한다.
+- **검증** — `tools/ui_feedback_smoke.gd`, `test_battle_feel.gd`, `test_formation_renderer.gd`, `test_audio_manager.gd` 갱신. `./init.sh` 카드 22개, 단위 테스트 2746/2746 green.
+
 ## 2026-06-06 — feat-051 저장/이어하기 UX 스모크
 군주 선택 화면에서 저장된 런을 이어가는 UX 경로를 자동 smoke로 고정했다.
 - **Resume UX smoke** — `tools/resume_ux_smoke.gd`가 기본 저장 파일 없음/저장 런 있음 두 케이스를 독립적으로 검증한다.

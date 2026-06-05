@@ -444,6 +444,15 @@ func _assert_manual_first_play_started(battle: Node, run_manager) -> int:
 		errors += _fail("수동 첫 플레이 아군 보병 유닛 생성 실패")
 	if battle._hint_label.text.find("전군 돌격") < 0:
 		errors += _fail("수동 첫 플레이 시작 함성 힌트 누락: %s" % battle._hint_label.text)
+	var rally_count := _count_vfx_meta(battle._vfx_layer, "rally")
+	var charge_count := _count_vfx_meta(battle._vfx_layer, "charge")
+	var pulse_count := _count_vfx_meta(battle._vfx_layer, "pulse")
+	if rally_count < 1:
+		errors += _fail("수동 첫 플레이 rally banner VFX 누락")
+	if charge_count < 6:
+		errors += _fail("수동 첫 플레이 charge line VFX 부족: %d" % charge_count)
+	if pulse_count < 3:
+		errors += _fail("수동 첫 플레이 clash pulse VFX 부족: %d" % pulse_count)
 	return errors
 
 func _assert_default_speed_fast(battle: Node) -> int:
@@ -467,6 +476,14 @@ func _buttons(node: Node) -> Array[Button]:
 	for child in node.get_children():
 		out.append_array(_buttons(child))
 	return out
+
+func _count_vfx_meta(node: Node, kind: String) -> int:
+	if node == null:
+		return 0
+	var count := 1 if String(node.get_meta("battle_start_vfx", "")) == kind else 0
+	for child in node.get_children():
+		count += _count_vfx_meta(child, kind)
+	return count
 
 func _controls(node: Node) -> Array[Control]:
 	var out: Array[Control] = []

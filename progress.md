@@ -4,10 +4,11 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-06
-**활성 피처** — feat-051 저장/이어하기 UX 스모크 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 군주 선택 화면의 저장 런 이어하기 UX 경로를 자동 검증으로 고정하는 작업이다.
+**활성 피처** — feat-052 병력 밀도/함성 체감 패스 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 분대 렌더 밀도와 전투 시작 함성/VFX 체감을 높이는 작업이다.
 
 ## 완료
+- [x] **feat-052 병력 밀도/함성 체감 패스** — `docs/specs/feat-052-force-density-and-rally.md`를 추가했다. 병종 분대 렌더/visible cap을 18명, 장수 호위 cap을 10명으로 올리고, `rally` SFX cue를 기존 전투 시작 wav에 연결했다. battle.gd가 시작 순간 rally banner, charge line, clash pulse를 meta 태그로 표시하고 UI smoke가 첫 수동 플레이에서 검증한다. `./init.sh` 카드 22개 / 2746 단언 green.
 - [x] **feat-051 저장/이어하기 UX 스모크** — `docs/specs/feat-051-resume-ux-smoke.md`와 `tools/resume_ux_smoke.gd`를 추가했다. 저장 파일이 없으면 군주 선택 화면에 이어하기 버튼이 없고, autosave 런이 있으면 `저장된 런 이어하기` 버튼/tooltip이 보인다. 버튼 실행 후 run_map route와 stage, 성 위치, 보드, 손패, 골드 복원을 검증한다. `./init.sh` 카드 22개 / 2740 단언 green.
 - [x] **feat-050 카드 선택 추천순 정렬** — `docs/specs/feat-050-card-choice-priority.md`를 추가했다. `CardChoiceAdvisor.ranked_ids()`가 추천 점수순 stable sort를 제공하고, run_map 상점과 battle 전리품 버튼이 이 순서로 렌더된다. 상점에서는 살 수 없는 카드는 뒤로 밀리며, UI smoke가 보병 증원 후보가 첫 추천 카드로 올라오는지 검증한다. `./init.sh` 카드 22개 / 2740 단언 green.
 - [x] **feat-049 전투 템포 예산** — `docs/specs/feat-049-battle-tempo-budget.md`를 추가했다. battle 화면 기본 속도를 x3으로 올리고, UI smoke가 x3 버튼 기본 선택을 확인한다. `PlaytestMetrics.first_five_ok()`는 첫 5스테이지 전투를 개별 24초, 평균 20초 이하로 검증하며 `test_fun_contract.gd`가 느린 전투 회귀를 잡는다. `./init.sh` 카드 22개 / 2734 단언 green.
@@ -22,7 +23,7 @@
 
 ## 진행 중
 - [ ] 수동 플레이 감각 확인 — 첫 손패 장수+병종, 성 위치 선택, 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령, stage 4 상점, 전리품 추천 문구를 사용자 플레이로 확인한다.
-- [ ] 완성판 안전 개선 계속 — 다음 피처 후보는 전투 VFX 체감 조정, 병력 밀도/사운드 체감 패스, 저장/재시작 실패/손상 파일 UX 보강이다.
+- [ ] 완성판 안전 개선 계속 — 다음 피처 후보는 충돌 중 타격감/VFX 반복, 저장/재시작 실패/손상 파일 UX 보강, 보상 화면 선택 비교 UX다.
 - [ ] Codex goal은 완성판까지 계속 활성이다. MVP 이후 핵심 루프 재미와 안정성을 단계적으로 개선한다.
 
 ## 다음
@@ -44,6 +45,14 @@
 - `docs/specs/feat-051-resume-ux-smoke.md`
 - `tools/resume_ux_smoke.gd`
 - `init.sh`
+- `docs/specs/feat-052-force-density-and-rally.md`
+- `scripts/battle/battle_feel.gd`
+- `scripts/battle/formation_renderer.gd`
+- `scripts/battle/battle.gd`
+- `scripts/autoloads/audio_manager.gd`
+- `test/test_battle_feel.gd`
+- `test/test_formation_renderer.gd`
+- `test/test_audio_manager.gd`
 - `docs/specs/feat-049-battle-tempo-budget.md`
 - `scripts/battle/battle.gd`
 - `scripts/run/playtest_metrics.gd`
@@ -56,6 +65,9 @@
 - `CHANGELOG.md`
 
 ## 검증 증거
+- [x] `godot --headless --path . --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-052) — 첫 수동 플레이에서 시작 함성 힌트, rally banner, charge line, clash pulse VFX 확인.
+- [x] `godot --headless --path . --script res://test/runner.gd` (2026-06-06, feat-052) — BattleFeel cap/rally cue, FormationRenderer cap, AudioManager rally cue 포함 단위 테스트 2746/2746 green.
+- [x] `./init.sh` (2026-06-06, feat-052) — 카드 22개 검증 OK, 저장/이어하기 UX 스모크와 병력 밀도/함성 UI smoke 포함, 단위 테스트 2746/2746 green.
 - [x] `godot --headless --path . --script res://tools/resume_ux_smoke.gd` (2026-06-06, feat-051) — no-save 이어하기 미노출, autosave 런 이어하기 버튼/tooltip, run_map route, stage/성/보드/손패/골드 복원 확인.
 - [x] `./init.sh` (2026-06-06, feat-051) — 카드 22개 검증 OK, 저장/이어하기 UX 스모크 포함, 단위 테스트 2740/2740 green.
 - [x] `godot --headless --path . --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-050) — 상점 추천순 첫 카드가 `추천 — 증원 후보`로 렌더됨을 포함해 UI 스모크 통과.
@@ -70,4 +82,4 @@
 - [x] `./init.sh` (2026-06-06, feat-045) — 카드 22개 검증 OK, 전투 집중표적 피드백 OK, 단위 테스트 2701/2701 green.
 
 ## 다음 세션 메모
-`./init.sh` 2740 단언 green. feat-051 done. 다음 안전 피처는 전투 VFX 체감 조정, 병력 밀도/사운드 체감 패스, 저장/재시작 실패/손상 파일 UX 보강이 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+`./init.sh` 2746 단언 green. feat-052 done. 다음 안전 피처는 충돌 중 타격감/VFX 반복, 저장/재시작 실패/손상 파일 UX 보강, 보상 화면 선택 비교 UX가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.

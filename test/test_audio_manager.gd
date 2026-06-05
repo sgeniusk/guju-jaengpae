@@ -11,7 +11,8 @@ func test_music_registry_has_default_battle_theme() -> void:
 	not_null(load(path) as AudioStream, "battle BGM 로드")
 
 func test_sfx_registry_has_minimum_cues() -> void:
-	eq(_AudioManager.sfx_ids(), [&"defeat", &"gold", &"start", &"ui", &"victory"], "최소 SFX id")
+	eq(_AudioManager.sfx_ids(), [&"defeat", &"gold", &"rally", &"start", &"ui", &"victory"], "최소 SFX id")
 	for id in _AudioManager.sfx_ids():
 		truthy(_AudioManager.has_sfx(id), "%s SFX 존재" % id)
 		not_null(load(_AudioManager.sfx_path(id)) as AudioStream, "%s SFX 로드" % id)
+	eq(_AudioManager.sfx_path(&"rally"), _AudioManager.sfx_path(&"start"), "rally는 기존 전투 시작 wav 재사용")

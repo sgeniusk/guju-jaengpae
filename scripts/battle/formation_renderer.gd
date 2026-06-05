@@ -20,10 +20,10 @@ static func member_offsets(count: int, columns: int, dx: float, dy: float) -> Ar
 	return offsets
 
 static func troop_offsets(squad_count: int) -> Array[Vector2]:
-	return member_offsets(mini(maxi(1, squad_count), 14), 5, 29.0, 17.0)
+	return member_offsets(mini(maxi(1, squad_count), 18), 6, 27.0, 16.0)
 
 static func retinue_offsets(retinue_count: int) -> Array[Vector2]:
-	var base := member_offsets(mini(maxi(0, retinue_count), 8), 4, 32.0, 18.0)
+	var base := member_offsets(mini(maxi(0, retinue_count), 10), 5, 30.0, 17.0)
 	var out: Array[Vector2] = []
 	for offset in base:
 		out.append(offset + Vector2(0.0, 20.0))

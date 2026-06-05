@@ -7,7 +7,7 @@ func test_visible_count_counts_squad_not_sim_object() -> void:
 	unit.squad_count = 9
 	eq(BattleFeel.visible_count_for_unit(unit), 9, "분대 1개는 보이는 병사 수로 환산")
 	unit.squad_count = 20
-	eq(BattleFeel.visible_count_for_unit(unit), 14, "가독성을 위해 렌더 상한 적용")
+	eq(BattleFeel.visible_count_for_unit(unit), BattleFeel.TROOP_VISIBLE_CAP, "성장 분대 렌더 상한 적용")
 
 func test_force_metrics_tracks_lanes_and_visible_soldiers() -> void:
 	var units := [
@@ -26,6 +26,12 @@ func test_stage_one_encounter_has_enemy_front() -> void:
 	var wave: Array = WaveFactory.stage_encounter_waves(1)[0]
 	truthy(BattleFeel.has_army_front(wave), "첫 전투부터 적 전열이 보임")
 	eq(BattleFeel.rally_text(1, wave), "전군 돌격!", "첫 전투 rally")
+	eq(BattleFeel.rally_sfx_id(1, wave), &"rally", "교전 시작 함성 cue")
+
+func test_retinue_visible_cap_allows_larger_guard() -> void:
+	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 1, 120.0, "장수", 100, 10, 1.0, "melee", 34.0)
+	unit.retinue_count = 13
+	eq(BattleFeel.visible_count_for_unit(unit), 1 + BattleFeel.RETINUE_VISIBLE_CAP, "장수 본체+호위 cap")
 
 func _enemy(lane: int, name: String, squad_count: int, attack_range: String) -> BattleUnit:
 	var unit := BattleUnit.make(BattleUnit.Team.ENEMY, lane, BattleSim.FIELD_W, name, 80, 10, 1.0, attack_range, 34.0, &"", &"", "infantry", -1, BattleSim.start_y_for_col(lane))

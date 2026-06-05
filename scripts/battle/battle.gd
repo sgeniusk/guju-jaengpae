@@ -921,7 +921,7 @@ func _upgrade_from_hand(index: int) -> void:
 	_respawn_unit_for_board_key(key)
 	_selected_hand_index = -1
 	_hint_label.text = "증원 — %s Lv.%d. 교전을 시작합니다." % [card_name, RunManager.get_board_level(key)]
-	AudioManager.play_sfx(&"start")
+	AudioManager.play_sfx(_BattleFeel.rally_sfx_id(RunManager.stage_index(), _sim.enemy_units))
 	_refresh_deploy_ui()
 	call_deferred("_on_start_pressed")
 
@@ -1405,10 +1405,13 @@ func _spawn_battle_start_vfx() -> void:
 		return
 	_spawn_rally_banner(_BattleFeel.rally_text(RunManager.stage_index(), _sim.enemy_units))
 	_spawn_charge_lines()
+	_spawn_clash_pulses()
 	_shake_camera()
 
 func _spawn_rally_banner(text: String) -> void:
 	var label := Label.new()
+	label.name = "RallyBanner"
+	label.set_meta("battle_start_vfx", "rally")
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -1438,6 +1441,8 @@ func _spawn_charge_lines() -> void:
 
 func _spawn_charge_line(from_field: Vector2, to_field: Vector2, color: Color) -> void:
 	var line := Line2D.new()
+	line.name = "ChargeLine"
+	line.set_meta("battle_start_vfx", "charge")
 	line.width = 7.0
 	line.default_color = color
 	line.z_index = VFX_RALLY_Z - 1
@@ -1449,6 +1454,23 @@ func _spawn_charge_line(from_field: Vector2, to_field: Vector2, color: Color) ->
 	tween.tween_property(line, "modulate:a", 0.0, 0.54).set_delay(0.08)
 	tween.set_parallel(false)
 	tween.tween_callback(Callable(line, "queue_free"))
+
+func _spawn_clash_pulses() -> void:
+	for y in BattleSim.COL_Y:
+		var pulse := Polygon2D.new()
+		pulse.name = "ClashPulse"
+		pulse.set_meta("battle_start_vfx", "pulse")
+		pulse.polygon = _ellipse_points(38.0, 16.0, 18)
+		pulse.color = Color(1.0, 0.78, 0.34, 0.40)
+		pulse.position = field_to_screen(555.0, y)
+		pulse.z_index = VFX_RALLY_Z - 2
+		_vfx_layer.add_child(pulse)
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(pulse, "scale", Vector2(1.55, 1.55), 0.62).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(pulse, "modulate:a", 0.0, 0.62).set_delay(0.08)
+		tween.set_parallel(false)
+		tween.tween_callback(Callable(pulse, "queue_free"))
 
 func _shake_camera() -> void:
 	if _camera == null:
@@ -1805,7 +1827,7 @@ func _create_formation_body(u: BattleUnit) -> Node2D:
 		main.z_index = 20
 		group.add_child(main)
 	else:
-		var count := mini(maxi(1, u.squad_count), 14)
+		var count := mini(maxi(1, u.squad_count), _BattleFeel.TROOP_VISIBLE_CAP)
 		var texture_path := _unit_texture_path_for_troop_type(u, u.troop_type)
 		var texture := _texture_or_placeholder(texture_path, Vector2(UNIT_MEMBER_W, UNIT_MEMBER_H), _unit_color(u))
 		var walk_path := _walk_sheet_path_for_texture(texture_path)
@@ -1818,7 +1840,7 @@ func _create_formation_body(u: BattleUnit) -> Node2D:
 	return group
 
 func _add_retinue_members(group: Node2D, u: BattleUnit) -> void:
-	var retinue := mini(maxi(0, u.retinue_count), 8)
+	var retinue := mini(maxi(0, u.retinue_count), _BattleFeel.RETINUE_VISIBLE_CAP)
 	if retinue <= 0:
 		return
 	var texture_path := _unit_texture_path_for_troop_type(u, u.troop_type)
