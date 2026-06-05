@@ -4,11 +4,12 @@
 
 ## 현재 상태 (Current State)
 **마지막 갱신 (Last Updated)** — 2026-06-05
-**활성 피처 (Active Feature)** — feat-041 전투 체감 패스 완료
-**현재 목표 (Current Objective)** — MVP 루프 위에 첫 전투부터 적 전열과 돌격 피드백을 보강했다. stage 1 적은 3개 저체력 분대가 중앙 전선 근처에 펼쳐져 보이고, 전투 시작 시 rally banner/charge line/camera shake가 뷰 레이어에서만 재생된다. `BattleFeel` helper가 visible soldiers/전열 계약을 계산하고 `PlaytestMetrics`는 아군·적·전체 병력 밀도를 출력한다. `./init.sh`는 카드 **22개 / 2645 단언 green**이다. push는 사용자 확인 대기.
+**활성 피처 (Active Feature)** — feat-042 진형 전술 시너지 완료
+**현재 목표 (Current Objective)** — MVP 루프 위에 배치 전략성을 1차로 보강했다. `FormationTactics` helper가 장수 인접 지휘(+10%), 전열 엄호(+15%), 측면 기동(+10%) 공격 보너스를 계산하고 `CardCatalog.build_board_army()`가 실제 전투 유닛에 적용한다. battle.gd는 배치 타일 라벨에 `지휘/엄호/측면` 태그를 표시한다. `./init.sh`는 카드 **22개 / 2671 단언 green**이다. push/tag는 사용자 확인 대기.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
+- [x] **feat-042 진형 전술 시너지** (Codex) — `docs/specs/feat-042-formation-tactics.md`와 `FormationTactics` helper/test를 추가했다. 병종이 상하좌우 인접 장수에게 지휘를 받으면 공격 +10%, 궁병 등 원거리 유닛 앞 같은 열에 근접 아군이 있으면 엄호 +15%, 기병이 좌우 가장자리 열에 있으면 측면 +10%를 받는다. 전술 재계산은 base attack 메타 기준이라 배치 중 중첩 곱셈하지 않고, 타일 라벨은 `지휘/엄호/측면` 태그를 표시한다. ./init.sh 2671 단언 green.
 - [x] **feat-041 전투 체감 패스** (Codex) — `docs/specs/feat-041-battle-feel-pass.md`와 `BattleFeel` helper/test를 추가했다. 첫 combat encounter는 3개 적 분대 전열(enemy visible 25명)로 보이되 개별 HP/공격과 y 간격을 낮춰 stage 1 자동 교전은 21.1s에 승리한다. battle.gd는 전투 시작 때 "전군 돌격!" banner, 양 진영 charge line, 짧은 camera shake를 표시한다. ./init.sh 2645 단언 green.
 - [x] **feat-040 Fun Reset MVP** (Codex) — `docs/specs/feat-040-fun-reset.md`에 제품 계약을 고정하고, `SquadProfile`/`StrategyDeckCatalog`/`TerrainPerkCatalog`/`FormationRenderer`/`PlaytestMetrics` 순수 helper와 계약 테스트를 추가했다. 전략 풀은 12장으로 확장하되 손패는 3장 유지, 첫 손패는 장수+병종 혼합, 성 선점·교전당 1장·중복 증원·지형 시너지·카드 action label·우물 한 수 제한을 검증한다. `tools/playtest_loop_smoke.gd`는 stage 1/2/5 전투에서 16.8s/18.3s/14.6s와 시작 병력 10/16/26명을 출력했다. ./init.sh 2624 단언 green.
 - [x] **feat-039 분대 전투·성장 템포 hotfix** (Codex) — 유닛 카드는 보드 레벨을 갖고 같은 카드 재획득 시 새 칸이 아니라 기존 부대 Lv.+1 증원으로 소비된다. 병종은 10명 안팎의 분대 비주얼과 레벨별 병력/체력/공격/공속 성장을 갖고, 장수는 크기를 줄인 본체 주변에 호위병이 붙는다. 기본 전투 속도 x2, 근접/원거리 교전 거리 확대. ./init.sh 2485 단언 green.
@@ -54,9 +55,9 @@
 - [ ] 수동 플레이 감각 확인 — 새 로컬 실행에서 첫 손패 장수+병종, 성 위치 선택, 3장 중 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령과 stage 4 상점 흐름을 사용자 플레이로 확인한다.
 - [ ] Codex Ultragoal 남은 항목은 사용자 결정 게이트에 걸려 있다. G019는 push 확인 대기, G055/G056/G058/G060/G061/G062는 천계·마계 정본 승인 전 blocked.
 ### 다음 (What's Next)
-1. 사용자 승인으로 천계·마계 명칭과 resource id가 canon이 되면 G055/G056/G058/G060/G061/G062를 재개한다.
-2. 승인 전에는 릴리스 게이트 재검증처럼 nation id 확정이 필요 없는 작업만 고른다.
-3. 사용자 확인이 오면 `git push origin main`으로 미푸시 커밋을 발행한다.
+1. 완성판 안전 작업으로 카드 선택 전략성 UX, 장기런 자동 스모크, 전투 중 표적 지정 체감 중 하나를 feat-043으로 고른다.
+2. 사용자 승인으로 천계·마계 명칭과 resource id가 canon이 되면 G055/G056/G058/G060/G061/G062를 재개한다.
+3. 사용자 확인 전 push/tag는 하지 않는다.
 
 ## 블로커 / 리스크 (Blockers / Risks)
 - [ ] `git push origin main`은 사용자 확인 전 실행 금지. G055/G058은 complete가 아니어서 failed audit trail로 남겼고 정본 승인 후 `--retry-failed`가 필요하다.
@@ -74,6 +75,7 @@
 - 전투 로직/표현 분리, 적은 카드 아님, trait_id, 오픈필드 이후 승=모든 파도 적전멸/패=아군 전멸 — 상세 CHANGELOG.
 
 ## 이번 세션 수정 파일 (Files Modified)
+- feat-042 — docs/specs/feat-042-formation-tactics.md, scripts/run/formation_tactics.gd, scripts/resources/card_catalog.gd, scripts/battle/battle.gd, test/test_formation_tactics.gd, feature_list.json, progress.md, session-handoff.md, CHANGELOG.md.
 - feat-040 — docs/specs/feat-040-fun-reset.md, docs/superpowers/plans/2026-06-05-game-completion-multi-lane-plan.md, scripts/battle/squad_profile.gd, scripts/battle/formation_renderer.gd, scripts/run/terrain_perk_catalog.gd, scripts/run/strategy_deck_catalog.gd, scripts/run/playtest_metrics.gd, scripts/resources/card_catalog.gd, scripts/ui/card_ui_text.gd, scripts/battle/battle.gd, tools/playtest_loop_smoke.gd, tools/reward_smoke.gd, tools/shoot_battle.gd, tools/shoot_run_map.gd, tools/boss_stage_boot_smoke.gd, test/test_fun_contract.gd, test/test_squad_profile.gd, test/test_terrain_perk_catalog.gd, test/test_strategy_deck_catalog.gd, test/test_formation_renderer.gd, test/test_run_board.gd, test/test_factions.gd, test/test_run_reward.gd, init.sh, feature_list.json, progress.md, session-handoff.md.
 - feat-041 — docs/specs/feat-041-battle-feel-pass.md, scripts/battle/battle_feel.gd, scripts/battle/wave_factory.gd, scripts/battle/battle.gd, scripts/run/playtest_metrics.gd, test/test_battle_feel.gd, feature_list.json, progress.md, session-handoff.md.
 - feat-039 — scripts/run/run_state.gd, scripts/autoloads/run_manager.gd, scripts/resources/card_catalog.gd, scripts/run/reward_pool.gd, scripts/battle/battle_unit.gd, scripts/battle/battle_sim.gd, scripts/battle/wave_factory.gd, scripts/battle/battle.gd, test/test_board_army.gd, test/test_persistence_payload.gd, test/test_run_board.gd, test/test_run_reward.gd, tools/reward_smoke.gd, feature_list.json, progress.md, session-handoff.md.
@@ -82,6 +84,7 @@
 - 오래된 상세 파일 목록은 CHANGELOG와 `docs/specs/`를 본다.
 
 ## 검증 증거
+- [x] `./init.sh` (2026-06-05, feat-042) → 카드 **22개** 검증 OK, `FormationTactics` 전역 클래스 등록, battle/run_map/보스/result/UI 스모크 통과, 플레이테스트 루프 stage 1/2/5 전투 **21.1s/18.3s/14.6s**, 단위 테스트 **2671 단언** green. 종료 0. Godot 종료 시 resource leak 경고 1건은 기존 headless 종료 경고 계열로 테스트 실패는 아님.
 - [x] `./init.sh` (2026-06-05, feat-040) → 카드 **22개** 검증 OK, 전략 풀 12장/시작 손패 3장/드로우 9장, 플레이테스트 루프 stage 1/2/5 전투 **16.8s/18.3s/14.6s** 및 시작 병력 **10/16/26명**, stage 3 칙령·stage 4 상점, 우물 한 수 제한, battle/run_map/보스/result/UI 스모크 포함 단위 테스트 **2624 단언** green. 종료 0. Godot 종료 시 resource leak 경고 1건은 기존 headless 종료 경고 계열로 테스트 실패는 아님.
 - [x] `./init.sh` (2026-06-05, feat-041) → 카드 **22개** 검증 OK, battle/run_map/보스/result/UI 스모크 통과, 플레이테스트 루프 stage 1/2/5 전투 **21.1s/18.3s/14.6s**, stage 1 enemy visible **25명**·total **35명**, 단위 테스트 **2645 단언** green. 종료 0. Godot 종료 시 resource leak 경고 1건은 기존 headless 종료 경고 계열로 테스트 실패는 아님.
 - [x] `./init.sh` (2026-06-05, feat-040) → 카드 **22개**, MVP 재미 계약과 플레이테스트 루프, 단위 테스트 **2624 단언** green.
@@ -93,4 +96,4 @@
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh` 2645단언 green. **feat-041 done** — feat-040 MVP 루프 위에서 첫 전투 적 전열을 3개 저체력 분대로 보강했고, 전투 시작 rally banner/charge line/camera shake로 "전군 돌격" 피드백을 추가했다. `tools/playtest_loop_smoke.gd`는 stage 1 enemy visible 25명·total 35명·21.1s 승리, stage 3 칙령, stage 4 상점, stage 5 보스 흐름을 검증한다. Phase 4 9세력 확장은 정본 승인→CardVocab→validator→Resource→lord_select 순서가 고정됐고 G055/G056/G058/G060/G061/G062는 명칭 승인 대기 blocked. 푸시와 태그는 사용자 확인 후.
+`./init.sh` 2671단언 green. **feat-042 done** — feat-040/041 MVP 루프 위에 지휘·엄호·측면 전술 보너스와 타일 태그를 추가했다. `tools/playtest_loop_smoke.gd`는 stage 1 enemy visible 25명·total 35명·21.1s 승리, stage 3 칙령, stage 4 상점, stage 5 보스 흐름을 계속 검증한다. Phase 4 9세력 확장은 정본 승인→CardVocab→validator→Resource→lord_select 순서가 고정됐고 G055/G056/G058/G060/G061/G062는 명칭 승인 대기 blocked. 푸시와 태그는 사용자 확인 후.

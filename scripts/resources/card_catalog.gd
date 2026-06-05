@@ -8,6 +8,7 @@ const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 const _SquadProfile := preload("res://scripts/battle/squad_profile.gd")
 const _TerrainPerkCatalog := preload("res://scripts/run/terrain_perk_catalog.gd")
 const _StrategyDeckCatalog := preload("res://scripts/run/strategy_deck_catalog.gd")
+const _FormationTactics := preload("res://scripts/run/formation_tactics.gd")
 
 const _REALM_SORT := {
 	"mortal": 0,
@@ -169,6 +170,7 @@ func build_board_army(board: Dictionary, lord: LordData, run_board_rows: int = R
 			unit.set_position(start.x, start.y)
 			_TerrainPerkCatalog.apply_to_unit(unit, terrain_perk_id, col, row, castle_key)
 			army.append(unit)
+	_FormationTactics.apply_to_army(army)
 	return army
 
 func _lord_sort_less(a: StringName, b: StringName) -> bool:

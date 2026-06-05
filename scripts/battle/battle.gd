@@ -13,6 +13,7 @@ const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
 const _FormationRenderer := preload("res://scripts/battle/formation_renderer.gd")
 const _BattleFeel := preload("res://scripts/battle/battle_feel.gd")
+const _FormationTactics := preload("res://scripts/run/formation_tactics.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
 
@@ -1054,6 +1055,7 @@ func _on_start_pressed() -> void:
 	_sim.set_waves(RunManager.current_waves())
 	_enemy_force_max = maxi(1, _sim.enemy_units.size())
 	_apply_pending_scheme_battle_effects()
+	_apply_formation_tactics()
 	_apply_building_auras()
 	RunManager.apply_treasure_battle_modifiers(_sim.player_units)
 	_battle_gold_per_sec = _BoardEconomy.gold_per_sec(RunManager.get_board(), CardLibrary.catalog)
@@ -1453,6 +1455,7 @@ func _spawn_board_army() -> void:
 		_spawn_visual(unit)
 		_update_tile_label(unit.lane, unit.row, _unit_tile_label(unit))
 	_spawn_board_buildings(board)
+	_refresh_unit_tile_labels()
 	_refresh_board_tiles()
 
 func _spawn_unit_for_board_key(block_key: String) -> void:
@@ -1470,6 +1473,7 @@ func _spawn_unit_for_board_key(block_key: String) -> void:
 		_sim.add_unit(unit)
 		_spawn_visual(unit)
 		_update_tile_label(unit.lane, unit.row, _unit_tile_label(unit))
+	_apply_formation_tactics()
 
 func _respawn_unit_for_board_key(block_key: String) -> void:
 	var parts := block_key.split(":")
@@ -1566,6 +1570,16 @@ func _building_texture(card: CardData) -> Texture2D:
 
 func _apply_building_auras() -> void:
 	_BoardEconomy.apply_auras(_sim.player_units, RunManager.get_board(), CardLibrary.catalog)
+
+func _apply_formation_tactics() -> void:
+	_FormationTactics.apply_to_army(_sim.player_units)
+	_refresh_unit_tile_labels()
+
+func _refresh_unit_tile_labels() -> void:
+	for unit in _sim.player_units:
+		if unit == null or unit.is_castle or unit.row < 0:
+			continue
+		_update_tile_label(unit.lane, unit.row, _unit_tile_label(unit))
 
 func _apply_scheme_battle_result(result: Dictionary) -> void:
 	var battle: Dictionary = result.get("battle", {})
@@ -1891,9 +1905,13 @@ func _update_tile_label(col: int, row: int, text: String) -> void:
 func _unit_tile_label(unit: BattleUnit) -> String:
 	if unit == null:
 		return ""
+	var base := unit.display_name
 	if unit.squad_level > 1:
-		return "%s Lv.%d" % [unit.display_name, unit.squad_level]
-	return unit.display_name
+		base = "%s Lv.%d" % [unit.display_name, unit.squad_level]
+	var tags := _FormationTactics.tag_text_for_unit(unit, _sim.player_units)
+	if not tags.is_empty():
+		return "%s · %s" % [base, tags]
+	return base
 
 func _unit_visual_offset(u: BattleUnit) -> Vector2:
 	var index := 0

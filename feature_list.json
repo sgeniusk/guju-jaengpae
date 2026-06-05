@@ -397,6 +397,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-041-battle-feel-pass.md + BattleFeel helper/test 추가. stage 1 encounter를 3개 저체력 적 분대 전열로 조정하고, battle.gd 시작 rally banner/charge line/camera shake VFX를 추가했다. PlaytestMetrics가 아군/적/전체 visible soldiers를 출력한다. ./init.sh 카드 22개 / 2645 단언 green, playtest loop stage 1 enemy=25 total=35, time=21.1s."
+    },
+    {
+      "id": "feat-042",
+      "name": "진형 전술 시너지",
+      "description": "격자 배치가 실제 전략 선택으로 느껴지도록 장수 인접 지휘, 전열 엄호, 측면 기동 보너스와 전술 태그 표시를 추가한다.",
+      "dependencies": ["feat-040", "feat-041"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-042-formation-tactics.md + FormationTactics helper/test 추가. CardCatalog.build_board_army가 지휘(+10%)·엄호(+15%)·측면(+10%) 공격 보너스를 idempotent로 적용하고 battle.gd 타일 라벨에 전술 태그를 표시한다. ./init.sh 카드 22개 / 2671 단언 green."
     }
   ]
 }

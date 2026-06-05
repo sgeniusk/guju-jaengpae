@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-05 — feat-042 진형 전술 시너지
+MVP 루프의 배치 격자를 실제 공격 보너스와 읽히는 전술 태그로 연결했다. 새 카드 Resource 필드는 추가하지 않고 기존 장수·병종·행/열 정보만 사용한다.
+- **FormationTactics helper** — `scripts/run/formation_tactics.gd`가 지휘(+10%), 엄호(+15%), 측면(+10%) 보너스와 태그를 순수 계산한다. 전술 재계산은 `formation_base_attack` 메타를 기준으로 하므로 배치 중 재계산해도 중첩 곱셈하지 않는다.
+- **군세 변환 연결** — `CardCatalog.build_board_army()`가 terrain perk 적용 뒤 `FormationTactics.apply_to_army()`를 호출해 실제 전투 유닛 공격력에 반영한다.
+- **전투 UI 태그** — `battle.gd`가 배치/증원 후 현 군세 기준으로 전술을 재계산하고, 타일 라벨에 `지휘/엄호/측면` 태그를 붙인다.
+- **검증** — `test_formation_tactics.gd`가 장수 인접 보병, 전열 뒤 궁병, 가장자리 기병, 비적용, idempotent 재계산을 검증한다. `./init.sh` 카드 22개, 단위 테스트 2671/2671 green.
+
 ## 2026-06-05 — feat-041 전투 체감 패스
 MVP 루프의 첫 교전을 "군세 충돌"로 읽히게 하는 뷰·파도 체감 패스. BattleSim 결정성은 보존하고, stage 1 encounter와 시작 VFX만 좁게 조정했다.
 - **BattleFeel helper** — `scripts/battle/battle_feel.gd`가 visible soldiers, lane coverage, enemy front 계약, rally text를 순수 계산한다. `test_battle_feel.gd`가 첫 encounter enemy front와 병력 밀도 집계를 검증한다.
