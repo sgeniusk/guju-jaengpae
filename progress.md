@@ -3,12 +3,13 @@
 이 파일은 재시작 상태용이다. 전체 이력이 아니다. 오래된 증거는 CHANGELOG·reports·docs로 옮긴다. (≤120줄)
 
 ## 현재 상태 (Current State)
-**마지막 갱신 (Last Updated)** — 2026-06-05
-**활성 피처 (Active Feature)** — feat-044 장기런 자동 스모크 완료
-**현재 목표 (Current Objective)** — 완성판 안정성 검증을 최종 보스까지 확장했다. `tools/long_run_smoke.gd`가 유비 기준 stage 1~15를 결정적 선택으로 진행하며 전투·보스·칙령·상점·사건·확장과 병법서 보패 공격 보정을 검증한다. `init.sh`는 플레이테스트 루프 뒤 장기런 스모크를 실행하고, stage 15는 result=1, 20.5s 승리로 닫힌다. `./init.sh`는 카드 **22개 / 2677 단언 green**이다. push/tag는 사용자 확인 대기.
+**마지막 갱신 (Last Updated)** — 2026-06-06
+**활성 피처 (Active Feature)** — feat-045 집중표적 체감 피드백 완료
+**현재 목표 (Current Objective)** — 전투 중 표적 지정이 실제 지휘처럼 읽히도록 피드백을 보강했다. `BattleCommandFeedback`이 표적 선택 반경·문구·tooltip을 순수 계산하고, `battle.gd`는 집중표적 클릭 성공 시 표적명/장수 수 힌트, 표적 위 `집중` 라벨, 장수→표적 지휘선, 빈 곳/사망 자동 복귀 문구를 표시한다. `tools/ui_feedback_smoke.gd`는 실제 전투 단계에서 집중표적 버튼과 마커/라벨을 검증한다. `./init.sh`는 카드 **22개 / 2701 단언 green**이다. push/tag는 사용자 확인 대기.
 
 ## 상태 (Status)
 ### 완료 (What's Done)
+- [x] **feat-045 집중표적 체감 피드백** (Codex) — `docs/specs/feat-045-command-feedback.md`와 `scripts/battle/battle_command_feedback.gd`를 추가했다. 전투 중 집중표적 버튼 tooltip이 전투 상태/현재 표적/장수 수를 반영하고, 적 클릭 성공 시 `집중 표적 — <적> · 장수 N명 집중` 힌트·표적 위 `집중` 라벨·지휘선 VFX를 표시한다. 빈 곳 클릭과 표적 사망은 자동 표적 복귀 문구를 남긴다. `test_battle_command_feedback.gd`와 UI smoke 집중표적 케이스 추가. ./init.sh 2701 단언 green.
 - [x] **feat-044 장기런 자동 스모크** (Codex) — `docs/specs/feat-044-long-run-smoke.md`와 `tools/long_run_smoke.gd`를 추가했다. 자동 선택기는 stage 1~15에서 전투/보스/칙령/상점/사건/확장을 통과하고, 병법서 보패를 장착한 뒤 `TreasureCatalog` 공격 보정을 시뮬레이션에 반영한다. `init.sh`에 연결했고 stage 15 최종 보스는 20.5s 승리, wins=8, board=4, rows=6으로 통과한다. ./init.sh 2677 단언 green.
 - [x] **feat-043 배치 전술 미리보기** (Codex) — `docs/specs/feat-043-formation-preview.md`를 추가했다. 손패 유닛 선택 중 빈 타일마다 임시 보드를 계산해 전술 보너스가 생기는 칸만 `지휘/엄호/측면 +%` 라벨과 tooltip을 표시한다. `FormationTactics.preview_for_unit()`이 문자열 계약을 맡고, `tools/ui_feedback_smoke.gd`는 보병 앞/궁병 뒤 배치에서 `엄호 +15%` 미리보기를 확인한다. ./init.sh 2677 단언 green.
 - [x] **feat-042 진형 전술 시너지** (Codex) — `docs/specs/feat-042-formation-tactics.md`와 `FormationTactics` helper/test를 추가했다. 병종이 상하좌우 인접 장수에게 지휘를 받으면 공격 +10%, 궁병 등 원거리 유닛 앞 같은 열에 근접 아군이 있으면 엄호 +15%, 기병이 좌우 가장자리 열에 있으면 측면 +10%를 받는다. 전술 재계산은 base attack 메타 기준이라 배치 중 중첩 곱셈하지 않고, 타일 라벨은 `지휘/엄호/측면` 태그를 표시한다. ./init.sh 2671 단언 green.
@@ -57,7 +58,7 @@
 - [ ] 수동 플레이 감각 확인 — 새 로컬 실행에서 첫 손패 장수+병종, 성 위치 선택, 3장 중 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령과 stage 4 상점 흐름을 사용자 플레이로 확인한다.
 - [ ] Codex Ultragoal 남은 항목은 사용자 결정 게이트에 걸려 있다. G019는 push 확인 대기, G055/G056/G058/G060/G061/G062는 천계·마계 정본 승인 전 blocked.
 ### 다음 (What's Next)
-1. 완성판 안전 작업으로 전투 중 표적 지정 체감, 보상/상점 카드 선택 전략성, 장기런 군주 3종 확대 중 하나를 feat-045로 고른다.
+1. 완성판 안전 작업으로 보상/상점 카드 선택 전략성, 장기런 군주 3종 확대, 수동 플레이 QA 자동화 중 하나를 feat-046으로 고른다.
 2. 사용자 승인으로 천계·마계 명칭과 resource id가 canon이 되면 G055/G056/G058/G060/G061/G062를 재개한다.
 3. 사용자 확인 전 push/tag는 하지 않는다.
 
@@ -77,6 +78,7 @@
 - 전투 로직/표현 분리, 적은 카드 아님, trait_id, 오픈필드 이후 승=모든 파도 적전멸/패=아군 전멸 — 상세 CHANGELOG.
 
 ## 이번 세션 수정 파일 (Files Modified)
+- feat-045 — docs/specs/feat-045-command-feedback.md, scripts/battle/battle_command_feedback.gd, scripts/battle/battle.gd, test/test_battle_command_feedback.gd, tools/ui_feedback_smoke.gd, feature_list.json, progress.md, session-handoff.md, CHANGELOG.md.
 - feat-044 — docs/specs/feat-044-long-run-smoke.md, tools/long_run_smoke.gd, init.sh, feature_list.json, progress.md, session-handoff.md, CHANGELOG.md.
 - feat-043 — docs/specs/feat-043-formation-preview.md, scripts/run/formation_tactics.gd, scripts/battle/battle.gd, test/test_formation_tactics.gd, tools/ui_feedback_smoke.gd, feature_list.json, progress.md, session-handoff.md, CHANGELOG.md.
 - feat-042 — docs/specs/feat-042-formation-tactics.md, scripts/run/formation_tactics.gd, scripts/resources/card_catalog.gd, scripts/battle/battle.gd, test/test_formation_tactics.gd, feature_list.json, progress.md, session-handoff.md, CHANGELOG.md.
@@ -88,6 +90,7 @@
 - 오래된 상세 파일 목록은 CHANGELOG와 `docs/specs/`를 본다.
 
 ## 검증 증거
+- [x] `./init.sh` (2026-06-06, feat-045) → 카드 **22개** 검증 OK, UI 툴팁/피드백 스모크에 **전투 집중표적 피드백 OK** 추가, 첫 5스테이지 플레이테스트 루프와 장기런 스모크 stage 1~15 통과, 단위 테스트 **2701 단언** green. 종료 0. Godot 종료 시 resource leak 경고는 기존 headless 종료 경고 계열로 테스트 실패는 아님.
 - [x] `./init.sh` (2026-06-05, feat-044) → 카드 **22개** 검증 OK, UI 전술 미리보기 OK, 첫 5스테이지 플레이테스트 루프 통과, 장기런 스모크 stage 1~15 통과(stage 15 result=1, **20.5s**, wins=8, board=4, rows=6), 단위 테스트 **2677 단언** green. 종료 0. Godot 종료 시 resource leak 경고 2회는 기존 headless 종료 경고 계열로 테스트 실패는 아님.
 - [x] `./init.sh` (2026-06-05, feat-043) → 카드 **22개** 검증 OK, UI 툴팁/피드백 스모크에 **전투 전술 미리보기 OK** 추가, 플레이테스트 루프 stage 1/2/5 전투 **21.1s/18.3s/14.6s**, 단위 테스트 **2677 단언** green. 종료 0. Godot 종료 시 resource leak 경고 1건은 기존 headless 종료 경고 계열로 테스트 실패는 아님.
 - [x] `./init.sh` (2026-06-05, feat-042) → 카드 **22개** 검증 OK, `FormationTactics` 전역 클래스 등록, battle/run_map/보스/result/UI 스모크 통과, 플레이테스트 루프 stage 1/2/5 전투 **21.1s/18.3s/14.6s**, 단위 테스트 **2671 단언** green. 종료 0. Godot 종료 시 resource leak 경고 1건은 기존 headless 종료 경고 계열로 테스트 실패는 아님.
@@ -102,4 +105,4 @@
 - 로드맵 — `docs/roadmap.md` / 구조·결정 이력 — `CHANGELOG.md` / 세계관·스키마 — `docs/worldview.md` / 스펙 — `docs/specs/`
 
 ## 다음 세션 메모
-`./init.sh` 2677단언 green. **feat-044 done** — 최종 보스까지 장기런 스모크를 추가했다. `tools/ui_feedback_smoke.gd`는 궁병 손패 선택 시 `엄호 +15%` 타일 라벨과 tooltip을 검증하고, `tools/long_run_smoke.gd`는 stage 1~15를 통과하며 stage 15 result=1·20.5s·wins=8·board=4·rows=6을 확인한다. Phase 4 9세력 확장은 정본 승인→CardVocab→validator→Resource→lord_select 순서가 고정됐고 G055/G056/G058/G060/G061/G062는 명칭 승인 대기 blocked. 푸시와 태그는 사용자 확인 후.
+`./init.sh` 2701단언 green. **feat-045 done** — 집중표적 체감 피드백을 추가했다. `tools/ui_feedback_smoke.gd`는 실제 전투 단계에서 적을 집중표적으로 지정해 현재 표적 tooltip, 힌트, 마커, `집중` 라벨과 빈 곳 클릭 자동 복귀를 검증한다. `tools/long_run_smoke.gd`는 여전히 stage 1~15를 통과하며 stage 15 result=1·20.5s·wins=8·board=4·rows=6을 확인한다. Phase 4 9세력 확장은 정본 승인→CardVocab→validator→Resource→lord_select 순서가 고정됐고 G055/G056/G058/G060/G061/G062는 명칭 승인 대기 blocked. 푸시와 태그는 사용자 확인 후.

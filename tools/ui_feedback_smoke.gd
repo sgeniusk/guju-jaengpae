@@ -19,6 +19,7 @@ func _run() -> void:
 	errors += await _run_map_event_case()
 	errors += await _battle_deploy_case()
 	errors += await _battle_formation_preview_case()
+	errors += await _battle_command_feedback_case()
 	errors += await _battle_reward_case()
 	if errors == 0:
 		print("✅ UI 툴팁/피드백 스모크 통과")
@@ -190,6 +191,55 @@ func _battle_formation_preview_case() -> int:
 		print("  전투 전술 미리보기 OK")
 	return errors
 
+func _battle_command_feedback_case() -> int:
+	var run_manager := root.get_node_or_null("/root/RunManager")
+	if run_manager == null:
+		return _fail("RunManager autoload 조회 실패")
+	run_manager.reset_run()
+	run_manager.ensure_started(LORD_ID)
+	run_manager.state.stage_index = 1
+	run_manager.state.castle_key = "1:1"
+	run_manager.state.board = {"0:0": &"general_guanyu"}
+	run_manager.state.board_levels = {"0:0": 1}
+	run_manager.state.hand.clear()
+	run_manager.state.deploy_cards_played = 1
+	run_manager.state.deploy_stage_index = 1
+	var battle = _instantiate_scene(BATTLE_SCENE_PATH)
+	if battle == null:
+		return _fail("battle.tscn 집중표적 인스턴스 생성 실패")
+	root.add_child(battle)
+	await _frames(8)
+	var errors := 0
+	if battle.has_method("_on_start_pressed"):
+		battle._on_start_pressed()
+	else:
+		errors += _fail("battle._on_start_pressed 없음")
+	await _frames(2)
+	battle._paused = true
+	if battle._sim.enemy_units.is_empty():
+		errors += _fail("집중표적 검증용 적 없음")
+	elif battle._ability_buttons.size() < 2:
+		errors += _fail("집중표적 버튼 없음")
+	else:
+		var target: BattleUnit = battle._sim.enemy_units[0]
+		var focus_button := battle._ability_buttons[1] as Button
+		focus_button.button_pressed = true
+		battle._on_focus_toggled()
+		battle._apply_hero_command_at(battle.field_to_screen(target.px, target.py))
+		await _frames(2)
+		errors += _assert_command_feedback(battle, target)
+		battle._apply_hero_command_at(Vector2(0.0, 0.0))
+		await _frames(2)
+		if battle._commanded_target != null:
+			errors += _fail("빈 곳 클릭 후 집중표적 해제 실패")
+		if battle._hint_label.text.find("범위 안 적 없음") < 0:
+			errors += _fail("빈 곳 클릭 자동 표적 문구 누락: %s" % battle._hint_label.text)
+	battle.queue_free()
+	await _frames(2)
+	if errors == 0:
+		print("  전투 집중표적 피드백 OK")
+	return errors
+
 func _battle_reward_case() -> int:
 	var run_manager := root.get_node_or_null("/root/RunManager")
 	if run_manager == null:
@@ -274,6 +324,26 @@ func _assert_tile_label_and_tooltip(battle: Node, block_key: String, text_needle
 	if label.tooltip_text.find(tooltip_needle) < 0:
 		return _fail("%s 누락: tooltip=%s expected~=%s" % [msg, label.tooltip_text, tooltip_needle])
 	return 0
+
+func _assert_command_feedback(battle: Node, target: BattleUnit) -> int:
+	var errors := 0
+	if battle._commanded_target != target:
+		errors += _fail("집중표적 대상 저장 실패")
+	if battle._hint_label.text.find(target.display_name) < 0 or battle._hint_label.text.find("장수 1명") < 0:
+		errors += _fail("집중표적 힌트 문구 누락: %s" % battle._hint_label.text)
+	var focus_button := battle._ability_buttons[1] as Button
+	if focus_button.tooltip_text.find("현재 %s" % target.display_name) < 0:
+		errors += _fail("집중표적 현재 target tooltip 누락: %s" % focus_button.tooltip_text)
+	if not battle._vis.has(target):
+		return errors + _fail("집중표적 target visual 없음")
+	var visual: Dictionary = battle._vis[target]
+	var marker := visual.get("command_marker", null) as Polygon2D
+	if marker == null or not marker.visible:
+		errors += _fail("집중표적 marker 표시 실패")
+	var label := visual.get("command_label", null) as Label
+	if label == null or not label.visible or label.text.find("집중") < 0:
+		errors += _fail("집중표적 label 표시 실패")
+	return errors
 
 func _buttons(node: Node) -> Array[Button]:
 	var out: Array[Button] = []

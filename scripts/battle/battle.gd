@@ -13,6 +13,7 @@ const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
 const _FormationRenderer := preload("res://scripts/battle/formation_renderer.gd")
 const _BattleFeel := preload("res://scripts/battle/battle_feel.gd")
+const _BattleCommandFeedback := preload("res://scripts/battle/battle_command_feedback.gd")
 const _FormationTactics := preload("res://scripts/run/formation_tactics.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
@@ -54,7 +55,7 @@ const BOSS_TEXTURE_PATHS := {
 var _phase: int = Phase.DEPLOY
 var _sim := BattleSim.new()
 var _lord: LordData
-var _vis: Dictionary = {}            # BattleUnit -> { root, body, hp, command_marker, hp_width, last_px, last_py }
+var _vis: Dictionary = {}            # BattleUnit -> { root, body, hp, command_marker, command_label, hp_width, last_px, last_py }
 var _building_vis: Dictionary = {}   # "col:row" -> { root, gold_label, gold_per_sec }
 var _tile_buttons: Dictionary = {}   # "col:row" -> { area, poly, label }
 var _placeholder_textures: Dictionary = {}
@@ -1063,7 +1064,7 @@ func _on_focus_toggled() -> void:
 	if _command_toggle_active:
 		_hint_label.text = "집중표적 — 적을 클릭하세요."
 	else:
-		_clear_hero_command(true)
+		_clear_hero_command(true, _BattleCommandFeedback.manual_clear_hint())
 	_sync_hud()
 
 func _on_pause_toggled() -> void:
@@ -1164,6 +1165,22 @@ func _spawn_visual(u: BattleUnit) -> void:
 	command_marker.position = Vector2(0.0, -6.0)
 	command_marker.visible = false
 	root.add_child(command_marker)
+	var command_label := Label.new()
+	command_label.text = ""
+	command_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	command_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	command_label.position = Vector2(-38.0, -size.y - 70.0)
+	command_label.size = Vector2(76.0, 44.0)
+	command_label.add_theme_font_size_override("font_size", 16)
+	command_label.add_theme_color_override("font_shadow_color", Color(0.02, 0.01, 0.0, 0.92))
+	command_label.add_theme_constant_override("shadow_offset_x", 2)
+	command_label.add_theme_constant_override("shadow_offset_y", 2)
+	command_label.modulate = Color(1.0, 0.84, 0.18, 1.0)
+	command_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	command_label.visible = false
+	if _damage_font != null:
+		command_label.add_theme_font_override("font", _damage_font)
+	root.add_child(command_label)
 	var texture := _unit_texture(u)
 	var body := _create_unit_body(u, texture, size)
 	root.add_child(body)
@@ -1188,7 +1205,7 @@ func _spawn_visual(u: BattleUnit) -> void:
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(name_label)
 	_units_layer.add_child(root)
-	_vis[u] = { "root": root, "body": body, "shadow": shadow, "base_color": body.modulate, "hp": hp, "command_marker": command_marker, "hp_width": size.x, "last_px": u.px, "last_py": u.py }
+	_vis[u] = { "root": root, "body": body, "shadow": shadow, "base_color": body.modulate, "hp": hp, "command_marker": command_marker, "command_label": command_label, "hp_width": size.x, "last_px": u.px, "last_py": u.py }
 	_position_visual(u)
 
 func _unit_name_label(u: BattleUnit) -> String:
@@ -1220,6 +1237,7 @@ func _sync_visuals() -> void:
 		if root != null:
 			root.queue_free()
 		_vis.erase(u)
+	var command_hero_count := _BattleCommandFeedback.controllable_hero_count(_sim.player_units)
 	for u in active_units:
 		if _vis.has(u):
 			_sync_unit_walk_animation(u)
@@ -1227,9 +1245,14 @@ func _sync_visuals() -> void:
 			var hp: ColorRect = _vis[u].get("hp", null)
 			if hp != null:
 				hp.size.x = float(_vis[u].get("hp_width", UNIT_W)) * u.hp_ratio()
+			var is_commanded := u == _commanded_target
 			var marker: Polygon2D = _vis[u].get("command_marker", null)
 			if marker != null:
-				marker.visible = u == _commanded_target
+				marker.visible = is_commanded
+			var command_label: Label = _vis[u].get("command_label", null)
+			if command_label != null:
+				command_label.visible = is_commanded
+				command_label.text = _BattleCommandFeedback.marker_text(command_hero_count) if is_commanded else ""
 	_update_wave_label()
 	_sync_hud()
 
@@ -1293,6 +1316,12 @@ func _sync_ability_bar() -> void:
 	_ability_buttons[0].disabled = _phase != Phase.DEPLOY or _selected_hand_index < 0
 	_ability_buttons[1].disabled = _phase != Phase.BATTLE
 	_ability_buttons[1].button_pressed = _command_toggle_active
+	_ability_buttons[1].tooltip_text = _BattleCommandFeedback.focus_button_tooltip(
+		_phase == Phase.BATTLE,
+		_command_toggle_active,
+		_commanded_target,
+		_BattleCommandFeedback.controllable_hero_count(_sim.player_units)
+	)
 
 func _sync_bottom_bars() -> void:
 	if _sim.enemy_units.size() > _enemy_force_max:
@@ -1429,6 +1458,56 @@ func _shake_camera() -> void:
 	tween.tween_property(_camera, "offset", Vector2(-5.0, 2.0), 0.05)
 	tween.tween_property(_camera, "offset", Vector2(3.0, -1.0), 0.05)
 	tween.tween_property(_camera, "offset", Vector2.ZERO, 0.08)
+
+func _spawn_command_vfx(target: BattleUnit, heroes: Array[BattleUnit]) -> void:
+	if _vfx_layer == null or target == null:
+		return
+	for hero: BattleUnit in heroes:
+		if hero == null or not hero.is_alive():
+			continue
+		_spawn_command_line(hero, target)
+	_spawn_command_banner(target, heroes.size())
+
+func _spawn_command_line(hero: BattleUnit, target: BattleUnit) -> void:
+	var line := Line2D.new()
+	line.width = 5.0
+	line.default_color = Color(1.0, 0.86, 0.18, 0.78)
+	line.z_index = VFX_RALLY_Z - 1
+	line.points = PackedVector2Array([
+		field_to_screen(hero.px, hero.py) + Vector2(0.0, -44.0),
+		field_to_screen(target.px, target.py) + Vector2(0.0, -72.0),
+	])
+	_vfx_layer.add_child(line)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(line, "width", 1.0, 0.36)
+	tween.tween_property(line, "modulate:a", 0.0, 0.36).set_delay(0.08)
+	tween.set_parallel(false)
+	tween.tween_callback(Callable(line, "queue_free"))
+
+func _spawn_command_banner(target: BattleUnit, hero_count: int) -> void:
+	var label := Label.new()
+	label.text = _BattleCommandFeedback.command_banner(target, hero_count)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.position = field_to_screen(target.px, target.py) + Vector2(-120.0, -148.0)
+	label.size = Vector2(240.0, 58.0)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.z_index = VFX_RALLY_Z
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_shadow_color", Color(0.02, 0.01, 0.0, 0.92))
+	label.add_theme_constant_override("shadow_offset_x", 3)
+	label.add_theme_constant_override("shadow_offset_y", 3)
+	if _damage_font != null:
+		label.add_theme_font_override("font", _damage_font)
+	label.modulate = Color(1.0, 0.86, 0.22, 1.0)
+	_vfx_layer.add_child(label)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 32.0, 0.62).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.62).set_delay(0.16)
+	tween.set_parallel(false)
+	tween.tween_callback(Callable(label, "queue_free"))
 
 func _spawn_damage_number(event: Dictionary) -> void:
 	if _vfx_layer == null:
@@ -1883,30 +1962,37 @@ func _is_boss(u: BattleUnit) -> bool:
 func _apply_hero_command_at(screen_pos: Vector2) -> void:
 	var target := _enemy_near_screen_pos(screen_pos)
 	if target == null:
-		_clear_hero_command(true)
+		_clear_hero_command(true, _BattleCommandFeedback.no_target_hint())
 		return
 	var heroes := _controllable_heroes()
 	if heroes.is_empty():
 		_clear_hero_command(false)
+		_hint_label.text = _BattleCommandFeedback.no_heroes_hint()
+		_sync_hud()
 		return
 	for hero in heroes:
 		hero.commanded_target = target
 	_commanded_target = target
-	_hint_label.text = "집중 표적 — %s" % target.display_name
+	_hint_label.text = _BattleCommandFeedback.command_hint(target, heroes.size())
+	AudioManager.play_sfx(&"ui")
+	_spawn_command_vfx(target, heroes)
+	_sync_visuals()
 
-func _clear_hero_command(update_hint: bool = true) -> void:
+func _clear_hero_command(update_hint: bool = true, hint_text: String = "") -> void:
 	for hero in _controllable_heroes():
 		hero.commanded_target = null
 	_commanded_target = null
 	if update_hint and _phase == Phase.BATTLE:
-		_hint_label.text = "자동 표적"
+		_hint_label.text = hint_text if not hint_text.is_empty() else "자동 표적"
+	_sync_hud()
 
 func _prune_command_target() -> void:
 	if _commanded_target == null:
 		return
 	if _commanded_target.is_alive() and _sim.enemy_units.has(_commanded_target):
 		return
-	_clear_hero_command(false)
+	var target_name := _commanded_target.display_name
+	_clear_hero_command(true, _BattleCommandFeedback.defeated_target_hint(target_name))
 
 func _controllable_heroes() -> Array[BattleUnit]:
 	var heroes: Array[BattleUnit] = []
@@ -1917,18 +2003,7 @@ func _controllable_heroes() -> Array[BattleUnit]:
 
 func _enemy_near_screen_pos(screen_pos: Vector2) -> BattleUnit:
 	var field_pos := _screen_to_field(screen_pos)
-	if field_pos.x < 0.0 or field_pos.x > BattleSim.FIELD_W or field_pos.y < 0.0 or field_pos.y > BattleSim.FIELD_H:
-		return null
-	var best: BattleUnit = null
-	var best_d := COMMAND_PICK_RADIUS
-	for enemy in _sim.enemy_units:
-		if enemy == null or not enemy.is_alive():
-			continue
-		var d := enemy.position().distance_to(field_pos)
-		if d <= best_d:
-			best_d = d
-			best = enemy
-	return best
+	return _BattleCommandFeedback.nearest_enemy_to_field(field_pos, _sim.enemy_units, COMMAND_PICK_RADIUS)
 
 func _screen_to_field(screen_pos: Vector2) -> Vector2:
 	return Vector2(
