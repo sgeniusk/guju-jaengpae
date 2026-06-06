@@ -1164,11 +1164,7 @@ func _spawn_visual(u: BattleUnit) -> void:
 	var root := Node2D.new()
 	root.position = field_to_screen(u.px, u.py)
 	root.y_sort_enabled = true
-	var shadow := Polygon2D.new()
-	shadow.polygon = _ellipse_points(size.x * 0.28, size.y * 0.075, 18)
-	shadow.color = Color(0.02, 0.01, 0.0, 0.34)
-	shadow.position = Vector2(0.0, -3.0)
-	shadow.z_index = -2
+	var shadow := _make_ground_shadow(size, Vector2(0.0, 0.0), 0.34, 0.28, 0.075)
 	root.add_child(shadow)
 	var command_marker := Polygon2D.new()
 	command_marker.polygon = PackedVector2Array([Vector2(0.0, -18.0), Vector2(34.0, 0.0), Vector2(0.0, 18.0), Vector2(-34.0, 0.0)])
@@ -1890,7 +1886,11 @@ func _create_formation_body(u: BattleUnit) -> Node2D:
 		_add_retinue_members(group, u)
 		var main_texture := _unit_texture(u)
 		var main := _create_single_unit_body(u, main_texture, Vector2(GENERAL_BODY_W, GENERAL_BODY_H), _unit_walk_sheet_path(u))
-		main.position += Vector2(0.0, -18.0)
+		var main_offset := Vector2(0.0, -10.0)
+		var main_shadow := _make_ground_shadow(Vector2(GENERAL_BODY_W, GENERAL_BODY_H), main_offset, 0.26, 0.24, 0.055)
+		main_shadow.z_index = -5
+		group.add_child(main_shadow)
+		main.position += main_offset
 		main.z_index = 20
 		group.add_child(main)
 	else:
@@ -1900,6 +1900,9 @@ func _create_formation_body(u: BattleUnit) -> Node2D:
 		var walk_path := _walk_sheet_path_for_texture(texture_path)
 		var offsets := _FormationRenderer.troop_offsets(count)
 		for i in count:
+			var member_shadow := _make_ground_shadow(Vector2(UNIT_MEMBER_W, UNIT_MEMBER_H), offsets[i], 0.22, 0.30, 0.055)
+			member_shadow.z_index = i - 20
+			group.add_child(member_shadow)
 			var member := _create_single_unit_body(u, texture, Vector2(UNIT_MEMBER_W, UNIT_MEMBER_H), walk_path)
 			member.position += offsets[i]
 			member.z_index = i
@@ -1915,10 +1918,23 @@ func _add_retinue_members(group: Node2D, u: BattleUnit) -> void:
 	var walk_path := _walk_sheet_path_for_texture(texture_path)
 	var offsets := _FormationRenderer.retinue_offsets(retinue)
 	for i in retinue:
+		var member_shadow := _make_ground_shadow(Vector2(42.0, 48.0), offsets[i], 0.22, 0.30, 0.055)
+		member_shadow.z_index = i - 20
+		group.add_child(member_shadow)
 		var member := _create_single_unit_body(u, texture, Vector2(42.0, 48.0), walk_path)
 		member.position += offsets[i]
 		member.z_index = i
 		group.add_child(member)
+
+func _make_ground_shadow(target_size: Vector2, foot_offset: Vector2 = Vector2.ZERO, alpha: float = 0.30, width_scale: float = 0.28, height_scale: float = 0.065) -> Polygon2D:
+	var shadow := Polygon2D.new()
+	shadow.name = "GroundShadow"
+	shadow.set_meta(&"ground_shadow", true)
+	shadow.polygon = _ellipse_points(maxf(8.0, target_size.x * width_scale), maxf(3.0, target_size.y * height_scale), 18)
+	shadow.color = Color(0.02, 0.01, 0.0, alpha)
+	shadow.position = foot_offset + Vector2(0.0, -2.0)
+	shadow.z_index = -20
+	return shadow
 
 func _apply_unit_body_visuals(body: Node2D, u: BattleUnit, texture: Texture2D, target_size: Vector2) -> void:
 	if body == null:

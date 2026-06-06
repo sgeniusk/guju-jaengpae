@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-066 전투 유닛 접지감 보강
+전투 유닛이 공중에 떠 보이는 느낌을 줄이도록 분대/호위/장수 visual의 발밑 shadow를 보강했다.
+- **발밑 ground shadow** — `battle.gd`가 root shadow와 분대/호위 병사별 작은 shadow에 `ground_shadow` meta를 붙이고, 병사 발 위치 근처에 배치한다.
+- **장수 본체 위치 보정** — 장수 본체의 위쪽 오프셋을 -18px에서 -10px로 낮추고 본체 발밑 shadow를 추가해 호위병 위에 떠 있는 느낌을 줄였다.
+- **수치 불변** — 전투 수치, 이동, 충돌, 승패 조건은 바꾸지 않았다. 렌더 계층만 보정했다.
+- **검증** — `tools/ui_feedback_smoke.gd`가 첫 수동 전투 시작 후 ground shadow meta 노드 생성을 확인한다. `./init.sh` 카드 22개, 단위 테스트 2982/2982 green.
+
 ## 2026-06-06 — feat-065 전투 화면 정보 밀도 정리
 전투 화면 중앙에서 현재 전황을 한 줄로 읽을 수 있도록 top-center HUD를 보강했다.
 - **BattleHudState 전황 helper** — `combat_summary()`가 phase, stage, wave, 아군/적 visible soldiers, 속도/정지/auto 상태를 `전황 — ...` 문구와 tooltip으로 순수 계산한다.

@@ -524,6 +524,9 @@ func _assert_manual_first_play_started(battle: Node, run_manager) -> int:
 		errors += _fail("수동 첫 플레이 charge line VFX 부족: %d" % charge_count)
 	if pulse_count < 3:
 		errors += _fail("수동 첫 플레이 clash pulse VFX 부족: %d" % pulse_count)
+	var ground_shadow_count := _count_bool_meta(battle._units_layer, &"ground_shadow")
+	if ground_shadow_count < 10:
+		errors += _fail("수동 첫 플레이 ground shadow 부족: %d" % ground_shadow_count)
 	errors += _assert_hit_impact_vfx(battle)
 	return errors
 
@@ -607,6 +610,14 @@ func _count_hit_vfx_meta(node: Node, kind: String) -> int:
 	var count := 1 if String(node.get_meta("hit_impact_vfx", "")) == kind else 0
 	for child in node.get_children():
 		count += _count_hit_vfx_meta(child, kind)
+	return count
+
+func _count_bool_meta(node: Node, key: StringName) -> int:
+	if node == null:
+		return 0
+	var count := 1 if bool(node.get_meta(key, false)) else 0
+	for child in node.get_children():
+		count += _count_bool_meta(child, key)
 	return count
 
 func _controls(node: Node) -> Array[Control]:
