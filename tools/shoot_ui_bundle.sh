@@ -12,6 +12,8 @@ SHOP_STAGE="${SHOP_STAGE:-4}"
 RESULT_LORD="${RESULT_LORD:-lord_liubei}"
 RESULT_LOSS_STAGE="${RESULT_LOSS_STAGE:-3}"
 RESULT_WIN_STAGE="${RESULT_WIN_STAGE:-15}"
+FIRST_BOARD_LORD="${FIRST_BOARD_LORD:-lord_liubei}"
+FIRST_BOARD_STAGE="${FIRST_BOARD_STAGE:-1}"
 SHOOT_FIGHT_FRAMES="${SHOOT_FIGHT_FRAMES:-560}"
 
 mkdir -p "$SHOT_DIR"
@@ -20,6 +22,11 @@ SCENE="res://scenes/screens/lord_select.tscn" \
 	SHOT_KIND="lord_select" \
 	SHOT_DIR="$SHOT_DIR" \
 	"$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_scene.tscn
+
+LORD="$FIRST_BOARD_LORD" \
+	SHOOT_STAGE="$FIRST_BOARD_STAGE" \
+	SHOT_DIR="$SHOT_DIR" \
+	"$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_first_board_states.tscn
 
 for lord in $LORDS; do
 	for stage in $FLOW_STAGES; do
@@ -60,6 +67,8 @@ LORD="$RESULT_LORD" \
 	--shop-stage "$SHOP_STAGE" \
 	--result-lord "$RESULT_LORD" \
 	--result-loss-stage "$RESULT_LOSS_STAGE" \
-	--result-win-stage "$RESULT_WIN_STAGE"
+	--result-win-stage "$RESULT_WIN_STAGE" \
+	--first-board-lord "$FIRST_BOARD_LORD" \
+	--first-board-stage "$FIRST_BOARD_STAGE"
 
 printf 'UI screenshot bundle: %s\n' "$SHOT_DIR"

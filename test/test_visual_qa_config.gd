@@ -17,6 +17,10 @@ func test_shot_path_names_kind_lord_and_stage() -> void:
 	var path := _VisualQaConfig.shot_path("battle fight", &"lord_caocao", 5, "/tmp/qa/")
 	eq(path, "/tmp/qa/battle_fight_lord_caocao_stage_5.png", "전투 스크린샷 파일명")
 
+func test_first_board_shot_path_names_state_lord_and_stage() -> void:
+	var path := _VisualQaConfig.shot_path("battle_first_scheme", &"lord_liubei", 1, "/tmp/qa")
+	eq(path, "/tmp/qa/battle_first_scheme_lord_liubei_stage_1.png", "첫 보드 상태 스크린샷 파일명")
+
 func test_shot_path_omits_stage_for_scene_captures() -> void:
 	var path := _VisualQaConfig.shot_path("lord_select", &"all", 0, "/tmp/qa")
 	eq(path, "/tmp/qa/lord_select_all.png", "씬 스크린샷 파일명")

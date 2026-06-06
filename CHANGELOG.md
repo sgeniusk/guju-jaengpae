@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-068 첫 보드 스크린샷 QA 갱신
+첫 전투 배치 보드의 핵심 4상태가 durable screenshot bundle에도 남도록 QA 하네스를 보강했다.
+- **첫 보드 전용 촬영** — `tools/shoot_first_board_states.gd`가 성 선택 전 `성 후보`, 성 선택 후 `손패 선택`, 계략 선택 후 `계략 버튼`, 병종 선택 후 `배치 가능` 상태를 차례로 PNG로 저장한다.
+- **Bundle 연결** — `tools/shoot_ui_bundle.sh`가 군주 선택 촬영 뒤 첫 보드 4장을 함께 생성하고, `FIRST_BOARD_LORD`/`FIRST_BOARD_STAGE`로 대상 런을 바꿀 수 있게 했다.
+- **stdlib PNG validator** — `tools/validate_screenshot_bundle.py`가 첫 보드 4장을 필수 파일로 요구하고, PIL 의존성 없이 PNG signature/chunk/해상도/투명도/색상 수를 검사한다.
+- **검증** — `/tmp/guju-feat-068-ui` 최소 bundle 11장 검증 통과, `./init.sh` 카드 22개, 단위 테스트 2983/2983 green.
+
 ## 2026-06-06 — feat-067 첫 전투 보드 가독성 polish
 첫 전투 배치 보드의 빈 칸이 현재 할 일을 직접 말하도록 label과 tooltip을 보강했다.
 - **성 후보 안내** — 성 위치를 고르기 전 빈 타일은 `성 후보` label과 성 위치 선택 tooltip을 표시한다.
