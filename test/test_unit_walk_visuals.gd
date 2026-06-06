@@ -174,7 +174,8 @@ func test_battlefield_floor_context_draws_persistent_band_and_lanes() -> void:
 	eq(_count_bool_meta(view._background_layer, &"battlefield_depth_lane"), BattleSim.COL_COUNT, "배경 레이어에 3레인 진군 바닥선")
 	truthy(_count_bool_meta(view._iso_base_layer, &"battlefield_tile_contact") >= BattleSim.COL_COUNT * RunManager.get_board_rows(), "보드 타일마다 접지 shadow")
 	eq(_count_bool_meta(view._iso_base_layer, &"battlefield_tile_outline"), BattleSim.COL_COUNT * RunManager.get_board_rows(), "보드 타일은 지면 outline으로 표시")
-	truthy(_max_tile_sprite_alpha(view) <= 0.14, "타일 fill은 공중 plate처럼 보이지 않도록 낮은 alpha")
+	truthy(_max_tile_sprite_alpha(view) <= 0.08, "타일 fill은 공중 plate처럼 보이지 않도록 낮은 alpha")
+	truthy(_max_tile_outline_alpha(view) <= 0.08, "기본 타일 outline은 공중 격자처럼 보이지 않도록 낮은 alpha")
 	view.free()
 
 func test_deploy_unit_feet_share_ground_grid_and_draw_above_it() -> void:
@@ -195,10 +196,38 @@ func test_deploy_unit_feet_share_ground_grid_and_draw_above_it() -> void:
 		var ground_center := view.field_to_screen_position(tile_pos)
 		var foot_center := view._field_foot_screen_position(tile_pos)
 		almost(root.position.y, foot_center.y, 0.001, "유닛 발밑 y는 선택 타일 앞쪽 foot 지점과 일치")
-		truthy(root.position.y >= ground_center.y + 54.0, "유닛은 타일 하단보다 앞쪽 footline에 선다")
+		truthy(root.position.y >= ground_center.y + 66.0, "유닛은 타일 하단보다 앞쪽 footline에 선다")
 		var unit_total_z := int(view._units_layer.z_index) + root.z_index
 		var field_total_z := int(view._iso_base_layer.z_index) + _max_tile_canvas_z(view)
 		truthy(unit_total_z > field_total_z, "배치 유닛은 같은 지면 격자 뒤가 아니라 위에 그려짐")
+	view.free()
+
+func test_occupied_tiles_hide_field_labels_but_keep_state_tooltips() -> void:
+	RunManager.reset_run()
+	RunManager.ensure_started(&"lord_liubei")
+	RunManager.state.castle_key = "1:1"
+	RunManager.state.board = {"0:0": &"troop_infantry"}
+	RunManager.state.board_levels = {"0:0": 1}
+	var view := BattleView.new()
+	view._bind_scene_nodes()
+	view._build_field()
+	view._refresh_board_tiles()
+
+	var occupied: Dictionary = view._tile_buttons.get("0:0", {})
+	var occupied_label := occupied.get("label", null) as Label
+	not_null(occupied_label, "점유 타일 label 노드 존재")
+	if occupied_label != null:
+		falsy(occupied_label.visible, "점유 타일 field label은 유닛 앞을 덮지 않도록 숨김")
+		eq(occupied_label.text, "", "점유 타일 field label 텍스트 제거")
+	truthy(String(occupied.get("state_label", "")).find("보병") >= 0, "점유 타일 state label은 유지")
+	truthy(String(occupied.get("tooltip", "")).find("보드 배치") >= 0, "점유 타일 tooltip은 유지")
+
+	var castle_tile: Dictionary = view._tile_buttons.get("1:1", {})
+	var castle_label := castle_tile.get("label", null) as Label
+	not_null(castle_label, "성 타일 label 노드 존재")
+	if castle_label != null:
+		falsy(castle_label.visible, "성 field label은 성 visual 앞을 덮지 않도록 숨김")
+	truthy(String(castle_tile.get("state_label", "")).find("성") >= 0, "성 타일 state label은 유지")
 	view.free()
 
 func _player_unit(troop_type: String) -> BattleUnit:
@@ -237,6 +266,16 @@ func _max_tile_sprite_alpha(view: Node) -> float:
 		var poly := (value as Dictionary).get("poly", null) as Polygon2D
 		if poly != null:
 			max_alpha = maxf(max_alpha, poly.color.a)
+	return max_alpha
+
+func _max_tile_outline_alpha(view: Node) -> float:
+	var max_alpha := 0.0
+	for value in view._tile_buttons.values():
+		if not (value is Dictionary):
+			continue
+		var outline := (value as Dictionary).get("outline", null) as Line2D
+		if outline != null:
+			max_alpha = maxf(max_alpha, outline.default_color.a)
 	return max_alpha
 
 func _max_tile_canvas_z(view: Node) -> int:

@@ -2,8 +2,14 @@
 
 이 문서는 **Codex CLI가 다음 세션을 이어받기 위한 진입점**이다. 에이전트-중립 규칙은 [AGENTS.md](AGENTS.md), 세계관 정본은 [docs/worldview.md](docs/worldview.md), 구조 이력은 [CHANGELOG.md](CHANGELOG.md)를 본다.
 
-## 현재 상태 (2026-06-07) — feat-084 교전 phase 군세 충돌 polish 완료
-`./init.sh` 카드 **22개 / 3117 단언 green**. 최신 완료는 `feat-084-combat-clash-pressure`다. 교전 시작 순간의 함성, 충돌 압력, 카메라 반응이 실제 아군·적 visible soldier 규모를 반영하도록 전투 체감을 보강했다.
+## 현재 상태 (2026-06-07) — feat-085 전장 보드 stencil/depth 재정리 완료
+`./init.sh` 카드 **22개 / 3126 단언 green**. 최신 완료는 `feat-085-battlefield-board-stencil-depth`다. 사용자가 지적한 “필드 9칸이 하늘에 떠 있고, 유닛이 필드 뒤에서 나타나는 느낌”을 줄이기 위해 배치 보드 표식과 점유 라벨을 다시 낮췄다.
+
+`battle.gd`는 `FIELD_FOOT_OFFSET_Y`를 68로 전진시켜 유닛/성/건물 footline이 타일 중심보다 더 앞쪽 지면에 서게 한다. 기본 tile fill은 0으로 시작하고 contact shadow, idle outline, 성/점유/빈 타일 alpha를 더 낮췄다. 성과 점유 카드 field label은 숨기고 `state_label`/tooltip만 유지한다. `엄호 +15%` 같은 전술 preview 라벨은 계속 표시된다.
+
+`test_unit_walk_visuals.gd`와 `tools/ui_feedback_smoke.gd`는 fill<=0.08, outline<=0.10, footline>=tile+66, 점유 label hidden, 전술 preview 유지 계약을 검증한다.
+
+직전 `feat-084`는 교전 시작 순간의 함성, 충돌 압력, 카메라 반응이 실제 아군·적 visible soldier 규모를 반영하도록 보강했다.
 
 `BattleFeel.clash_profile()`은 아군/적 visible soldier 수, 총 병력, 레인 수, intensity, pressure marker 수를 계산한다. `battle.gd`는 이 profile로 `전군 돌격! 아군 12 · 적 25` 같은 시작 hint, `군세 12 : 25` 보조 rally tag, 중앙 pressure VFX, charge line 폭, camera shake 강도를 조절한다.
 
@@ -11,7 +17,7 @@
 
 `tools/shoot_battle.gd`는 QA용 보드 준비를 `_prepare_demo_board()`로 분리했고, 유닛/건물만 시연 배치하며 계략은 보드에 심지 않는다. 직접 배치 후 `deploy_cards_played = 1`, `deploy_stage_index = target_stage`를 명시하고, 유닛이 없으면 촬영용 보병을 보충한다. `SHOT_STRICT=1` 실행은 교전 phase 진입 실패를 종료 코드 1로 드러낸다.
 
-`battle.gd`는 `VIEW_ORIGIN.y`를 한 번 더 낮추고 `FIELD_FOOT_OFFSET_Y`를 56으로 키워 유닛 발이 타일 중심이나 하단 내부가 아니라 격자 앞쪽 지면에 서도록 한다. 성/배치/빈 타일 fill·outline alpha도 더 낮춰 밝은 9칸 UI판이 유닛 주변에 남지 않게 했다.
+`battle.gd`는 직전 보정에서 `VIEW_ORIGIN.y`를 한 번 더 낮추고 `FIELD_FOOT_OFFSET_Y`를 56으로 키워 유닛 발이 타일 중심이나 하단 내부가 아니라 격자 앞쪽 지면에 서도록 했다. feat-085에서는 footline과 보이는 field label/alpha 계약을 다시 강화했다.
 
 `VisualQaConfig`에는 `SHOT_SKIP_POST_DRAW=1` 우회 옵션을 추가했다. 이번 세션에서 GUI Godot 실행은 macOS 표시 서비스 연결 오류 뒤 장시간 멈춰 새 PNG 캡처를 남기지 못했다. headless screenshot 하네스는 기대대로 `headless_display`를 출력하고 hang 없이 종료한다.
 
@@ -26,12 +32,14 @@
 직전 `feat-077`은 배경 지면 밴드와 3레인 진군 바닥선을 추가해 보드, 성, 유닛의 지면 축을 연결했다.
 
 ## 최신 검증
+- `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-085-unit.log --script res://test/runner.gd` — 단위 테스트 3126/3126 green.
+- `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-085-ui.log --script res://tools/ui_feedback_smoke.gd` — 배치 필드 alpha, footline, 점유 label hidden, 전술 preview 유지 포함 UI smoke green.
+- `./init.sh` — 카드 22개 검증 OK, UI smoke, 저장/이어하기 smoke, playtest loop, 장기런 tempo gate, 단위 테스트 3126/3126 포함 전체 green.
 - `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-084-unit.log --script res://test/runner.gd` — 단위 테스트 3117/3117 green.
 - `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-084-ui.log --script res://tools/ui_feedback_smoke.gd` — 군세 숫자 hint, force_roar, pressure VFX 포함 UI smoke green.
 - `HOME=$PWD/.godot/home SHOT_DIR=/tmp/guju-feat-084-headless LORD=lord_liubei SHOOT_STAGE=5 SHOOT_FIGHT_FRAMES=4 SHOT_STRICT=1 godot --headless --path . --scene res://tools/shoot_battle.tscn` — `battle_phase=1`, `deploy_cards_played=1`, `board_units=3`, headless PNG 저장은 기대대로 `headless_display`.
 - `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-083-unit-2.log --script res://test/runner.gd` — 단위 테스트 3072/3072 green.
 - `HOME=$PWD/.godot/home SHOT_DIR=/tmp/guju-feat-083-headless LORD=lord_liubei SHOOT_STAGE=5 SHOOT_FIGHT_FRAMES=2 SHOT_STRICT=1 godot --headless --path . --scene res://tools/shoot_battle.tscn` — `battle_phase=1`, `deploy_cards_played=1`, `board_units=3`, headless PNG 저장은 기대대로 `headless_display`.
-- `./init.sh` — 카드 22개 검증 OK, UI smoke, 저장/이어하기 smoke, playtest loop, 장기런 tempo gate, 단위 테스트 3117/3117 포함 전체 green.
 
 ## 작업 규칙
 - 코드를 쓰기 전 `pwd`, `AGENTS.md`, `CLAUDE.md`, `./init.sh`, `feature_list.json`, `progress.md` 확인.
@@ -44,7 +52,7 @@
 ## 다음 작업 후보
 1. **배치 카드 UI 정리** — 왼쪽 패널 카드/버튼이 아직 정보 텍스트 중심이다. 카드 3장 선택 UX를 레퍼런스처럼 큰 카드/현재 선택/발동 버튼 분리로 정리한다.
 2. **GUI 표시 드라이버 screenshot bundle 재확인** — headless는 non-hang과 phase만 검증한다. 실제 PNG 품질은 GUI 표시 드라이버에서 bundle을 다시 돌려 확인해야 한다.
-3. **중후반 군세 충돌 가독성 QA** — feat-084가 시작 압력은 강화했지만, 병력이 많아지는 중후반에 VFX/유닛/HP bar가 겹치는지는 따로 확인해야 한다.
+3. **실제 플레이 접지감 재확인** — feat-085가 자동 계약은 강화했지만, 사용자가 보는 GUI에서 9칸 stencil과 유닛 footline이 충분히 자연스러운지 재확인이 필요하다.
 
 천계·마계 확장 관련 G055/G056/G058/G060/G061/G062는 nation id, 군주명, resource id 정본 승인 전 보류한다.
 
@@ -66,4 +74,4 @@
 - Codex goal은 완성판까지 계속 활성이다. 현재 피처 단위 완료가 전체 goal 완료는 아니다.
 
 ## Codex 시작 프롬프트
-> 구주쟁패(`/Users/taewookkim/dev/guju-jaengpae`) 이어서. 현재 브랜치는 `codex/feat-040-mvp`. `AGENTS.md`, `CLAUDE.md`, `progress.md`, `feature_list.json`를 읽고 `./init.sh` baseline을 먼저 확인한다. 최신 완료는 feat-084 교전 phase 군세 충돌 polish다. `BattleFeel.clash_profile()`은 아군/적 visible soldier 수와 intensity를 계산하고, `battle.gd`는 `전군 돌격! 아군 12 · 적 25` hint, `군세 12 : 25` 보조 tag, pressure VFX, charge line 폭, camera shake를 profile 기반으로 조절한다. 직전 feat-083에서 `tools/shoot_battle.gd`는 QA용 직접 배치 후 `deploy_cards_played=1`, `deploy_stage_index=target_stage`를 명시해 `battle_fight`가 실제 교전 phase에서 캡처를 시도한다. GUI PNG 품질 검증은 표시 드라이버에서 아직 재확인 필요하다. G055/G056/G058/G060/G061/G062는 명칭 승인 대기 blocked이므로 사용자/편집장 승인 전 천계·마계 nation id와 Resource를 추가하지 않는다. push/tag는 사용자 확인 전 금지다. 다음은 배치 카드 UI 정리, GUI 표시 드라이버 screenshot bundle 재확인, 중후반 군세 충돌 가독성 QA 중 하나를 잡아 `docs/specs/` 스펙 → 구현 → `./init.sh` green → 상태 파일 갱신 → 중요 커밋 순서로 진행한다.
+> 구주쟁패(`/Users/taewookkim/dev/guju-jaengpae`) 이어서. 현재 브랜치는 `codex/feat-040-mvp`. `AGENTS.md`, `CLAUDE.md`, `progress.md`, `feature_list.json`를 읽고 `./init.sh` baseline을 먼저 확인한다. 최신 완료는 feat-085 전장 보드 stencil/depth 재정리다. `battle.gd`는 `FIELD_FOOT_OFFSET_Y=68`로 유닛/성/건물 footline을 더 앞쪽 지면에 세우고, 기본/성/점유/빈 타일 fill·outline alpha를 낮췄으며 성·점유 field label은 숨기고 state/tooltip만 유지한다. `test_unit_walk_visuals.gd`와 UI smoke가 fill<=0.08, outline<=0.10, footline>=tile+66, 점유 label hidden, 전술 preview 유지 계약을 검증한다. 직전 feat-084는 군세 충돌 pressure polish다. GUI PNG 품질 검증은 표시 드라이버에서 아직 재확인 필요하다. G055/G056/G058/G060/G061/G062는 명칭 승인 대기 blocked이므로 사용자/편집장 승인 전 천계·마계 nation id와 Resource를 추가하지 않는다. push/tag는 사용자 확인 전 금지다. 다음은 배치 카드 UI 정리, GUI 표시 드라이버 screenshot bundle 재확인, 실제 플레이 접지감 재확인 중 하나를 잡아 `docs/specs/` 스펙 → 구현 → `./init.sh` green → 상태 파일 갱신 → 중요 커밋 순서로 진행한다.

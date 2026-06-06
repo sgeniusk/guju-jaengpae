@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-07 — feat-085 전장 보드 stencil/depth 재정리
+사용자가 다시 지적한 “필드 9칸이 하늘에 떠 있고, 유닛이 필드 뒤에 나타나는 느낌”을 보이는 보드 표식과 점유 라벨 차원에서 줄였다.
+- **footline 추가 전진** — `FIELD_FOOT_OFFSET_Y`를 68로 키워 유닛, 성, 건물 발이 타일 중심/하단보다 더 앞쪽 지면에 서게 했다.
+- **보드 stencil화** — 기본 tile fill은 0으로 시작하고 contact shadow, idle outline, 성/점유/빈 타일 alpha를 더 낮춰 9칸이 하나의 공중판처럼 뭉쳐 보이지 않게 했다.
+- **점유 라벨 숨김** — 성과 배치된 카드의 field label은 숨기고 `state_label`/tooltip만 유지한다. 정보는 유닛 이름표와 왼쪽 보드 요약이 맡고, `엄호 +15%` 같은 전술 preview 라벨은 계속 표시한다.
+- **검증** — `test_unit_walk_visuals.gd`와 `tools/ui_feedback_smoke.gd`가 fill<=0.08, outline<=0.10, footline>=tile+66, 점유 label hidden, 전술 preview 유지 계약을 검증한다. `./init.sh` 카드 22개, 단위 테스트 3126/3126 green.
+
 ## 2026-06-07 — feat-084 교전 phase 군세 충돌 polish
 전투 시작 순간이 고정 이펙트가 아니라 실제 양측 군세 규모를 반영하도록 보강했다.
 - **군세 profile** — `BattleFeel.clash_profile()`이 아군/적 visible soldier 수, 총 병력, 레인 수, intensity, pressure marker 수를 계산한다.

@@ -27,7 +27,7 @@ const VIEW_SCALE_X := 1.28
 const VIEW_SCALE_Y := 0.62
 const ISO_HALF_W := 96.0
 const ISO_HALF_H := 48.0
-const FIELD_FOOT_OFFSET_Y := 56.0
+const FIELD_FOOT_OFFSET_Y := 68.0
 const TILE_TEXTURE_SCALE := 0.75
 const FIELD_LAYER_Z := 0
 const BACKGROUND_FLOOR_BAND_Z := -960
@@ -546,14 +546,14 @@ func _build_iso_base() -> void:
 			tile_sprite.position = center
 			tile_sprite.scale = Vector2(TILE_TEXTURE_SCALE, TILE_TEXTURE_SCALE)
 			tile_sprite.z_index = FIELD_TILE_Z
-			tile_sprite.modulate = Color(0.78, 0.70, 0.52, 0.08)
+			tile_sprite.modulate = Color(0.78, 0.70, 0.52, 0.0)
 			_iso_base_layer.add_child(tile_sprite)
 			var fallback_poly: Polygon2D = null
 			if tile_texture == null:
 				fallback_poly = Polygon2D.new()
 				fallback_poly.polygon = _diamond_points()
 				fallback_poly.position = center
-				fallback_poly.color = Color(0.20, 0.24, 0.16, 0.08)
+				fallback_poly.color = Color(0.20, 0.24, 0.16, 0.0)
 				fallback_poly.z_index = FIELD_TILE_Z
 				_iso_base_layer.add_child(fallback_poly)
 			var tile_outline := _make_tile_ground_outline(center)
@@ -565,7 +565,7 @@ func _build_iso_base() -> void:
 			label.size = Vector2(116.0, 24.0)
 			label.z_index = FIELD_LABEL_Z
 			label.add_theme_font_size_override("font_size", 12)
-			label.modulate = Color(0.10, 0.07, 0.03, 0.86)
+			label.modulate = Color(0.10, 0.07, 0.03, 0.76)
 			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			_iso_base_layer.add_child(label)
 			var area := Area2D.new()
@@ -733,7 +733,7 @@ func _make_tile_contact_shadow(center: Vector2) -> Polygon2D:
 	shadow.set_meta(&"battlefield_tile_contact", true)
 	shadow.polygon = _ellipse_points(72.0, 18.0, 18)
 	shadow.position = center + Vector2(0.0, FIELD_FOOT_OFFSET_Y)
-	shadow.color = Color(0.02, 0.01, 0.0, 0.050)
+	shadow.color = Color(0.02, 0.01, 0.0, 0.026)
 	shadow.z_index = FIELD_TILE_SHADOW_Z
 	return shadow
 
@@ -743,8 +743,8 @@ func _make_tile_ground_outline(center: Vector2) -> Line2D:
 	outline.set_meta(&"battlefield_tile_outline", true)
 	outline.points = _diamond_points()
 	outline.closed = true
-	outline.width = 1.4
-	outline.default_color = Color(0.88, 0.82, 0.62, 0.12)
+	outline.width = 1.0
+	outline.default_color = Color(0.88, 0.82, 0.62, 0.055)
 	outline.position = center + Vector2(0.0, 2.0)
 	outline.z_index = FIELD_TILE_OUTLINE_Z
 	outline.antialiased = true
@@ -1006,26 +1006,26 @@ func _refresh_board_tiles() -> void:
 		var outline := tile.get("outline", null) as Line2D
 		var area := tile.get("area", null) as Area2D
 		if key == castle_key:
-			_set_tile_feedback(tile, "성", "선택한 성 위치입니다.", true)
+			_set_tile_feedback(tile, "성", "선택한 성 위치입니다.", false, "성")
 			if poly != null:
-				poly.color = Color(0.48, 0.28, 0.18, 0.055)
+				poly.color = Color(0.48, 0.28, 0.18, 0.014)
 			if sprite != null:
-				sprite.modulate = Color(1.10, 0.88, 0.56, 0.055)
+				sprite.modulate = Color(1.10, 0.88, 0.56, 0.014)
 			if outline != null:
-				outline.default_color = Color(1.0, 0.76, 0.42, 0.12)
+				outline.default_color = Color(1.0, 0.76, 0.42, 0.052)
 			if area != null:
 				area.input_pickable = false
 		elif board.has(key):
 			var card := CardLibrary.get_card(StringName(board[key]))
 			var board_label := "%s Lv.%d" % [card.display_name, RunManager.get_board_level(key)] if card != null else String(board[key])
 			var board_tooltip := _CardUiText.tooltip(card) if card != null else String(board[key])
-			_set_tile_feedback(tile, board_label, board_tooltip, true)
+			_set_tile_feedback(tile, board_label, board_tooltip, false, board_label)
 			if poly != null:
-				poly.color = Color(0.24, 0.42, 0.26, 0.050)
+				poly.color = Color(0.24, 0.42, 0.26, 0.012)
 			if sprite != null:
-				sprite.modulate = Color(0.98, 1.0, 0.78, 0.050)
+				sprite.modulate = Color(0.98, 1.0, 0.78, 0.012)
 			if outline != null:
-				outline.default_color = Color(0.82, 1.0, 0.64, 0.10)
+				outline.default_color = Color(0.82, 1.0, 0.64, 0.044)
 			if area != null:
 				area.input_pickable = false
 		else:
@@ -1042,15 +1042,15 @@ func _refresh_board_tiles() -> void:
 				if _phase != Phase.DEPLOY:
 					poly.color = Color(0.17, 0.27, 0.17, 0.0)
 				elif not preview.is_empty():
-					poly.color = Color(0.40, 0.54, 0.20, 0.16)
+					poly.color = Color(0.40, 0.54, 0.20, 0.060)
 				elif not RunManager.has_castle():
-					poly.color = Color(0.54, 0.36, 0.18, 0.12)
+					poly.color = Color(0.54, 0.36, 0.18, 0.030)
 				elif _selected_hand_index < 0:
-					poly.color = Color(0.23, 0.34, 0.30, 0.07)
+					poly.color = Color(0.23, 0.34, 0.30, 0.016)
 				elif not RunManager.can_place_hand_card(_selected_hand_index):
-					poly.color = Color(0.32, 0.30, 0.25, 0.06)
+					poly.color = Color(0.32, 0.30, 0.25, 0.014)
 				else:
-					poly.color = Color(0.25, 0.42, 0.28, 0.10)
+					poly.color = Color(0.25, 0.42, 0.28, 0.028)
 			if sprite != null:
 				sprite.modulate = _empty_tile_sprite_modulate(preview) if _phase == Phase.DEPLOY else Color(1.0, 1.0, 1.0, 0.0)
 			if outline != null:
@@ -1141,25 +1141,25 @@ func _visible_empty_tile_state(label_text: String, tooltip: String) -> Dictionar
 
 func _empty_tile_sprite_modulate(preview: Dictionary) -> Color:
 	if not RunManager.has_castle():
-		return Color(1.02, 0.82, 0.52, 0.070)
+		return Color(1.02, 0.82, 0.52, 0.028)
 	if _selected_hand_index < 0:
-		return Color(0.72, 0.88, 0.72, 0.040)
+		return Color(0.72, 0.88, 0.72, 0.014)
 	if not preview.is_empty():
-		return Color(0.78, 1.04, 0.60, 0.120)
+		return Color(0.78, 1.04, 0.60, 0.054)
 	if not RunManager.can_place_hand_card(_selected_hand_index):
-		return Color(0.74, 0.72, 0.66, 0.035)
-	return Color(0.70, 0.92, 0.60, 0.070)
+		return Color(0.74, 0.72, 0.66, 0.012)
+	return Color(0.70, 0.92, 0.60, 0.028)
 
 func _empty_tile_outline_color(preview: Dictionary) -> Color:
 	if not RunManager.has_castle():
-		return Color(1.0, 0.78, 0.44, 0.16)
+		return Color(1.0, 0.78, 0.44, 0.074)
 	if _selected_hand_index < 0:
-		return Color(0.74, 0.92, 0.78, 0.10)
+		return Color(0.74, 0.92, 0.78, 0.040)
 	if not preview.is_empty():
-		return Color(0.78, 1.0, 0.54, 0.28)
+		return Color(0.78, 1.0, 0.54, 0.150)
 	if not RunManager.can_place_hand_card(_selected_hand_index):
-		return Color(0.62, 0.58, 0.48, 0.08)
-	return Color(0.74, 0.96, 0.58, 0.14)
+		return Color(0.62, 0.58, 0.48, 0.032)
+	return Color(0.74, 0.96, 0.58, 0.058)
 
 func _find_army_unit_at_block(army: Array, block_key: String) -> BattleUnit:
 	var parts := block_key.split(":")

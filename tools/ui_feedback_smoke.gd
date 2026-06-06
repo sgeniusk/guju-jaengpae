@@ -298,6 +298,7 @@ func _battle_formation_preview_case() -> int:
 	if battle.has_method("_select_hand"):
 		battle._select_hand(0)
 		await _frames(2)
+		errors += _assert_occupied_tile_label_hidden(battle, "1:0", "보병", "기존 보병 field label 숨김")
 		errors += _assert_tile_label_and_tooltip(battle, "1:1", "엄호 +15%", "궁병 배치", "궁병 엄호 미리보기")
 		errors += _assert_deploy_unit_visuals_above_field(battle)
 	else:
@@ -498,6 +499,24 @@ func _assert_tile_state_hidden_and_tooltip(battle: Node, block_key: String, stat
 		return _fail("%s 누락: area tooltip=%s expected~=%s" % [msg, String(area.get_meta(&"tile_tooltip", "")), tooltip_needle])
 	return 0
 
+func _assert_occupied_tile_label_hidden(battle: Node, block_key: String, state_needle: String, msg: String) -> int:
+	var tiles: Dictionary = battle._tile_buttons
+	if not tiles.has(block_key):
+		return _fail("%s 누락: tile=%s" % [msg, block_key])
+	var tile: Dictionary = tiles[block_key]
+	var label := tile.get("label", null) as Label
+	if label == null:
+		return _fail("%s 누락: label 없음" % msg)
+	if label.visible or not label.text.strip_edges().is_empty():
+		return _fail("%s 실패: 점유 field label이 유닛 앞에 남음: %s" % [msg, label.text])
+	var state_label := String(tile.get("state_label", ""))
+	if state_label.find(state_needle) < 0:
+		return _fail("%s 누락: state=%s expected~=%s" % [msg, state_label, state_needle])
+	var tooltip := String(tile.get("tooltip", ""))
+	if tooltip.strip_edges().is_empty():
+		return _fail("%s 누락: 점유 tile tooltip 없음" % msg)
+	return 0
+
 func _assert_tile_hover_hint(battle: Node, block_key: String, hint_needle: String, msg: String) -> int:
 	if not battle.has_method("_on_tile_area_hovered"):
 		return _fail("%s 누락: hover handler 없음" % msg)
@@ -529,10 +548,11 @@ func _assert_deploy_unit_visuals_above_field(battle: Node) -> int:
 	return _assert_deploy_unit_foot_forward_of_tile(battle)
 
 func _assert_deploy_unit_foot_forward_of_tile(battle: Node) -> int:
+	var bounds := _battlefield_tile_y_bounds(battle)
 	var checked := false
 	for unit in battle._vis.keys():
 		var battle_unit := unit as BattleUnit
-		if battle_unit == null or battle_unit.is_castle or battle_unit.row < 0:
+		if battle_unit == null or battle_unit.is_castle:
 			continue
 		if battle_unit.team != BattleUnit.Team.PLAYER:
 			continue
@@ -541,9 +561,14 @@ func _assert_deploy_unit_foot_forward_of_tile(battle: Node) -> int:
 		if root == null:
 			continue
 		checked = true
-		var tile_center: Vector2 = battle.field_to_screen_position(BattleSim.position_for_tile(battle_unit.lane, battle_unit.row))
-		if root.position.y < tile_center.y + 54.0:
-			return _fail("배치 유닛 발 위치가 타일 하단보다 뒤에 있음: y=%.1f tile=%.1f" % [root.position.y, tile_center.y])
+		if battle_unit.row >= 0:
+			var tile_center: Vector2 = battle.field_to_screen_position(BattleSim.position_for_tile(battle_unit.lane, battle_unit.row))
+			if root.position.y < tile_center.y + 66.0:
+				return _fail("배치 유닛 발 위치가 타일 하단보다 뒤에 있음: y=%.1f tile=%.1f" % [root.position.y, tile_center.y])
+		elif not bounds.is_empty():
+			var min_y := float(bounds.get("min_y", 0.0))
+			if root.position.y < min_y + 66.0:
+				return _fail("배치 유닛 발 위치가 전장 지면보다 뒤에 있음: y=%.1f min=%.1f" % [root.position.y, min_y])
 	if not checked:
 		return _fail("배치 유닛 foot 검증 대상 없음")
 	return 0
@@ -676,10 +701,10 @@ func _assert_battlefield_ground_plane(battle: Node) -> int:
 	if outline_count < battle._tile_buttons.size():
 		errors += _fail("전장 타일 지면 outline 부족: %d/%d" % [outline_count, battle._tile_buttons.size()])
 	var max_tile_fill_alpha := _max_tile_fill_alpha(battle)
-	if max_tile_fill_alpha > 0.14:
+	if max_tile_fill_alpha > 0.08:
 		errors += _fail("전장 타일 fill이 너무 진해 공중 판처럼 보임: alpha=%.2f" % max_tile_fill_alpha)
 	var max_tile_outline_alpha := _max_tile_outline_alpha(battle)
-	if max_tile_outline_alpha > 0.30:
+	if max_tile_outline_alpha > 0.10:
 		errors += _fail("전장 타일 outline이 너무 밝아 공중 격자처럼 보임: alpha=%.2f" % max_tile_outline_alpha)
 	var floor_band_count := _count_bool_meta(battle._background_layer, &"battlefield_floor_band")
 	if floor_band_count < 1:
