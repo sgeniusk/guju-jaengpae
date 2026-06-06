@@ -453,7 +453,52 @@ func _assert_manual_first_play_started(battle: Node, run_manager) -> int:
 		errors += _fail("수동 첫 플레이 charge line VFX 부족: %d" % charge_count)
 	if pulse_count < 3:
 		errors += _fail("수동 첫 플레이 clash pulse VFX 부족: %d" % pulse_count)
+	errors += _assert_hit_impact_vfx(battle)
 	return errors
+
+func _assert_hit_impact_vfx(battle: Node) -> int:
+	var enemy := _first_alive_enemy(battle)
+	if enemy == null:
+		return _fail("hit impact 검증용 적 유닛 없음")
+	battle._sim.last_damage_events = [
+		{
+			"target": enemy,
+			"amount": 12,
+			"px": enemy.px,
+			"py": enemy.py,
+			"team": enemy.team,
+			"is_crit": true,
+			"kind": "attack",
+		},
+		{
+			"target": enemy,
+			"amount": 40,
+			"px": enemy.px,
+			"py": enemy.py,
+			"team": enemy.team,
+			"is_crit": false,
+			"kind": "skill",
+		},
+	]
+	battle._play_damage_events()
+	var errors := 0
+	var spark_count := _count_hit_vfx_meta(battle._vfx_layer, "spark")
+	var crit_count := _count_hit_vfx_meta(battle._vfx_layer, "crit")
+	var burst_count := _count_hit_vfx_meta(battle._vfx_layer, "burst")
+	if spark_count < 2:
+		errors += _fail("hit impact spark VFX 부족: %d" % spark_count)
+	if crit_count < 1:
+		errors += _fail("hit impact crit VFX 누락")
+	if burst_count < 1:
+		errors += _fail("hit impact skill burst VFX 누락")
+	return errors
+
+func _first_alive_enemy(battle: Node) -> BattleUnit:
+	for unit in battle._sim.enemy_units:
+		var enemy := unit as BattleUnit
+		if enemy != null and enemy.is_alive():
+			return enemy
+	return null
 
 func _assert_default_speed_fast(battle: Node) -> int:
 	var errors := 0
@@ -483,6 +528,14 @@ func _count_vfx_meta(node: Node, kind: String) -> int:
 	var count := 1 if String(node.get_meta("battle_start_vfx", "")) == kind else 0
 	for child in node.get_children():
 		count += _count_vfx_meta(child, kind)
+	return count
+
+func _count_hit_vfx_meta(node: Node, kind: String) -> int:
+	if node == null:
+		return 0
+	var count := 1 if String(node.get_meta("hit_impact_vfx", "")) == kind else 0
+	for child in node.get_children():
+		count += _count_hit_vfx_meta(child, kind)
 	return count
 
 func _controls(node: Node) -> Array[Control]:

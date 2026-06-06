@@ -15,6 +15,7 @@ const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
 const _FormationRenderer := preload("res://scripts/battle/formation_renderer.gd")
 const _BattleFeel := preload("res://scripts/battle/battle_feel.gd")
 const _BattleCommandFeedback := preload("res://scripts/battle/battle_command_feedback.gd")
+const _BattleHitFeedback := preload("res://scripts/battle/battle_hit_feedback.gd")
 const _FormationTactics := preload("res://scripts/run/formation_tactics.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
@@ -1397,6 +1398,7 @@ func _flash_skill_casts() -> void:
 
 func _play_damage_events() -> void:
 	for event in _sim.last_damage_events:
+		_spawn_hit_impact_vfx(event)
 		_spawn_damage_number(event)
 		_flash_damaged_target(event)
 
@@ -1569,6 +1571,33 @@ func _spawn_damage_number(event: Dictionary) -> void:
 	tween.tween_property(label, "modulate:a", 0.0, 0.62).set_delay(0.14)
 	tween.set_parallel(false)
 	tween.tween_callback(Callable(label, "queue_free"))
+
+func _spawn_hit_impact_vfx(event: Dictionary) -> void:
+	if _vfx_layer == null:
+		return
+	var profiles: Array[Dictionary] = _BattleHitFeedback.profiles_for_event(event)
+	if profiles.is_empty():
+		return
+	var base_pos := field_to_screen(float(event.get("px", 0.0)), float(event.get("py", 0.0))) + Vector2(0.0, -42.0)
+	for profile in profiles:
+		var kind := String(profile.get("kind", "spark"))
+		var impact := Polygon2D.new()
+		impact.name = "HitImpact"
+		impact.set_meta("hit_impact_vfx", kind)
+		impact.polygon = _ellipse_points(float(profile.get("radius_x", 18.0)), float(profile.get("radius_y", 7.0)), 16)
+		impact.color = profile.get("color", Color(1.0, 0.82, 0.28, 0.86))
+		impact.position = base_pos
+		impact.rotation = 0.18 if kind == _BattleHitFeedback.KIND_SPARK else 0.0
+		impact.z_index = VFX_FLOATING_Z - 1
+		_vfx_layer.add_child(impact)
+		var duration := float(profile.get("duration", 0.26))
+		var scale := float(profile.get("scale", 1.5))
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(impact, "scale", Vector2(scale, scale), duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(impact, "modulate:a", 0.0, duration).set_delay(duration * 0.25)
+		tween.set_parallel(false)
+		tween.tween_callback(Callable(impact, "queue_free"))
 
 func _flash_damaged_target(event: Dictionary) -> void:
 	var target: BattleUnit = event.get("target", null)

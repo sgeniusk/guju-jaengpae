@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-053 충돌 중 타격감 VFX 반복
+전투 중 데미지 이벤트가 숫자만 뜨는 느낌을 줄이고, 실제 충돌이 반복해서 보이도록 피격 VFX를 추가했다.
+- **BattleHitFeedback helper** — `scripts/battle/battle_hit_feedback.gd`가 데미지 이벤트를 VFX 프로필로 바꾼다. 일반 피해는 spark, 치명타는 crit ring, 스킬/계략은 burst를 추가한다.
+- **전투 화면 피격 VFX** — `battle.gd`가 `_play_damage_events()`마다 `hit_impact_vfx` meta가 있는 `Polygon2D`를 VFX layer에 띄운다. BattleSim의 피해 계산과 밸런스 수치는 바꾸지 않는다.
+- **UI smoke 고정** — `tools/ui_feedback_smoke.gd`가 첫 수동 전투에서 데미지 이벤트를 주입하고 spark/crit/burst가 실제 씬에 생성되는지 검증한다.
+- **검증** — `test_battle_hit_feedback.gd` 추가. `./init.sh` 카드 22개, 단위 테스트 2769/2769 green.
+
 ## 2026-06-06 — feat-052 병력 밀도/함성 체감 패스
 삼국지 전투가 더 많은 군세의 충돌로 읽히도록 렌더 밀도와 시작 연출을 보강했다.
 - **분대 밀도 cap 상향** — `BattleFeel`과 `FormationRenderer`의 병종 분대 렌더/visible cap을 18명으로 올렸다. Lv.3 병종 18명 성장 체감이 화면과 metric에 그대로 남는다.
