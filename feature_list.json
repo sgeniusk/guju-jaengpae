@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~072로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널→다음 배치 손패 미리보기→자동저장 슬롯 삭제 UX→상점 손패 정리 안내→전투 결과 복귀 안내→런맵 진행 리듬 안내→상점 구매 피드백→장기런 결과 요약→전투 전황 요약 HUD→유닛 접지감 보강→첫 전투 보드 가독성→첫 보드 스크린샷 QA→screenshot validator 속도 최적화→결과 화면 시각 polish→전장 필드 접지/깊이 보정→스크린샷 하네스 실행 안정화까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2994 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~073으로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널→다음 배치 손패 미리보기→자동저장 슬롯 삭제 UX→상점 손패 정리 안내→전투 결과 복귀 안내→런맵 진행 리듬 안내→상점 구매 피드백→장기런 결과 요약→전투 전황 요약 HUD→유닛 접지감 보강→첫 전투 보드 가독성→첫 보드 스크린샷 QA→screenshot validator 속도 최적화→결과 화면 시각 polish→전장 필드 접지/깊이 보정→스크린샷 하네스 실행 안정화→전투 진군 접지/충돌선 polish까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 3010 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -676,6 +676,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-072-screenshot-harness-stability.md 추가. screenshot bundle 셸 스크립트가 모든 shoot scene을 --scene으로 실행하고, VisualQaConfig.capture_viewport_png가 GUI에서는 frame_post_draw를 기다리되 headless에서는 SHOT FAIL headless_display로 즉시 종료한다. 전투/첫 보드/범용 scene quick headless 하네스가 멈추지 않고 종료, ./init.sh 카드 22개 / 단위 테스트 2994/2994 green."
+    },
+    {
+      "id": "feat-073",
+      "name": "전투 진군 접지/충돌선 polish",
+      "description": "전투 시작 때 양 진영 병력이 바닥을 박차고 중앙에서 충돌하는 지면 VFX를 추가한다.",
+      "dependencies": ["feat-052", "feat-066", "feat-071"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-073-battle-advance-grounding-polish.md 추가. BattleFeel이 advance_dust/ground_clash 마커를 순수 계산하고 battle.gd가 첫 교전 시작 시 진군 먼지 18개와 지면 충돌선 3개를 렌더한다. UI smoke가 새 battle_start_vfx meta를 검증한다. ./init.sh 카드 22개 / 단위 테스트 3010/3010 green."
     }
   ]
 }

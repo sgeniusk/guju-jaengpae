@@ -33,6 +33,39 @@ func test_retinue_visible_cap_allows_larger_guard() -> void:
 	unit.retinue_count = 13
 	eq(BattleFeel.visible_count_for_unit(unit), 1 + BattleFeel.RETINUE_VISIBLE_CAP, "장수 본체+호위 cap")
 
+func test_advance_dust_markers_cover_both_armies_and_lanes() -> void:
+	var markers := BattleFeel.advance_dust_markers()
+	var side_counts := { "player": 0, "enemy": 0 }
+	var lanes := {}
+	var player_on_left := true
+	var enemy_on_right := true
+	for marker in markers:
+		var side := String(marker.get("side", ""))
+		var field: Vector2 = marker.get("field", Vector2.ZERO)
+		lanes[int(marker.get("lane", -1))] = true
+		if side_counts.has(side):
+			side_counts[side] = int(side_counts[side]) + 1
+		if side == "player":
+			player_on_left = player_on_left and field.x < 520.0
+		elif side == "enemy":
+			enemy_on_right = enemy_on_right and field.x > 580.0
+	eq(markers.size(), BattleFeel.ADVANCE_DUST_TOTAL, "진군 먼지는 3레인 양쪽 모두 생성")
+	eq(side_counts.get("player"), BattleSim.COL_COUNT * BattleFeel.ADVANCE_DUST_PER_SIDE_LANE, "아군 진군 먼지 수")
+	eq(side_counts.get("enemy"), BattleSim.COL_COUNT * BattleFeel.ADVANCE_DUST_PER_SIDE_LANE, "적군 진군 먼지 수")
+	eq(lanes.size(), BattleSim.COL_COUNT, "진군 먼지는 모든 레인에 분포")
+	truthy(player_on_left, "아군 진군 먼지는 아군 진영에서 시작")
+	truthy(enemy_on_right, "적군 진군 먼지는 적 진영에서 시작")
+
+func test_ground_clash_markers_anchor_center_lanes() -> void:
+	var markers := BattleFeel.ground_clash_markers()
+	eq(markers.size(), BattleFeel.GROUND_CLASH_TOTAL, "지면 충돌선은 레인별 1개")
+	for lane in BattleSim.COL_COUNT:
+		var marker := markers[lane]
+		var field: Vector2 = marker.get("field", Vector2.ZERO)
+		eq(int(marker.get("lane", -1)), lane, "지면 충돌선 lane 유지")
+		almost(field.x, 555.0, 0.001, "지면 충돌선은 중앙 교전선에 고정")
+		almost(field.y, BattleSim.start_y_for_col(lane), 0.001, "지면 충돌선은 해당 레인 y에 고정")
+
 func _enemy(lane: int, name: String, squad_count: int, attack_range: String) -> BattleUnit:
 	var unit := BattleUnit.make(BattleUnit.Team.ENEMY, lane, BattleSim.FIELD_W, name, 80, 10, 1.0, attack_range, 34.0, &"", &"", "infantry", -1, BattleSim.start_y_for_col(lane))
 	unit.squad_count = squad_count

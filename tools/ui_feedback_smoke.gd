@@ -7,6 +7,7 @@ const LORD_SELECT_SCENE_PATH := "res://scenes/screens/lord_select.tscn"
 const RUN_MAP_SCENE_PATH := "res://scenes/screens/run_map.tscn"
 const BATTLE_SCENE_PATH := "res://scenes/battle/battle.tscn"
 const BATTLE_PHASE_BATTLE := 1
+const _BattleFeel := preload("res://scripts/battle/battle_feel.gd")
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -523,11 +524,17 @@ func _assert_manual_first_play_started(battle: Node, run_manager) -> int:
 		errors += _fail("수동 첫 플레이 시작 함성 힌트 누락: %s" % battle._hint_label.text)
 	var rally_count := _count_vfx_meta(battle._vfx_layer, "rally")
 	var charge_count := _count_vfx_meta(battle._vfx_layer, "charge")
+	var dust_count := _count_vfx_meta(battle._vfx_layer, "advance_dust")
+	var ground_clash_count := _count_vfx_meta(battle._vfx_layer, "ground_clash")
 	var pulse_count := _count_vfx_meta(battle._vfx_layer, "pulse")
 	if rally_count < 1:
 		errors += _fail("수동 첫 플레이 rally banner VFX 누락")
 	if charge_count < 6:
 		errors += _fail("수동 첫 플레이 charge line VFX 부족: %d" % charge_count)
+	if dust_count < _BattleFeel.ADVANCE_DUST_TOTAL:
+		errors += _fail("수동 첫 플레이 advance dust VFX 부족: %d" % dust_count)
+	if ground_clash_count < _BattleFeel.GROUND_CLASH_TOTAL:
+		errors += _fail("수동 첫 플레이 ground clash VFX 부족: %d" % ground_clash_count)
 	if pulse_count < 3:
 		errors += _fail("수동 첫 플레이 clash pulse VFX 부족: %d" % pulse_count)
 	var ground_shadow_count := _count_bool_meta(battle._units_layer, &"ground_shadow")

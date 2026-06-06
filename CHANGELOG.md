@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-073 전투 진군 접지/충돌선 polish
+전투 시작이 디펜스식 적 출현이 아니라 양 진영이 바닥 위에서 진군해 충돌하는 장면으로 읽히도록 지면 VFX를 보강했다.
+- **순수 VFX 마커** — `BattleFeel.advance_dust_markers()`와 `ground_clash_markers()`가 3레인 양쪽 진군 먼지 18개와 중앙 지면 충돌선 3개를 계산한다.
+- **전투 시작 렌더링** — `battle.gd`가 기존 rally/charge/pulse에 `advance_dust`와 `ground_clash` meta VFX를 추가해 charge line이 공중 선처럼 보이는 느낌을 줄였다.
+- **수치 불변** — 전투 이동, 공격, 승패, 보상, 카드 규칙은 바꾸지 않았다. 첫 교전의 시각 접지감만 보강했다.
+- **검증** — `test_battle_feel.gd`가 마커 구성을 검증하고, `tools/ui_feedback_smoke.gd`가 첫 수동 전투에서 새 battle_start_vfx meta를 확인한다. `./init.sh` 카드 22개, 단위 테스트 3010/3010 green.
+
 ## 2026-06-06 — feat-072 스크린샷 하네스 실행 안정화
 Godot 4.6 CLI에서 screenshot bundle 장면이 잘못 실행되거나 headless draw wait로 멈추지 않도록 하네스를 안정화했다.
 - **CLI scene 계약 정리** — `shoot_ui_bundle.sh`, `shoot_visual_qa.sh`, `shoot_run_flow.sh`가 모든 촬영 씬을 `--scene res://tools/...`로 실행한다.

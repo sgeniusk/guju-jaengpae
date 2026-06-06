@@ -7,6 +7,9 @@ const BOSS_RALLY := "결전 개시!"
 const TROOP_VISIBLE_CAP := 18
 const RETINUE_VISIBLE_CAP := 10
 const RALLY_SFX_ID := &"rally"
+const ADVANCE_DUST_PER_SIDE_LANE := 3
+const ADVANCE_DUST_TOTAL := BattleSim.COL_COUNT * 2 * ADVANCE_DUST_PER_SIDE_LANE
+const GROUND_CLASH_TOTAL := BattleSim.COL_COUNT
 
 static func visible_count_for_unit(unit: BattleUnit) -> int:
 	if unit == null or not unit.is_alive() or unit.is_castle:
@@ -57,3 +60,40 @@ static func rally_text(stage: int, enemy_units: Array) -> String:
 
 static func rally_sfx_id(_stage: int, _enemy_units: Array) -> StringName:
 	return RALLY_SFX_ID
+
+static func advance_dust_markers() -> Array[Dictionary]:
+	var markers: Array[Dictionary] = []
+	for lane in BattleSim.COL_COUNT:
+		var y := BattleSim.start_y_for_col(lane)
+		for step in ADVANCE_DUST_PER_SIDE_LANE:
+			var step_f := float(step)
+			var lane_offset := _lane_dust_offset(lane, step)
+			markers.append({
+				"side": "player",
+				"lane": lane,
+				"field": Vector2(322.0 + step_f * 62.0, y + lane_offset),
+				"scale": 1.0 + step_f * 0.14,
+			})
+			markers.append({
+				"side": "enemy",
+				"lane": lane,
+				"field": Vector2(778.0 - step_f * 62.0, y - lane_offset),
+				"scale": 1.0 + step_f * 0.14,
+			})
+	return markers
+
+static func ground_clash_markers() -> Array[Dictionary]:
+	var markers: Array[Dictionary] = []
+	for lane in BattleSim.COL_COUNT:
+		markers.append({
+			"lane": lane,
+			"field": Vector2(555.0, BattleSim.start_y_for_col(lane)),
+			"radius_x": 54.0,
+			"radius_y": 8.0,
+		})
+	return markers
+
+static func _lane_dust_offset(lane: int, step: int) -> float:
+	var lane_bias := float(lane - 1) * 6.0
+	var step_bias := -5.0 + float(step) * 5.0
+	return lane_bias + step_bias

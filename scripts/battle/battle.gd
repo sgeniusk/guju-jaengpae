@@ -1554,6 +1554,8 @@ func _spawn_battle_start_vfx() -> void:
 		return
 	_spawn_rally_banner(_BattleFeel.rally_text(RunManager.stage_index(), _sim.enemy_units))
 	_spawn_charge_lines()
+	_spawn_advance_ground_dust()
+	_spawn_ground_clash_lines()
 	_spawn_clash_pulses()
 	_shake_camera()
 
@@ -1603,6 +1605,49 @@ func _spawn_charge_line(from_field: Vector2, to_field: Vector2, color: Color) ->
 	tween.tween_property(line, "modulate:a", 0.0, 0.54).set_delay(0.08)
 	tween.set_parallel(false)
 	tween.tween_callback(Callable(line, "queue_free"))
+
+func _spawn_advance_ground_dust() -> void:
+	for marker in _BattleFeel.advance_dust_markers():
+		var field: Vector2 = marker.get("field", Vector2.ZERO)
+		var scale := float(marker.get("scale", 1.0))
+		var side := String(marker.get("side", "player"))
+		var dust := Polygon2D.new()
+		dust.name = "AdvanceDust"
+		dust.set_meta("battle_start_vfx", "advance_dust")
+		dust.set_meta(&"advance_side", side)
+		dust.set_meta(&"advance_lane", int(marker.get("lane", -1)))
+		dust.polygon = _ellipse_points(30.0 * scale, 7.0 * scale, 16)
+		dust.color = Color(0.72, 0.56, 0.34, 0.25) if side == "player" else Color(0.70, 0.32, 0.24, 0.24)
+		dust.position = field_to_screen_position(field)
+		dust.rotation = -0.10 if side == "player" else 0.10
+		dust.z_index = VFX_RALLY_Z - 4
+		_vfx_layer.add_child(dust)
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(dust, "scale", Vector2(1.58, 1.32), 0.86).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(dust, "position:y", dust.position.y - 6.0, 0.86).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(dust, "modulate:a", 0.0, 0.86).set_delay(0.18)
+		tween.set_parallel(false)
+		tween.tween_callback(Callable(dust, "queue_free"))
+
+func _spawn_ground_clash_lines() -> void:
+	for marker in _BattleFeel.ground_clash_markers():
+		var field: Vector2 = marker.get("field", Vector2.ZERO)
+		var clash := Polygon2D.new()
+		clash.name = "GroundClash"
+		clash.set_meta("battle_start_vfx", "ground_clash")
+		clash.set_meta(&"advance_lane", int(marker.get("lane", -1)))
+		clash.polygon = _ellipse_points(float(marker.get("radius_x", 54.0)), float(marker.get("radius_y", 8.0)), 18)
+		clash.color = Color(1.0, 0.78, 0.36, 0.36)
+		clash.position = field_to_screen_position(field)
+		clash.z_index = VFX_RALLY_Z - 3
+		_vfx_layer.add_child(clash)
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(clash, "scale", Vector2(1.60, 1.50), 0.72).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(clash, "modulate:a", 0.0, 0.72).set_delay(0.12)
+		tween.set_parallel(false)
+		tween.tween_callback(Callable(clash, "queue_free"))
 
 func _spawn_clash_pulses() -> void:
 	for y in BattleSim.COL_Y:
