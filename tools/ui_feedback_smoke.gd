@@ -192,6 +192,8 @@ func _battle_deploy_case() -> int:
 	await _frames(8)
 	var errors := 0
 	errors += _assert_button_tooltip(battle, "계략 발동", "손패에서 계략", "계략 버튼 기본 tooltip")
+	errors += _assert_any_text(battle, "전황 — 배치 준비", "전투 배치 전황 요약")
+	errors += _assert_any_tooltip(battle, "병력 수 기준", "전투 배치 전황 tooltip")
 	errors += _assert_button_tooltip(battle, "우물", "+10골드", "우물 버튼 tooltip")
 	errors += _assert_button_tooltip(battle, "교전 시작", "성 위치", "교전 시작 비활성 tooltip")
 	errors += _assert_button_tooltip(battle, "계략 발동", "계략 발동 버튼", "계략 손패 tooltip")
@@ -255,6 +257,10 @@ func _battle_manual_first_play_case() -> int:
 	battle._on_tile_pressed("0:0")
 	await _frames(8)
 	errors += _assert_manual_first_play_started(battle, run_manager)
+	errors += _assert_any_text(battle, "전황 — 교전", "전투 교전 전황 요약")
+	errors += _assert_any_text(battle, "아군 10", "전투 교전 아군 병력 요약")
+	errors += _assert_any_text(battle, "적 25", "전투 교전 적 병력 요약")
+	errors += _assert_any_tooltip(battle, "파도는 이번 교전", "전투 교전 전황 tooltip")
 	battle.queue_free()
 	await _frames(2)
 	if errors == 0:

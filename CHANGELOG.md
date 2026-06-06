@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-065 전투 화면 정보 밀도 정리
+전투 화면 중앙에서 현재 전황을 한 줄로 읽을 수 있도록 top-center HUD를 보강했다.
+- **BattleHudState 전황 helper** — `combat_summary()`가 phase, stage, wave, 아군/적 visible soldiers, 속도/정지/auto 상태를 `전황 — ...` 문구와 tooltip으로 순수 계산한다.
+- **전투 HUD 요약 라벨** — `battle.gd`가 stage ladder 아래에 전황 라벨을 추가하고 배치/교전/결과 phase마다 최신 병력 수와 속도 상태를 동기화한다.
+- **병력 기준 tooltip** — tooltip은 아군/적 숫자가 현재 화면에 살아 있는 병력 수 기준이며, 파도는 이번 교전 묶음의 진행도임을 설명한다.
+- **검증** — `test_hud_state.gd`가 helper 문구를 검증하고, `tools/ui_feedback_smoke.gd`가 배치 준비와 첫 교전의 전황 요약 렌더를 확인한다. `./init.sh` 카드 22개, 단위 테스트 2982/2982 green.
+
 ## 2026-06-06 — feat-064 장기런 결과 요약 UX
 최종 패배와 최종 승리 화면에서 방금 끝난 런의 성과가 보이도록 결산 블록을 추가했다.
 - **RunResultSummary helper** — `scripts/run/run_result_summary.gd`가 RunState와 battle outcome으로 `런 결산 — 승리/패배`, 스테이지, 점수, 군세, 최고 Lv, 골드, 칙령/보패/손패/드로우 요약을 순수 계산한다.

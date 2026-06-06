@@ -4,10 +4,11 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-06
-**활성 피처** — feat-064 장기런 결과 요약 UX 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 최종 패배/최종 승리 화면에서 방금 끝난 런의 성과를 읽히게 하는 작업이다.
+**활성 피처** — feat-065 전투 화면 정보 밀도 정리 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 전투 중 stage/phase/wave/병력/속도를 한 줄로 읽게 하는 작업이다.
 
 ## 완료
+- [x] **feat-065 전투 화면 정보 밀도 정리** — `docs/specs/feat-065-battle-status-ribbon.md`와 `BattleHudState.combat_summary`를 추가했다. battle top-center HUD가 `전황 — 배치 준비/교전`, stage, 파도, 아군/적 visible soldiers, 속도/정지/auto 상태와 병력 기준 tooltip을 표시한다. `tools/ui_feedback_smoke.gd`가 배치와 첫 교전 전황 요약을 검증한다. `./init.sh` 카드 22개 / 2982 단언 green.
 - [x] **feat-064 장기런 결과 요약 UX** — `docs/specs/feat-064-run-result-summary.md`와 `RunResultSummary`를 추가했다. battle 결과 오버레이가 run_complete일 때 `런 결산 — 승리/패배`, 스테이지, 점수, 군세, 최고 Lv, 골드, 칙령/보패/손패/드로우 요약을 표시한다. `tools/battle_result_smoke.gd`가 패배/최종승리 결과 화면의 결산 문구와 tooltip을 검증한다. `./init.sh` 카드 22개 / 2972 단언 green.
 - [x] **feat-063 상점 구매 피드백** — `docs/specs/feat-063-shop-purchase-feedback.md`와 `ShopPurchaseFeedback`을 추가했다. run_map 상점 카드가 `구매 가능 — N금, 구매 후 M금` 또는 `자금 부족 — N금 필요, 현재 M금`을 표시하고, 구매 성공 뒤 `구매 완료`, 남은 자금, 다음 전투 후보 3장 정리 안내를 남긴다. UI smoke가 고자금/저자금 상점과 구매 완료 문구를 검증한다. `./init.sh` 카드 22개 / 2946 단언 green.
 - [x] **feat-062 런맵 진행 리듬 안내** — `docs/specs/feat-062-run-flow-rhythm-guide.md`와 `RunFlowSummary`를 추가했다. run_map 전투/칙령/상점/사건 화면이 `진행 리듬 — 현재 ...`, `현재 행동`, `다음 흐름: 2 전투 -> 3 칙령 -> 4 상점` 같은 안내를 표시한다. UI smoke가 첫 전투와 상점의 다음 흐름/tooltip을 검증한다. `./init.sh` 카드 22개 / 2920 단언 green.
@@ -23,7 +24,7 @@
 
 ## 진행 중
 - [ ] 수동 플레이 감각 확인 — 첫 손패 장수+병종, 성 위치 선택, 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령, stage 4 상점, 전리품 추천 문구를 사용자 플레이로 확인한다.
-- [ ] 완성판 안전 개선 계속 — 다음 후보는 전투 화면 정보 밀도 정리, 수동 플레이 시각 검증 갱신, 결과 화면 시각 polish다.
+- [ ] 완성판 안전 개선 계속 — 다음 후보는 수동 플레이 시각 검증 갱신, 결과 화면 시각 polish, 첫 전투 보드 가독성 polish다.
 - [ ] Codex goal은 완성판까지 계속 활성이다. MVP 이후 핵심 루프 재미와 안정성을 단계적으로 개선한다.
 
 ## 다음
@@ -38,18 +39,10 @@
 - [ ] Godot 4.6.3 macOS headless 종료 시 resource leak 경고가 남지만 종료 코드는 0이고 테스트 실패는 아니다.
 
 ## 이번 세션 수정 파일
-- `docs/specs/feat-064-run-result-summary.md`
-- `scripts/run/run_result_summary.gd`
-- `test/test_run_result_summary.gd`
+- `docs/specs/feat-065-battle-status-ribbon.md`
 - `scripts/battle/battle.gd`
-- `tools/battle_result_smoke.gd`
-- `docs/specs/feat-063-shop-purchase-feedback.md`
-- `scripts/run/shop_purchase_feedback.gd`
-- `test/test_shop_purchase_feedback.gd`
-- `docs/specs/feat-062-run-flow-rhythm-guide.md`
-- `scripts/run/run_flow_summary.gd`
-- `test/test_run_flow_summary.gd`
-- `scripts/screens/run_map.gd`
+- `scripts/battle/hud_state.gd`
+- `test/test_hud_state.gd`
 - `tools/ui_feedback_smoke.gd`
 - `feature_list.json`
 - `progress.md`
@@ -57,6 +50,9 @@
 - `CHANGELOG.md`
 
 ## 검증 증거
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-065-unit-3.log --script res://test/runner.gd` (2026-06-06, feat-065) — BattleHudState combat summary helper 포함 단위 테스트 2982/2982 green.
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-065-ui-3.log --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-065) — 배치 전 `전황 — 배치 준비`, 첫 교전 `전황 — 교전`, `아군 10`, `적 25`, 병력 기준 tooltip 렌더 확인.
+- [x] `./init.sh` (2026-06-06, feat-065) — 카드 22개 검증 OK, 전투 전황 요약 UI smoke 포함, 단위 테스트 2982/2982 green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-064-unit-2.log --script res://test/runner.gd` (2026-06-06, feat-064) — RunResultSummary helper 포함 단위 테스트 2972/2972 green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-064-result-2.log --script res://tools/battle_result_smoke.gd` (2026-06-06, feat-064) — 패배/최종승리 결과 화면 `런 결산` 문구와 tooltip 렌더 확인.
 - [x] `./init.sh` (2026-06-06, feat-064) — 카드 22개 검증 OK, battle result smoke 결산 확인 포함, 단위 테스트 2972/2972 green.
@@ -68,4 +64,4 @@
 - [x] `./init.sh` (2026-06-06, feat-062) — 카드 22개 검증 OK, run_map/lord_select/battle/보스/결과/UI/저장/플레이테스트/장기런 스모크 포함, 단위 테스트 2920/2920 green.
 
 ## 다음 세션 메모
-feat-064 done. 다음 안전 피처는 전투 화면 정보 밀도 정리, 수동 플레이 시각 검증 갱신, 결과 화면 시각 polish가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+feat-065 done. 다음 안전 피처는 수동 플레이 시각 검증 갱신, 결과 화면 시각 polish, 첫 전투 보드 가독성 polish가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.

@@ -96,6 +96,7 @@ var _hud_theme: Theme
 var _top_gold_label: Label
 var _stage_ladder_box: HBoxContainer
 var _stage_year_label: Label
+var _combat_summary_label: Label
 var _pause_button: Button
 var _auto_button: Button
 var _speed_buttons: Array[Button] = []
@@ -216,7 +217,7 @@ func _bind_scene_nodes() -> void:
 	_deploy_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_deploy_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_layout_hud_slot(_top_left, Vector2(24.0, 22.0), Vector2(250.0, 54.0))
-	_layout_hud_slot(_top_center, Vector2(510.0, 18.0), Vector2(900.0, 88.0))
+	_layout_hud_slot(_top_center, Vector2(510.0, 18.0), Vector2(900.0, 114.0))
 	_layout_hud_slot(_top_right, Vector2(1450.0, 22.0), Vector2(440.0, 54.0))
 	_layout_hud_slot(_left_bar, Vector2(24.0, 180.0), Vector2(76.0, 360.0))
 	_layout_hud_slot(_bottom_bars, Vector2(540.0, 900.0), Vector2(840.0, 142.0))
@@ -321,6 +322,12 @@ func _build_stage_ladder() -> void:
 	_stage_year_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_stage_year_label.add_theme_font_size_override("font_size", 18)
 	box.add_child(_stage_year_label)
+	_combat_summary_label = Label.new()
+	_combat_summary_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_combat_summary_label.add_theme_font_size_override("font_size", 15)
+	_combat_summary_label.add_theme_color_override("font_color", Color(0.18, 0.10, 0.04))
+	_combat_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(_combat_summary_label)
 	_stage_ladder_box = HBoxContainer.new()
 	_stage_ladder_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	_stage_ladder_box.add_theme_constant_override("separation", 8)
@@ -1264,6 +1271,7 @@ func _sync_hud() -> void:
 	if _top_gold_label != null:
 		_top_gold_label.text = "%d" % RunManager.get_gold()
 	_sync_stage_ladder()
+	_sync_combat_summary()
 	_sync_speed_controls()
 	_sync_ability_bar()
 	_sync_bottom_bars()
@@ -1301,6 +1309,34 @@ func _sync_stage_ladder() -> void:
 		label.modulate = Color(0.13, 0.08, 0.04) if is_current else Color(0.93, 0.83, 0.63)
 		v.add_child(label)
 		_stage_ladder_box.add_child(item)
+
+func _sync_combat_summary() -> void:
+	if _combat_summary_label == null:
+		return
+	var ally_metrics := _BattleFeel.force_metrics(_sim.player_units)
+	var enemy_metrics := _BattleFeel.force_metrics(_sim.enemy_units)
+	var summary := _BattleHudState.combat_summary(
+		_phase_key(),
+		RunManager.stage_index(),
+		_sim.wave_index,
+		_sim.wave_total,
+		int(ally_metrics.get("visible_soldiers", 0)),
+		int(enemy_metrics.get("visible_soldiers", 0)),
+		_speed,
+		_paused,
+		_auto_enabled
+	)
+	_combat_summary_label.text = String(summary.get("text", ""))
+	_combat_summary_label.tooltip_text = String(summary.get("tooltip", ""))
+
+func _phase_key() -> String:
+	match _phase:
+		Phase.BATTLE:
+			return "battle"
+		Phase.DONE:
+			return "done"
+		_:
+			return "deploy"
 
 func _sync_speed_controls() -> void:
 	if _pause_button != null:

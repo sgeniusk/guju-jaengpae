@@ -64,3 +64,18 @@ func test_bottom_bar_ratios_track_castle_champion_and_enemy_force() -> void:
 	falsy(empty["active"], "적이 없으면 챔피언 바 비활성")
 	almost(_HudState.enemy_force_ratio(3, 6, 1, 3), 0.5, 0.0001, "현재 적 수 / 최대 관측 적 수")
 	almost(_HudState.enemy_force_ratio(0, 0, 2, 4), 0.75, 0.0001, "최대값 전에는 파도 진행 폴백")
+
+func test_combat_summary_compacts_phase_wave_force_and_speed() -> void:
+	var deploy := _HudState.combat_summary("deploy", 1, 0, 0, 0, 0, 3.0, false, false)
+	truthy(String(deploy.get("text")).contains("전황 — 배치 준비"), "배치 단계")
+	truthy(String(deploy.get("text")).contains("1스테이지"), "stage 표시")
+	truthy(String(deploy.get("text")).contains("×3"), "속도 표시")
+	truthy(String(deploy.get("tooltip")).contains("병력 수 기준"), "병력 기준 tooltip")
+
+	var battle := _HudState.combat_summary("battle", 5, 2, 3, 32, 17, 2.0, true, true)
+	truthy(String(battle.get("text")).contains("전황 — 교전"), "교전 단계")
+	truthy(String(battle.get("text")).contains("파도 2/3"), "파도 표시")
+	truthy(String(battle.get("text")).contains("아군 32"), "아군 표시")
+	truthy(String(battle.get("text")).contains("적 17"), "적 표시")
+	truthy(String(battle.get("text")).contains("정지"), "일시정지 표시")
+	truthy(String(battle.get("text")).contains("auto"), "auto 표시")
