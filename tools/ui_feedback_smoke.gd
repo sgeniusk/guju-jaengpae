@@ -87,11 +87,20 @@ func _run_map_shop_case() -> int:
 	await _frames(8)
 	var errors := 0
 	errors += _assert_button_tooltip(screen, "상점 떠나기", "다음 스테이지", "상점 떠나기 tooltip")
+	errors += _assert_any_text(screen, "다음 전투 손패", "상점 다음 전투 손패 요약")
+	errors += _assert_any_tooltip(screen, "드로우 더미", "상점 손패 정리 tooltip")
 	errors += _assert_any_tooltip(screen, "손패 구매", "상점 카드 구매 경로 tooltip")
 	errors += _assert_any_text(screen, "추천 —", "상점 전략 추천 문구")
 	errors += _assert_any_tooltip(screen, "추천 —", "상점 전략 추천 tooltip")
 	errors += _assert_first_recommended_button(screen, "추천 — 증원 후보", "상점 추천순 첫 카드")
 	errors += _assert_any_tooltip(screen, "보드 배치", "보드 요약 카드 tooltip")
+	if screen.has_method("_on_shop_card_pressed"):
+		screen._on_shop_card_pressed(&"troop_infantry")
+		await _frames(4)
+		errors += _assert_any_text(screen, "상점 손패 4장 → 전투 후보 3장", "구매 후 상점 손패 정리 문구")
+		errors += _assert_any_tooltip(screen, "현재 손패 4장", "구매 후 상점 손패 tooltip")
+	else:
+		errors += _fail("run_map._on_shop_card_pressed 없음")
 	screen.queue_free()
 	await _frames(2)
 	if errors == 0:

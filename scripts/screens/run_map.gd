@@ -9,6 +9,7 @@ const _CardChoiceAdvisor := preload("res://scripts/run/card_choice_advisor.gd")
 const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const _RunPrepSummary := preload("res://scripts/run/run_prep_summary.gd")
+const _ShopHandSummary := preload("res://scripts/run/shop_hand_summary.gd")
 
 var _root: VBoxContainer
 var _shop_status_message := ""
@@ -144,13 +145,7 @@ func _build_shop_panel() -> void:
 		feedback.modulate = Color(0.72, 1.0, 0.78)
 		_root.add_child(feedback)
 
-	if RunManager.get_hand().size() > RunState.HAND_MAX:
-		var hint := Label.new()
-		hint.text = "손패 초과분은 다음 전투 배치에서 보드로 정리하세요."
-		hint.tooltip_text = "손패 권장치는 %d장입니다. 전투 배치 단계에서 빈 타일 배치나 우물로 정리할 수 있습니다." % RunState.HAND_MAX
-		hint.add_theme_font_size_override("font_size", 22)
-		hint.modulate = Color(1.0, 0.82, 0.42)
-		_root.add_child(hint)
+	_add_shop_hand_summary()
 
 	# 카드 타입 → 프레임 애셋 경로 매핑.
 	var frame_paths := {
@@ -391,6 +386,32 @@ func _add_battle_prep_summary() -> void:
 	detail.add_theme_font_size_override("font_size", 22)
 	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail.modulate = Color(0.86, 0.88, 0.78)
+	box.add_child(detail)
+
+func _add_shop_hand_summary() -> void:
+	var summary := _ShopHandSummary.for_state(
+		RunManager.get_hand().size(),
+		RunManager.get_deploy_hand_preview().size(),
+		RunManager.deploy_hand_refresh_pending()
+	)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	box.tooltip_text = String(summary.get("tooltip", ""))
+	_root.add_child(box)
+
+	var title := Label.new()
+	title.text = String(summary.get("title", "다음 전투 손패"))
+	title.tooltip_text = String(summary.get("tooltip", ""))
+	title.add_theme_font_size_override("font_size", 24)
+	title.modulate = Color(0.82, 0.94, 1.0)
+	box.add_child(title)
+
+	var detail := Label.new()
+	detail.text = String(summary.get("detail", ""))
+	detail.tooltip_text = String(summary.get("tooltip", ""))
+	detail.add_theme_font_size_override("font_size", 20)
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail.modulate = Color(1.0, 0.86, 0.48)
 	box.add_child(detail)
 
 func _shop_card_tooltip(card: CardData, can_afford: bool, choice_context: Dictionary) -> String:

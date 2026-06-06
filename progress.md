@@ -4,10 +4,11 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-06
-**활성 피처** — feat-059 자동저장 슬롯 삭제 UX 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 저장된 런을 군주 선택 화면에서 직접 삭제해 새 런 시작 상태로 복구하는 작업이다.
+**활성 피처** — feat-060 상점 손패 정리 안내 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 상점에서 구매 후 현재 손패와 다음 전투 배치 후보 3장 규칙의 차이를 명확히 안내하는 작업이다.
 
 ## 완료
+- [x] **feat-060 상점 손패 정리 안내** — `docs/specs/feat-060-shop-hand-prep-summary.md`와 `ShopHandSummary`를 추가했다. run_map 상점 패널이 `다음 전투 손패 — 후보 3장 중 1장`, 구매 후 `상점 손패 4장 → 전투 후보 3장`, 드로우 더미 tooltip을 표시한다. UI smoke가 상점 화면과 구매 직후 정리 문구를 검증한다. `./init.sh` 카드 22개 / 2868 단언 green.
 - [x] **feat-059 자동저장 슬롯 삭제 UX** — `docs/specs/feat-059-run-save-delete-ux.md`를 추가했다. `lord_select.gd`가 유효 저장/손상 저장 모두에 `저장된 런 삭제` 버튼을 표시하고, tooltip으로 autosave 슬롯만 지우며 프로필 기록은 유지된다고 안내한다. 삭제 후 `RunManager.reset_run()`으로 런 저장과 현재 state를 초기화하고 이어하기/삭제 버튼이 사라진 군주 선택 화면으로 돌아간다. `./init.sh` 카드 22개 / 2847 단언 green.
 - [x] **feat-058 다음 배치 손패 미리보기** — `docs/specs/feat-058-deploy-hand-preview.md`와 `RunState.deploy_hand_preview()`를 추가했다. run_map 전투 준비 패널과 battle 결과 오버레이가 다음 배치 preview 손패를 기준으로 `다음 배치 손패 — 후보 3장 중 1장`, `다음 손패 X→3`, 드로우 더미 정리 안내를 표시한다. `./init.sh` 카드 22개 / 2839 단언 green.
 - [x] **feat-057 런맵 전투 준비 패널 강화** — `docs/specs/feat-057-run-map-combat-prep.md`와 `scripts/run/run_prep_summary.gd`를 추가했다. run_map 전투/정예/보스 스테이지가 전투 시작 버튼 위에 `전투 준비 — 손패 3장 중 1장`, 성 위치, 군세, 증원/배치/계략 후보 수를 표시한다. `./init.sh` 카드 22개 / 2829 단언 green.
@@ -30,7 +31,7 @@
 
 ## 진행 중
 - [ ] 수동 플레이 감각 확인 — 첫 손패 장수+병종, 성 위치 선택, 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령, stage 4 상점, 전리품 추천 문구를 사용자 플레이로 확인한다.
-- [ ] 완성판 안전 개선 계속 — 다음 피처 후보는 상점 구매 후 손패 정리 안내 강화, 전투 승패 후 재시작/메뉴 복귀 안내, run_map 다음 스테이지 준비 흐름 보강이다.
+- [ ] 완성판 안전 개선 계속 — 다음 피처 후보는 전투 승패 후 재시작/메뉴 복귀 안내, run_map 다음 스테이지 준비 흐름 보강, 상점 구매 제한/선택 피드백 보강이다.
 - [ ] Codex goal은 완성판까지 계속 활성이다. MVP 이후 핵심 루프 재미와 안정성을 단계적으로 개선한다.
 
 ## 다음
@@ -45,6 +46,11 @@
 - [ ] Godot 4.6.3 macOS headless 종료 시 resource leak 경고가 남지만 종료 코드는 0이고 테스트 실패는 아니다.
 
 ## 이번 세션 수정 파일
+- `docs/specs/feat-060-shop-hand-prep-summary.md`
+- `scripts/run/shop_hand_summary.gd`
+- `test/test_shop_hand_summary.gd`
+- `scripts/screens/run_map.gd`
+- `tools/ui_feedback_smoke.gd`
 - `docs/specs/feat-059-run-save-delete-ux.md`
 - `scripts/screens/lord_select.gd`
 - `tools/resume_ux_smoke.gd`
@@ -65,6 +71,9 @@
 - `CHANGELOG.md`
 
 ## 검증 증거
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-060-unit.log --script res://test/runner.gd` (2026-06-06, feat-060) — ShopHandSummary helper 포함 단위 테스트 2868/2868 green.
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-060-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-060) — 상점 다음 전투 손패 요약, 드로우 더미 tooltip, 구매 후 `상점 손패 4장 → 전투 후보 3장` 문구 확인.
+- [x] `./init.sh` (2026-06-06, feat-060) — 카드 22개 검증 OK, 상점 손패 정리 안내 smoke 포함, 단위 테스트 2868/2868 green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-059-unit.log --script res://test/runner.gd` (2026-06-06, feat-059) — lord_select 저장 삭제 버튼 테스트 포함 단위 테스트 2847/2847 green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-059-resume.log --script res://tools/resume_ux_smoke.gd` (2026-06-06, feat-059) — no-save, corrupt-save, valid-save 이어하기, valid-save 삭제 네 케이스 통과.
 - [x] `./init.sh` (2026-06-06, feat-059) — 카드 22개 검증 OK, 저장 런 삭제 UX smoke 포함, 단위 테스트 2847/2847 green.
@@ -103,4 +112,4 @@
 - [x] `./init.sh` (2026-06-06, feat-045) — 카드 22개 검증 OK, 전투 집중표적 피드백 OK, 단위 테스트 2701/2701 green.
 
 ## 다음 세션 메모
-`./init.sh` 2847 단언 green. feat-059 done. 다음 안전 피처는 상점 구매 후 손패 정리 안내 강화 또는 전투 승패 후 재시작/메뉴 복귀 안내가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+`./init.sh` 2868 단언 green. feat-060 done. 다음 안전 피처는 전투 승패 후 재시작/메뉴 복귀 안내 또는 run_map 다음 스테이지 준비 흐름 보강이 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
