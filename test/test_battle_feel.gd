@@ -28,6 +28,42 @@ func test_stage_one_encounter_has_enemy_front() -> void:
 	eq(BattleFeel.rally_text(1, wave), "전군 돌격!", "첫 전투 rally")
 	eq(BattleFeel.rally_sfx_id(1, wave), &"rally", "교전 시작 함성 cue")
 
+func test_clash_profile_scales_with_visible_force() -> void:
+	var player := [
+		_player(0, "보병", 12, "melee"),
+		_player(1, "궁병", 12, "ranged"),
+	]
+	var enemy := [
+		_enemy(0, "사령병", 9, "melee"),
+		_enemy(1, "사령 선봉", 9, "melee"),
+		_enemy(2, "요사 궁수", 7, "ranged"),
+	]
+	var profile := BattleFeel.clash_profile(player, enemy)
+	eq(profile.get("player_visible"), 24, "아군 visible soldiers 집계")
+	eq(profile.get("enemy_visible"), 25, "적군 visible soldiers 집계")
+	eq(profile.get("total_visible"), 49, "양측 군세 총합")
+	eq(profile.get("lanes"), 3, "충돌 레인 수")
+	truthy(float(profile.get("intensity", 0.0)) > 0.65, "군세가 많으면 충돌 강도 상승")
+	truthy(int(profile.get("pressure_count", 0)) > BattleFeel.CLASH_PRESSURE_MIN, "군세가 많으면 pressure marker 증가")
+	truthy(BattleFeel.rally_line(1, player, enemy).contains("아군 24 · 적 25"), "rally line에 양측 군세 표시")
+
+func test_clash_pressure_markers_follow_profile_count_and_lanes() -> void:
+	var profile := {
+		"intensity": 0.90,
+		"pressure_count": 12,
+	}
+	var markers := BattleFeel.clash_pressure_markers(profile)
+	var lanes := {}
+	eq(markers.size(), 12, "pressure marker 수는 profile 계약을 따른다")
+	for marker in markers:
+		var field: Vector2 = marker.get("field", Vector2.ZERO)
+		var lane := int(marker.get("lane", -1))
+		lanes[lane] = true
+		truthy(field.x >= 520.0 and field.x <= 590.0, "pressure marker는 중앙 충돌선 주변")
+		truthy(float(marker.get("radius_x", 0.0)) > 30.0, "강한 충돌은 넓은 pressure 반경")
+		truthy(float(marker.get("alpha", 0.0)) > 0.35, "강한 충돌은 더 진한 pressure")
+	eq(lanes.size(), BattleSim.COL_COUNT, "pressure marker는 모든 레인에 분포")
+
 func test_retinue_visible_cap_allows_larger_guard() -> void:
 	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 1, 120.0, "장수", 100, 10, 1.0, "melee", 34.0)
 	unit.retinue_count = 13
@@ -68,5 +104,10 @@ func test_ground_clash_markers_anchor_center_lanes() -> void:
 
 func _enemy(lane: int, name: String, squad_count: int, attack_range: String) -> BattleUnit:
 	var unit := BattleUnit.make(BattleUnit.Team.ENEMY, lane, BattleSim.FIELD_W, name, 80, 10, 1.0, attack_range, 34.0, &"", &"", "infantry", -1, BattleSim.start_y_for_col(lane))
+	unit.squad_count = squad_count
+	return unit
+
+func _player(lane: int, name: String, squad_count: int, attack_range: String) -> BattleUnit:
+	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, lane, 120.0, name, 80, 10, 1.0, attack_range, 34.0, &"", &"", "infantry", -1, BattleSim.start_y_for_col(lane))
 	unit.squad_count = squad_count
 	return unit

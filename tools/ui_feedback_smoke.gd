@@ -599,19 +599,27 @@ func _assert_manual_first_play_started(battle: Node, run_manager) -> int:
 		errors += _fail("수동 첫 플레이 아군 보병 유닛 생성 실패")
 	if battle._hint_label.text.find("전군 돌격") < 0:
 		errors += _fail("수동 첫 플레이 시작 함성 힌트 누락: %s" % battle._hint_label.text)
+	if battle._hint_label.text.find("아군 12") < 0 or battle._hint_label.text.find("적 25") < 0:
+		errors += _fail("수동 첫 플레이 군세 숫자 힌트 누락: %s" % battle._hint_label.text)
 	var rally_count := _count_vfx_meta(battle._vfx_layer, "rally")
+	var force_roar_count := _count_vfx_meta(battle._vfx_layer, "force_roar")
 	var charge_count := _count_vfx_meta(battle._vfx_layer, "charge")
 	var dust_count := _count_vfx_meta(battle._vfx_layer, "advance_dust")
 	var ground_clash_count := _count_vfx_meta(battle._vfx_layer, "ground_clash")
+	var pressure_count := _count_vfx_meta(battle._vfx_layer, "pressure")
 	var pulse_count := _count_vfx_meta(battle._vfx_layer, "pulse")
 	if rally_count < 1:
 		errors += _fail("수동 첫 플레이 rally banner VFX 누락")
+	if force_roar_count < 1:
+		errors += _fail("수동 첫 플레이 force roar VFX 누락")
 	if charge_count < 6:
 		errors += _fail("수동 첫 플레이 charge line VFX 부족: %d" % charge_count)
 	if dust_count < _BattleFeel.ADVANCE_DUST_TOTAL:
 		errors += _fail("수동 첫 플레이 advance dust VFX 부족: %d" % dust_count)
 	if ground_clash_count < _BattleFeel.GROUND_CLASH_TOTAL:
 		errors += _fail("수동 첫 플레이 ground clash VFX 부족: %d" % ground_clash_count)
+	if pressure_count < _BattleFeel.CLASH_PRESSURE_MIN:
+		errors += _fail("수동 첫 플레이 pressure VFX 부족: %d" % pressure_count)
 	if pulse_count < 3:
 		errors += _fail("수동 첫 플레이 clash pulse VFX 부족: %d" % pulse_count)
 	var ground_shadow_count := _count_bool_meta(battle._units_layer, &"ground_shadow")

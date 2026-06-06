@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-07 — feat-084 교전 phase 군세 충돌 polish
+전투 시작 순간이 고정 이펙트가 아니라 실제 양측 군세 규모를 반영하도록 보강했다.
+- **군세 profile** — `BattleFeel.clash_profile()`이 아군/적 visible soldier 수, 총 병력, 레인 수, intensity, pressure marker 수를 계산한다.
+- **전황 문구 강화** — 전투 시작 hint가 `전군 돌격! 아군 12 · 적 25`처럼 양측 병력 규모를 표시한다. Rally banner 아래에는 `군세 12 : 25` 보조 tag가 뜬다.
+- **충돌 압력 VFX** — `battle.gd`가 profile 기반 pressure VFX를 중앙 교전선에 추가하고, charge line 폭과 camera shake 강도를 병력 규모에 따라 조절한다.
+- **검증** — `test_battle_feel.gd`가 clash profile/pressure marker 계약을 검증하고, UI smoke가 군세 숫자 hint, force_roar, pressure VFX를 확인한다. `./init.sh` 카드 22개, 단위 테스트 3117/3117 green.
+
 ## 2026-06-07 — feat-083 실제 교전 screenshot QA 정정
 전투 스크린샷 하네스가 배치 화면은 찍지만 실제 교전 phase로 못 넘어갈 수 있던 QA 구멍을 막았다.
 - **교전 시작 계약 복구** — `tools/shoot_battle.gd`가 QA용 직접 배치 후 `deploy_cards_played = 1`, `deploy_stage_index = target_stage`를 명시해 본편의 “한 수를 낸 뒤 교전 시작” 조건과 맞춘다.

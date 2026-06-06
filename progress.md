@@ -4,10 +4,11 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-07
-**활성 피처** — feat-083 실제 교전 screenshot QA 정정 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 전투 시각 QA가 배치 화면에 멈추지 않고 실제 교전 phase까지 진입해 `battle_fight` 캡처를 시도하도록 스크린샷 하네스를 정정한 작업이다.
+**활성 피처** — feat-084 교전 phase 군세 충돌 polish 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 교전 시작 순간의 함성, 충돌 압력, 카메라 반응이 실제 아군·적 visible soldier 규모를 반영하도록 전투 체감을 보강한 작업이다.
 
 ## 완료
+- [x] **feat-084 교전 phase 군세 충돌 polish** — `BattleFeel.clash_profile()`이 아군/적 visible soldier 수, 총 병력, 레인 수, intensity, pressure marker 수를 계산한다. `battle.gd`는 이 profile로 `전군 돌격! 아군 12 · 적 25` 같은 시작 hint, `군세 12 : 25` 보조 rally tag, pressure VFX, charge line 폭, camera shake 강도를 조절한다. `test_battle_feel.gd`와 UI smoke가 군세 숫자, force_roar, pressure VFX를 검증한다. `./init.sh` 카드 22개 / 3117 단언 green.
 - [x] **feat-083 실제 교전 screenshot QA 정정** — `tools/shoot_battle.gd`의 QA용 보드 준비를 `_prepare_demo_board()`로 분리하고, 직접 배치 시 계략은 보드에 심지 않으며 유닛/건물만 시연 배치하게 했다. 직접 배치 후 `deploy_cards_played = 1`, `deploy_stage_index = target_stage`를 명시해 본편의 “교전당 한 수 사용 후 전투 시작” 조건과 맞췄다. 유닛이 없을 때 촬영용 보병을 보충하는 안전장치와 `SHOT_STRICT=1` phase 검증도 추가했다. `test_shoot_battle_harness.gd`가 이 계약을 검증한다. `./init.sh` 카드 22개 / 3072 단언 green.
 - [x] **feat-082 전장 footline/depth 재수정** — `battle.gd`의 보드 origin y를 더 낮추고 `FIELD_FOOT_OFFSET_Y`를 타일 하단선보다 앞쪽으로 키워 유닛/성/건물 발이 다이아몬드 격자 안쪽에 걸리지 않게 했다. 성/배치/빈 타일 fill·outline alpha도 낮춰 밝은 9칸 공중판 착시를 줄였다. `VisualQaConfig`에는 GUI `frame_post_draw` 우회 옵션 `SHOT_SKIP_POST_DRAW`를 추가했다. `test_unit_walk_visuals.gd`와 UI smoke가 보드 y>=630, fill alpha<=0.14, outline alpha<=0.30, footline>=tile+54를 검증한다. `./init.sh` 카드 22개 / 3067 단언 green.
 - [x] **feat-081 전장 접지/depth 재보정** — `battle.gd`의 보드 origin y를 낮춰 첫 보드 9칸이 전경 바닥에 놓이도록 했고, 유닛/성/건물/root 및 지면 VFX를 타일 중심보다 앞쪽 `foot` 지점에 세웠다. 성 후보/빈 타일 fill·outline alpha도 더 낮춰 전체 9칸이 밝은 공중 격자로 읽히지 않게 했다. `test_unit_walk_visuals.gd`와 UI smoke가 보드 y>=610, outline alpha<=0.38, 유닛 foot 위치를 검증한다. GUI 캡처는 `/tmp/guju-feat-081-grounding`, `./init.sh` 카드 22개 / 3066 단언 green.
@@ -17,7 +18,7 @@
 
 ## 진행 중
 - [ ] 수동 플레이 감각 확인 — 첫 손패 장수+병종, 성 위치 선택, 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령, stage 4 상점, 전리품 추천 문구를 사용자 플레이로 확인한다.
-- [ ] 완성판 안전 개선 계속 — 다음 후보는 배치 카드 UI 정리, 교전 phase 군세 충돌 밀도/속도 polish, GUI 표시 드라이버 screenshot bundle 재확인이다.
+- [ ] 완성판 안전 개선 계속 — 다음 후보는 배치 카드 UI 정리, GUI 표시 드라이버 screenshot bundle 재확인, 중후반 군세 충돌 가독성 QA다.
 - [ ] Codex goal은 완성판까지 계속 활성이다. 현재 피처 완료가 전체 goal 완료는 아니다.
 
 ## 다음
@@ -34,15 +35,21 @@
 - [ ] 이번 세션에서도 GUI 표시 드라이버 PNG 품질 검증은 새로 남기지 못했다. 대신 `SHOT_STRICT=1` headless 실행으로 `battle_fight` 진입 상태가 `battle_phase=1`, `deploy_cards_played=1`, `board_units=3`임을 확인했다.
 
 ## 이번 세션 수정 파일
-- `docs/specs/feat-083-battle-fight-screenshot-harness.md`
-- `tools/shoot_battle.gd`
-- `test/test_shoot_battle_harness.gd`
+- `docs/specs/feat-084-combat-clash-pressure.md`
+- `scripts/battle/battle.gd`
+- `scripts/battle/battle_feel.gd`
+- `test/test_battle_feel.gd`
+- `tools/ui_feedback_smoke.gd`
 - `feature_list.json`
 - `progress.md`
 - `session-handoff.md`
 - `CHANGELOG.md`
 
 ## 검증 증거
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-084-unit.log --script res://test/runner.gd` (2026-06-07, feat-084) — 단위 테스트 3117/3117 green.
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-084-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-07, feat-084) — 군세 숫자 hint, force_roar, pressure VFX 포함 UI smoke green.
+- [x] `HOME=$PWD/.godot/home SHOT_DIR=/tmp/guju-feat-084-headless LORD=lord_liubei SHOOT_STAGE=5 SHOOT_FIGHT_FRAMES=4 SHOT_STRICT=1 godot --headless --path . --scene res://tools/shoot_battle.tscn` (2026-06-07, feat-084) — `battle_phase=1`, `deploy_cards_played=1`, `board_units=3`, headless PNG 저장은 기대대로 `headless_display`.
+- [x] `./init.sh` (2026-06-07, feat-084) — 카드 22개 검증 OK, UI smoke, 저장/이어하기 smoke, playtest loop, 장기런 tempo gate, 단위 테스트 3117/3117 포함 전체 green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-083-unit-2.log --script res://test/runner.gd` (2026-06-07, feat-083) — 단위 테스트 3072/3072 green.
 - [x] `HOME=$PWD/.godot/home SHOT_DIR=/tmp/guju-feat-083-headless LORD=lord_liubei SHOOT_STAGE=5 SHOOT_FIGHT_FRAMES=2 SHOT_STRICT=1 godot --headless --path . --scene res://tools/shoot_battle.tscn` (2026-06-07, feat-083) — `battle_phase=1`, `deploy_cards_played=1`, `board_units=3`, headless PNG 저장은 기대대로 `headless_display`.
 - [x] `./init.sh` (2026-06-07, feat-083) — 카드 22개 검증 OK, UI smoke, 저장/이어하기 smoke, playtest loop, 장기런 tempo gate, 단위 테스트 3072/3072 포함 전체 green.
@@ -52,4 +59,4 @@
 - [x] `./init.sh` (2026-06-06, feat-082) — 카드 22개 검증 OK, UI smoke, 저장/이어하기 smoke, playtest loop, 장기런 tempo gate, 단위 테스트 3067/3067 포함 전체 green.
 
 ## 다음 세션 메모
-feat-083 done. 다음 안전 피처는 배치 카드 UI surface 정리 또는 교전 phase 군세 충돌 polish가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+feat-084 done. 다음 안전 피처는 배치 카드 UI surface 정리 또는 GUI 표시 드라이버 screenshot bundle 재확인이 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.

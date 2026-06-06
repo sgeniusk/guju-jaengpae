@@ -1446,7 +1446,7 @@ func _on_start_pressed() -> void:
 	_sync_visuals()
 	_spawn_battle_start_vfx()
 	_start_button.disabled = true
-	_hint_label.text = _BattleFeel.rally_text(RunManager.stage_index(), _sim.enemy_units)
+	_hint_label.text = _BattleFeel.rally_line(RunManager.stage_index(), _sim.player_units, _sim.enemy_units)
 	_refresh_deploy_ui()
 
 func _run_export_first_battle_smoke() -> void:
@@ -1767,14 +1767,16 @@ func _play_damage_events() -> void:
 func _spawn_battle_start_vfx() -> void:
 	if _vfx_layer == null:
 		return
-	_spawn_rally_banner(_BattleFeel.rally_text(RunManager.stage_index(), _sim.enemy_units))
-	_spawn_charge_lines()
+	var clash_profile := _BattleFeel.clash_profile(_sim.player_units, _sim.enemy_units)
+	_spawn_rally_banner(_BattleFeel.rally_text(RunManager.stage_index(), _sim.enemy_units), clash_profile)
+	_spawn_charge_lines(float(clash_profile.get("intensity", 0.65)))
 	_spawn_advance_ground_dust()
 	_spawn_ground_clash_lines()
+	_spawn_clash_pressure(clash_profile)
 	_spawn_clash_pulses()
-	_shake_camera()
+	_shake_camera(float(clash_profile.get("intensity", 0.65)))
 
-func _spawn_rally_banner(text: String) -> void:
+func _spawn_rally_banner(text: String, clash_profile: Dictionary = {}) -> void:
 	var label := Label.new()
 	label.name = "RallyBanner"
 	label.set_meta("battle_start_vfx", "rally")
@@ -1799,17 +1801,52 @@ func _spawn_rally_banner(text: String) -> void:
 	tween.tween_property(label, "modulate:a", 0.0, 0.82).set_delay(0.18)
 	tween.set_parallel(false)
 	tween.tween_callback(Callable(label, "queue_free"))
+	_spawn_force_roar_tag(clash_profile)
 
-func _spawn_charge_lines() -> void:
+func _spawn_force_roar_tag(clash_profile: Dictionary) -> void:
+	if clash_profile.is_empty():
+		return
+	var label := Label.new()
+	label.name = "ForceRoarTag"
+	label.set_meta("battle_start_vfx", "force_roar")
+	label.set_meta(&"player_visible_soldiers", int(clash_profile.get("player_visible", 0)))
+	label.set_meta(&"enemy_visible_soldiers", int(clash_profile.get("enemy_visible", 0)))
+	label.text = "군세 %d : %d" % [
+		int(clash_profile.get("player_visible", 0)),
+		int(clash_profile.get("enemy_visible", 0)),
+	]
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.position = Vector2(748.0, 392.0)
+	label.size = Vector2(420.0, 34.0)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.z_index = VFX_RALLY_Z
+	label.add_theme_font_size_override("font_size", 24)
+	label.add_theme_color_override("font_color", Color(0.90, 0.98, 0.82, 0.96))
+	label.add_theme_color_override("font_shadow_color", Color(0.02, 0.01, 0.0, 0.86))
+	label.add_theme_constant_override("shadow_offset_x", 2)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	if _damage_font != null:
+		label.add_theme_font_override("font", _damage_font)
+	_vfx_layer.add_child(label)
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 30.0, 0.78).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.78).set_delay(0.24)
+	tween.set_parallel(false)
+	tween.tween_callback(Callable(label, "queue_free"))
+
+func _spawn_charge_lines(intensity: float = 0.65) -> void:
+	var width := 5.5 + clampf(intensity, 0.45, 1.0) * 3.0
 	for y in BattleSim.COL_Y:
-		_spawn_charge_line(Vector2(260.0, y), Vector2(470.0, y), Color(0.46, 0.92, 0.58, 0.85))
-		_spawn_charge_line(Vector2(840.0, y), Vector2(610.0, y), Color(1.0, 0.34, 0.26, 0.78))
+		_spawn_charge_line(Vector2(260.0, y), Vector2(470.0, y), Color(0.46, 0.92, 0.58, 0.85), width)
+		_spawn_charge_line(Vector2(840.0, y), Vector2(610.0, y), Color(1.0, 0.34, 0.26, 0.78), width)
 
-func _spawn_charge_line(from_field: Vector2, to_field: Vector2, color: Color) -> void:
+func _spawn_charge_line(from_field: Vector2, to_field: Vector2, color: Color, width: float = 7.0) -> void:
 	var line := Line2D.new()
 	line.name = "ChargeLine"
 	line.set_meta("battle_start_vfx", "charge")
-	line.width = 7.0
+	line.width = width
 	line.default_color = color
 	line.z_index = VFX_RALLY_Z - 1
 	line.points = PackedVector2Array([_field_foot_screen(from_field.x, from_field.y), _field_foot_screen(to_field.x, to_field.y)])
@@ -1863,6 +1900,27 @@ func _spawn_ground_clash_lines() -> void:
 		tween.tween_property(clash, "modulate:a", 0.0, 0.72).set_delay(0.12)
 		tween.set_parallel(false)
 		tween.tween_callback(Callable(clash, "queue_free"))
+
+func _spawn_clash_pressure(clash_profile: Dictionary) -> void:
+	for marker in _BattleFeel.clash_pressure_markers(clash_profile):
+		var field: Vector2 = marker.get("field", Vector2.ZERO)
+		var pressure := Polygon2D.new()
+		pressure.name = "ClashPressure"
+		pressure.set_meta("battle_start_vfx", "pressure")
+		pressure.set_meta(&"advance_lane", int(marker.get("lane", -1)))
+		pressure.set_meta(&"clash_intensity", float(marker.get("intensity", 0.45)))
+		pressure.polygon = _ellipse_points(float(marker.get("radius_x", 28.0)), float(marker.get("radius_y", 8.0)), 18)
+		pressure.color = Color(1.0, 0.56, 0.24, float(marker.get("alpha", 0.30)))
+		pressure.position = _field_foot_screen_position(field)
+		pressure.rotation = -0.04 if int(marker.get("lane", 0)) % 2 == 0 else 0.04
+		pressure.z_index = VFX_RALLY_Z - 3
+		_vfx_layer.add_child(pressure)
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(pressure, "scale", Vector2(1.42, 1.36), 0.70).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(pressure, "modulate:a", 0.0, 0.70).set_delay(0.12)
+		tween.set_parallel(false)
+		tween.tween_callback(Callable(pressure, "queue_free"))
 
 func _spawn_clash_pulses() -> void:
 	for y in BattleSim.COL_Y:

@@ -10,6 +10,8 @@ const RALLY_SFX_ID := &"rally"
 const ADVANCE_DUST_PER_SIDE_LANE := 3
 const ADVANCE_DUST_TOTAL := BattleSim.COL_COUNT * 2 * ADVANCE_DUST_PER_SIDE_LANE
 const GROUND_CLASH_TOTAL := BattleSim.COL_COUNT
+const CLASH_PRESSURE_MIN := 6
+const CLASH_PRESSURE_MAX := 14
 
 static func visible_count_for_unit(unit: BattleUnit) -> int:
 	if unit == null or not unit.is_alive() or unit.is_castle:
@@ -61,6 +63,32 @@ static func rally_text(stage: int, enemy_units: Array) -> String:
 static func rally_sfx_id(_stage: int, _enemy_units: Array) -> StringName:
 	return RALLY_SFX_ID
 
+static func rally_line(stage: int, player_units: Array, enemy_units: Array) -> String:
+	var profile := clash_profile(player_units, enemy_units)
+	return "%s  아군 %d · 적 %d" % [
+		rally_text(stage, enemy_units),
+		int(profile.get("player_visible", 0)),
+		int(profile.get("enemy_visible", 0)),
+	]
+
+static func clash_profile(player_units: Array, enemy_units: Array) -> Dictionary:
+	var player := force_metrics(player_units)
+	var enemy := force_metrics(enemy_units)
+	var player_visible := int(player.get("visible_soldiers", 0))
+	var enemy_visible := int(enemy.get("visible_soldiers", 0))
+	var total_visible := player_visible + enemy_visible
+	var lane_count := maxi(int(player.get("lanes", 0)), int(enemy.get("lanes", 0)))
+	var intensity := clampf(float(total_visible - 20) / 42.0, 0.45, 1.0)
+	var pressure_count := clampi(CLASH_PRESSURE_MIN + int(round(float(CLASH_PRESSURE_MAX - CLASH_PRESSURE_MIN) * intensity)), CLASH_PRESSURE_MIN, CLASH_PRESSURE_MAX)
+	return {
+		"player_visible": player_visible,
+		"enemy_visible": enemy_visible,
+		"total_visible": total_visible,
+		"lanes": lane_count,
+		"intensity": intensity,
+		"pressure_count": pressure_count,
+	}
+
 static func advance_dust_markers() -> Array[Dictionary]:
 	var markers: Array[Dictionary] = []
 	for lane in BattleSim.COL_COUNT:
@@ -90,6 +118,25 @@ static func ground_clash_markers() -> Array[Dictionary]:
 			"field": Vector2(555.0, BattleSim.start_y_for_col(lane)),
 			"radius_x": 54.0,
 			"radius_y": 8.0,
+		})
+	return markers
+
+static func clash_pressure_markers(profile: Dictionary) -> Array[Dictionary]:
+	var markers: Array[Dictionary] = []
+	var intensity := clampf(float(profile.get("intensity", 0.45)), 0.45, 1.0)
+	var count := clampi(int(profile.get("pressure_count", CLASH_PRESSURE_MIN)), CLASH_PRESSURE_MIN, CLASH_PRESSURE_MAX)
+	for index in count:
+		var lane := index % BattleSim.COL_COUNT
+		var lane_y := BattleSim.start_y_for_col(lane)
+		var rank := index / BattleSim.COL_COUNT
+		var side_shift := -1.0 if index % 2 == 0 else 1.0
+		markers.append({
+			"lane": lane,
+			"field": Vector2(555.0 + side_shift * (12.0 + float(rank) * 5.0), lane_y + _lane_dust_offset(lane, rank)),
+			"radius_x": 22.0 + intensity * 22.0,
+			"radius_y": 6.0 + intensity * 5.0,
+			"alpha": 0.20 + intensity * 0.22,
+			"intensity": intensity,
 		})
 	return markers
 
