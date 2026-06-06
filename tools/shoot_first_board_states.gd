@@ -1,5 +1,5 @@
 # 첫 전투 보드 상태 스크린샷 하네스 — 성 후보/손패 선택/계략 버튼/배치 가능 상태를 차례로 캡처한다.
-# 실행 — LORD=lord_liubei SHOOT_STAGE=1 SHOT_DIR=/tmp/guju-first-board godot --path . res://tools/shoot_first_board_states.tscn
+# 실행 — LORD=lord_liubei SHOOT_STAGE=1 SHOT_DIR=/tmp/guju-first-board godot --path . --scene res://tools/shoot_first_board_states.tscn
 extends Node
 
 const _VisualQaConfig := preload("res://tools/visual_qa_config.gd")
@@ -48,10 +48,4 @@ func _frames(n: int) -> void:
 		await get_tree().process_frame
 
 func _shoot(path: String) -> void:
-	await RenderingServer.frame_post_draw
-	var img := get_viewport().get_texture().get_image()
-	if img != null:
-		img.save_png(path)
-		print("SHOT ", path, " ", img.get_size())
-	else:
-		print("SHOT FAIL ", path)
+	await _VisualQaConfig.capture_viewport_png(get_viewport(), get_tree(), path)

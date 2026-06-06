@@ -1,5 +1,5 @@
 # 상점 화면 스크린샷 하네스 — 런을 상점 스테이지(4)로 보내고 골드를 주입해 run_map을 띄워 캡처한다. 시각 QA 전용.
-# 실행 — LORD=lord_sunquan SHOP_STAGE=4 SHOT_DIR=/tmp/guju-visual-qa godot --path . res://tools/shoot_shop.tscn
+# 실행 — LORD=lord_sunquan SHOP_STAGE=4 SHOT_DIR=/tmp/guju-visual-qa godot --path . --scene res://tools/shoot_shop.tscn
 extends Node
 
 const _VisualQaConfig := preload("res://tools/visual_qa_config.gd")
@@ -26,10 +26,4 @@ func _frames(n: int) -> void:
 		await get_tree().process_frame
 
 func _shoot(path: String) -> void:
-	await RenderingServer.frame_post_draw
-	var img := get_viewport().get_texture().get_image()
-	if img != null:
-		img.save_png(path)
-		print("SHOT ", path, " ", img.get_size())
-	else:
-		print("SHOT FAIL ", path)
+	await _VisualQaConfig.capture_viewport_png(get_viewport(), get_tree(), path)

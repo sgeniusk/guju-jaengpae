@@ -21,44 +21,44 @@ mkdir -p "$SHOT_DIR"
 SCENE="res://scenes/screens/lord_select.tscn" \
 	SHOT_KIND="lord_select" \
 	SHOT_DIR="$SHOT_DIR" \
-	"$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_scene.tscn
+	"$GODOT_BIN" --path "$ROOT_DIR" --scene res://tools/shoot_scene.tscn
 
 LORD="$FIRST_BOARD_LORD" \
 	SHOOT_STAGE="$FIRST_BOARD_STAGE" \
 	SHOT_DIR="$SHOT_DIR" \
-	"$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_first_board_states.tscn
+	"$GODOT_BIN" --path "$ROOT_DIR" --scene res://tools/shoot_first_board_states.tscn
 
 for lord in $LORDS; do
 	for stage in $FLOW_STAGES; do
 		LORD="$lord" \
 			RUN_STAGE="$stage" \
 			SHOT_DIR="$SHOT_DIR" \
-			"$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_run_map.tscn
+			"$GODOT_BIN" --path "$ROOT_DIR" --scene res://tools/shoot_run_map.tscn
 	done
 
 	LORD="$lord" \
 		SHOOT_STAGE="$BATTLE_STAGE" \
 		SHOOT_FIGHT_FRAMES="$SHOOT_FIGHT_FRAMES" \
 		SHOT_DIR="$SHOT_DIR" \
-		"$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_battle.tscn
+		"$GODOT_BIN" --path "$ROOT_DIR" --scene res://tools/shoot_battle.tscn
 
 	LORD="$lord" \
 		SHOP_STAGE="$SHOP_STAGE" \
 		SHOT_DIR="$SHOT_DIR" \
-		"$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_shop.tscn
+		"$GODOT_BIN" --path "$ROOT_DIR" --scene res://tools/shoot_shop.tscn
 done
 
 LORD="$RESULT_LORD" \
 	SHOOT_STAGE="$RESULT_LOSS_STAGE" \
 	SHOOT_FORCE_RESULT="loss" \
 	SHOT_DIR="$SHOT_DIR" \
-	"$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_battle.tscn
+	"$GODOT_BIN" --path "$ROOT_DIR" --scene res://tools/shoot_battle.tscn
 
 LORD="$RESULT_LORD" \
 	SHOOT_STAGE="$RESULT_WIN_STAGE" \
 	SHOOT_FORCE_RESULT="win" \
 	SHOT_DIR="$SHOT_DIR" \
-	"$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_battle.tscn
+	"$GODOT_BIN" --path "$ROOT_DIR" --scene res://tools/shoot_battle.tscn
 
 "$PYTHON_BIN" "$ROOT_DIR/tools/validate_screenshot_bundle.py" "$SHOT_DIR" \
 	--lords $LORDS \

@@ -10,11 +10,11 @@ LORDS="${LORDS:-lord_liubei lord_caocao lord_sunquan}"
 
 mkdir -p "$SHOT_DIR"
 
-SCENE="res://scenes/screens/lord_select.tscn" SHOT_KIND="lord_select" SHOT_DIR="$SHOT_DIR" "$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_scene.tscn
+SCENE="res://scenes/screens/lord_select.tscn" SHOT_KIND="lord_select" SHOT_DIR="$SHOT_DIR" "$GODOT_BIN" --path "$ROOT_DIR" --scene res://tools/shoot_scene.tscn
 
 for lord in $LORDS; do
-	LORD="$lord" SHOOT_STAGE="$SHOOT_STAGE" SHOT_DIR="$SHOT_DIR" "$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_battle.tscn
-	LORD="$lord" SHOP_STAGE="$SHOP_STAGE" SHOT_DIR="$SHOT_DIR" "$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_shop.tscn
+	LORD="$lord" SHOOT_STAGE="$SHOOT_STAGE" SHOT_DIR="$SHOT_DIR" "$GODOT_BIN" --path "$ROOT_DIR" --scene res://tools/shoot_battle.tscn
+	LORD="$lord" SHOP_STAGE="$SHOP_STAGE" SHOT_DIR="$SHOT_DIR" "$GODOT_BIN" --path "$ROOT_DIR" --scene res://tools/shoot_shop.tscn
 done
 
 printf 'Visual QA screenshots: %s\n' "$SHOT_DIR"

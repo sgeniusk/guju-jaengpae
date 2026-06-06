@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-072 스크린샷 하네스 실행 안정화
+Godot 4.6 CLI에서 screenshot bundle 장면이 잘못 실행되거나 headless draw wait로 멈추지 않도록 하네스를 안정화했다.
+- **CLI scene 계약 정리** — `shoot_ui_bundle.sh`, `shoot_visual_qa.sh`, `shoot_run_flow.sh`가 모든 촬영 씬을 `--scene res://tools/...`로 실행한다.
+- **공용 캡처 함수** — `VisualQaConfig.capture_viewport_png()`가 GUI 표시 드라이버에서는 `RenderingServer.frame_post_draw`를 기다리고, headless 표시 드라이버에서는 `SHOT FAIL ... headless_display`를 출력하고 즉시 종료한다.
+- **중복 제거** — `shoot_scene`, `shoot_run_map`, `shoot_shop`, `shoot_first_board_states`, `shoot_battle`의 PNG 저장 경로를 공용 함수로 통일했다.
+- **검증** — 전투/첫 보드/범용 scene quick headless 하네스가 모두 hang 없이 종료했다. `test_visual_qa_config.gd`가 headless wait skip 계약을 검증하고 `./init.sh` 카드 22개, 단위 테스트 2994/2994 green.
+
 ## 2026-06-06 — feat-071 전장 필드 접지/깊이 보정
 배치 필드가 공중 UI처럼 떠 보이고 유닛이 필드 뒤에 깔리는 느낌을 줄이도록 전장 렌더 깊이를 보정했다.
 - **전장 위치 보정** — battle view origin을 아래로 내려 필드와 유닛이 배경의 바닥 영역에 더 자연스럽게 앉도록 했다.

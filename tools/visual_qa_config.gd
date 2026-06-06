@@ -6,6 +6,7 @@ const DEFAULT_FLOW_STAGES: Array[int] = [1, 3, 4, 5]
 const DEFAULT_BATTLE_STAGE := 5
 const DEFAULT_SHOP_STAGE := 4
 const DEFAULT_OUTPUT_DIR := "/tmp/guju-visual-qa"
+const HEADLESS_CAPTURE_SETTLE_FRAMES := 2
 
 static func env_lord(default_lord: StringName = &"lord_liubei") -> StringName:
 	if not OS.has_environment("LORD"):
@@ -59,6 +60,45 @@ static func shot_path(kind: String, lord: StringName, stage: int = 0, output_dir
 		_safe_token(String(lord)),
 		suffix,
 	]
+
+static func display_driver_name() -> String:
+	return DisplayServer.get_name().strip_edges().to_lower()
+
+static func should_wait_for_frame_post_draw(display_driver: String = "") -> bool:
+	var driver := display_driver.strip_edges().to_lower()
+	if driver.is_empty():
+		driver = display_driver_name()
+	return driver != "headless"
+
+static func capture_viewport_png(viewport: Viewport, tree: SceneTree, path: String) -> bool:
+	if viewport == null or tree == null:
+		print("SHOT FAIL ", path, " no_viewport")
+		return false
+	if should_wait_for_frame_post_draw():
+		await RenderingServer.frame_post_draw
+	else:
+		await wait_process_frames(tree, HEADLESS_CAPTURE_SETTLE_FRAMES)
+		print("SHOT FAIL ", path, " headless_display")
+		return false
+	var texture := viewport.get_texture()
+	if texture == null:
+		print("SHOT FAIL ", path, " no_texture")
+		return false
+	var img := texture.get_image()
+	if img == null or img.get_width() <= 0 or img.get_height() <= 0:
+		print("SHOT FAIL ", path, " no_image")
+		return false
+	var err := img.save_png(path)
+	if err != OK:
+		print("SHOT FAIL ", path, " save_error=", err)
+		return false
+	print("SHOT ", path, " ", img.get_size())
+	return true
+
+static func wait_process_frames(tree: SceneTree, frames: int) -> void:
+	var count := maxi(1, frames)
+	for _i in count:
+		await tree.process_frame
 
 static func _safe_token(value: String) -> String:
 	var safe := value.strip_edges().to_lower()

@@ -11,7 +11,7 @@ mkdir -p "$SHOT_DIR"
 
 for lord in $LORDS; do
 	for stage in $FLOW_STAGES; do
-		LORD="$lord" RUN_STAGE="$stage" SHOT_DIR="$SHOT_DIR" "$GODOT_BIN" --path "$ROOT_DIR" res://tools/shoot_run_map.tscn
+		LORD="$lord" RUN_STAGE="$stage" SHOT_DIR="$SHOT_DIR" "$GODOT_BIN" --path "$ROOT_DIR" --scene res://tools/shoot_run_map.tscn
 	done
 done
 

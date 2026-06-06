@@ -101,5 +101,5 @@ Phase 3의 저장·재개·영구 해금을 구현하기 전에 저장 포맷과
 - `test_run_resume.gd`는 RunManager 명시 저장/로드와 autosave 재개가 board·hand·gold·stage·edicts·treasures를 보존하는지, missing/unknown/newer run 정책을 지키는지 검증한다.
 - `test_run_reward.gd`는 RewardPool이 profile의 unlocked lord nation과 unlocked_card_ids를 반영하는지 검증한다.
 - `test_lord_select.gd`는 lord_select 버튼이 ProfileState 해금 전후로 disabled/label 상태를 바꾸는지 검증한다.
-- `SHOT_DIR=/tmp/guju-g049-result ... SHOOT_FORCE_RESULT=loss|win godot --path . res://tools/shoot_battle.tscn`는 결과 overlay PNG 2장을 생성한다.
+- `SHOT_DIR=/tmp/guju-g049-result ... SHOOT_FORCE_RESULT=loss|win godot --path . --scene res://tools/shoot_battle.tscn`는 결과 overlay PNG 2장을 생성한다.
 - `./init.sh` 전체 green으로 닫는다.

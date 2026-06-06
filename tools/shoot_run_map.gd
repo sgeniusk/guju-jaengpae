@@ -1,5 +1,5 @@
 # 런 맵 화면 스크린샷 하네스 — 군주와 스테이지별 UI 상태를 재현해 캡처한다.
-# 실행 — LORD=lord_caocao RUN_STAGE=5 SHOT_DIR=/tmp/guju-flow-qa godot --path . res://tools/shoot_run_map.tscn
+# 실행 — LORD=lord_caocao RUN_STAGE=5 SHOT_DIR=/tmp/guju-flow-qa godot --path . --scene res://tools/shoot_run_map.tscn
 extends Node
 
 const _VisualQaConfig := preload("res://tools/visual_qa_config.gd")
@@ -80,10 +80,4 @@ func _frames(n: int) -> void:
 		await get_tree().process_frame
 
 func _shoot(path: String) -> void:
-	await RenderingServer.frame_post_draw
-	var img := get_viewport().get_texture().get_image()
-	if img != null:
-		img.save_png(path)
-		print("SHOT ", path, " ", img.get_size())
-	else:
-		print("SHOT FAIL ", path)
+	await _VisualQaConfig.capture_viewport_png(get_viewport(), get_tree(), path)

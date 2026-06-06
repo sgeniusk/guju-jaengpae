@@ -21,6 +21,10 @@ func test_first_board_shot_path_names_state_lord_and_stage() -> void:
 	var path := _VisualQaConfig.shot_path("battle_first_scheme", &"lord_liubei", 1, "/tmp/qa")
 	eq(path, "/tmp/qa/battle_first_scheme_lord_liubei_stage_1.png", "첫 보드 상태 스크린샷 파일명")
 
+func test_headless_display_skips_frame_post_draw_wait() -> void:
+	falsy(_VisualQaConfig.should_wait_for_frame_post_draw("headless"), "headless는 draw signal 대기 금지")
+	truthy(_VisualQaConfig.should_wait_for_frame_post_draw("macos"), "GUI 표시 드라이버는 draw signal 대기")
+
 func test_shot_path_omits_stage_for_scene_captures() -> void:
 	var path := _VisualQaConfig.shot_path("lord_select", &"all", 0, "/tmp/qa")
 	eq(path, "/tmp/qa/lord_select_all.png", "씬 스크린샷 파일명")

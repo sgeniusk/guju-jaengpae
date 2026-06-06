@@ -4,10 +4,11 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-06
-**활성 피처** — feat-071 전장 필드 접지/깊이 보정 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 배치 필드 9칸이 하늘에 떠 보이고 유닛이 필드 뒤에 깔리는 문제를 줄이는 작업이다.
+**활성 피처** — feat-072 스크린샷 하네스 실행 안정화 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 시각 QA screenshot bundle이 Godot 4.6 CLI에서 멈추지 않고 재시작 가능하게 만드는 작업이다.
 
 ## 완료
+- [x] **feat-072 스크린샷 하네스 실행 안정화** — `docs/specs/feat-072-screenshot-harness-stability.md`를 추가했다. screenshot bundle 셸 스크립트가 모든 shoot scene을 `--scene`으로 실행하고, `VisualQaConfig.capture_viewport_png()`가 GUI에서는 `frame_post_draw`를 기다리되 headless에서는 `SHOT FAIL ... headless_display`로 즉시 종료한다. 전투/첫 보드/범용 scene quick headless 하네스가 멈추지 않고 종료하며, `./init.sh`는 카드 22개 / 단위 테스트 2994/2994 green.
 - [x] **feat-071 전장 필드 접지/깊이 보정** — `docs/specs/feat-071-battlefield-ground-depth.md`를 추가했다. battle view origin을 아래로 내려 필드와 유닛을 바닥 영역에 맞추고, 필드 아래 `battlefield_ground_plate` meta 지면 plate/shadow를 추가했다. field/building/unit 레이어 z-order와 유닛 screen-y depth를 고정해 유닛이 필드 타일 뒤에 렌더되지 않게 했다. UI smoke가 지면 plate와 field < unit depth를 검증한다. `./init.sh` 카드 22개 / 2992 단언 green.
 - [x] **feat-070 결과 화면 시각 polish** — `docs/specs/feat-070-result-screen-polish.md`를 추가했다. `BattleOutcomeGuide`가 결과 배너 제목/상세/다음 행동을 순수 계산하고, battle 결과 오버레이 최상단이 `결과 — 성 함락`, `결과 — 구주 정복`, `결과 — 전투 승리`와 다음 행동을 표시한다. battle result smoke와 UI smoke가 패배/최종승리/일반승리 보상 화면 배너를 검증한다. `./init.sh` 카드 22개 / 2992 단언 green.
 - [x] **feat-069 스크린샷 validator 속도 최적화** — `docs/specs/feat-069-screenshot-validator-speed.md`를 추가했다. `tools/validate_screenshot_bundle.py` 기본 경로가 fast PNG mode로 바뀌어 PNG 구조, 해상도, 압축 스트림 샘플 다양성을 빠르게 검사한다. 기존 행 unfilter 픽셀 복원은 `--png-mode deep`으로 유지했다. `/tmp/guju-feat-068-ui` 11장 기준 fast 0.18초, deep 32.67초 통과. `./init.sh` 카드 22개 / 2983 단언 green.
@@ -30,7 +31,7 @@
 
 ## 진행 중
 - [ ] 수동 플레이 감각 확인 — 첫 손패 장수+병종, 성 위치 선택, 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령, stage 4 상점, 전리품 추천 문구를 사용자 플레이로 확인한다.
-- [ ] 완성판 안전 개선 계속 — 다음 후보는 수동 플레이 시각 검증 갱신, 전투 화면 체감 polish, 스크린샷 하네스 안정화다.
+- [ ] 완성판 안전 개선 계속 — 다음 후보는 수동 플레이 시각 검증 갱신, 전투 화면 체감 polish, GUI screenshot bundle 실촬영이다.
 - [ ] Codex goal은 완성판까지 계속 활성이다. MVP 이후 핵심 루프 재미와 안정성을 단계적으로 개선한다.
 
 ## 다음
@@ -43,12 +44,16 @@
 - [ ] push/tag는 사용자 확인 전 실행 금지다.
 - [ ] G055/G056/G058/G060/G061/G062는 천계·마계 nation id, 군주명, resource id 정본 승인 전 보류한다.
 - [ ] Godot 4.6.3 macOS headless 종료 시 resource leak 경고가 남지만 종료 코드는 0이고 테스트 실패는 아니다.
-- [ ] `tools/shoot_battle.tscn` 직접 headless 캡처는 이 desktop 세션에서 `SHOT` 출력 없이 멈춰 수동 종료했다. 이번 피처는 UI smoke와 `./init.sh`로 검증했다.
+- [ ] Godot headless dummy renderer는 PNG 추출을 지원하지 않아 screenshot 하네스가 `SHOT FAIL ... headless_display`로 종료한다. 실제 PNG 품질 검증은 GUI 표시 드라이버에서 `--scene` bundle로 실행한다.
 
 ## 이번 세션 수정 파일
-- `docs/specs/feat-071-battlefield-ground-depth.md`
-- `scripts/battle/battle.gd`
-- `tools/ui_feedback_smoke.gd`
+- `docs/specs/feat-072-screenshot-harness-stability.md`
+- `tools/visual_qa_config.gd`
+- `tools/shoot_scene.gd`, `tools/shoot_run_map.gd`, `tools/shoot_shop.gd`
+- `tools/shoot_first_board_states.gd`, `tools/shoot_battle.gd`
+- `tools/shoot_ui_bundle.sh`, `tools/shoot_visual_qa.sh`, `tools/shoot_run_flow.sh`
+- `test/test_visual_qa_config.gd`
+- `docs/specs/feat-032.md`, `docs/specs/feat-033.md`
 - `feature_list.json`
 - `progress.md`
 - `session-handoff.md`
@@ -78,6 +83,11 @@
 - `CHANGELOG.md`
 
 ## 검증 증거
+- [x] `HOME=$PWD/.godot/home LORD=lord_liubei SHOOT_STAGE=1 SHOOT_FIGHT_FRAMES=1 SHOT_DIR=/tmp/guju-shot-scene-fixed godot --headless --path . --scene res://tools/shoot_battle.tscn` (2026-06-06, feat-072) — 전투 deploy/fight가 `SHOT FAIL ... headless_display`로 종료, hang 없음.
+- [x] `HOME=$PWD/.godot/home LORD=lord_liubei SHOOT_STAGE=1 SHOT_DIR=/tmp/guju-first-board-fixed godot --headless --path . --scene res://tools/shoot_first_board_states.tscn` (2026-06-06, feat-072) — 첫 보드 4상태가 headless_display fail로 종료, hang 없음.
+- [x] `HOME=$PWD/.godot/home SCENE=res://scenes/screens/lord_select.tscn SHOT_KIND=lord_select SHOT_DIR=/tmp/guju-scene-fixed godot --headless --path . --scene res://tools/shoot_scene.tscn` (2026-06-06, feat-072) — 범용 scene 하네스 headless 종료, hang 없음.
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --script res://test/runner.gd` (2026-06-06, feat-072) — 단위 테스트 2994/2994 green.
+- [x] `./init.sh` (2026-06-06, feat-072) — 카드 22개 검증 OK, screenshot 하네스 계약 변경 포함, 단위 테스트 2994/2994 green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-071-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-071) — `battlefield_ground_plate`와 field < unit depth 포함 UI smoke green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-071-unit.log --script res://test/runner.gd` (2026-06-06, feat-071) — 단위 테스트 2992/2992 green.
 - [x] `./init.sh` (2026-06-06, feat-071) — 카드 22개 검증 OK, UI 피드백 smoke와 단위 테스트 2992/2992 포함 전체 green.
@@ -89,4 +99,4 @@
 - [x] feat-068~feat-062의 자세한 검증 로그는 `CHANGELOG.md`와 각 `docs/specs/`에 보관했다.
 
 ## 다음 세션 메모
-feat-071 done. 다음 안전 피처는 스크린샷 하네스 안정화, 수동 플레이 시각 검증 갱신, 전투 화면 체감 polish가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+feat-072 done. 다음 안전 피처는 GUI screenshot bundle 실촬영, 수동 플레이 시각 검증 갱신, 전투 화면 체감 polish가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
