@@ -3,8 +3,11 @@ class_name PlaytestMetrics
 extends RefCounted
 
 const BattleFeel := preload("res://scripts/battle/battle_feel.gd")
-const FIRST_FIVE_MAX_COMBAT_TIME := 24.0
-const FIRST_FIVE_AVERAGE_COMBAT_TIME := 20.0
+const FIRST_FIVE_MAX_COMBAT_TIME := 22.0
+const FIRST_FIVE_AVERAGE_COMBAT_TIME := 19.0
+const FIRST_FIVE_MIN_PLAYER_SOLDIERS := 12
+const FIRST_FIVE_MIN_TOTAL_SOLDIERS := 30
+const FIRST_FIVE_PEAK_PLAYER_SOLDIERS := 30
 
 static func summarize(stage: int, sim: BattleSim, board: Dictionary, board_levels: Dictionary, hand_size: int, draw_size: int) -> Dictionary:
 	var visible_soldiers := 0
@@ -52,7 +55,7 @@ static func compact_line(metrics: Dictionary) -> String:
 static func first_five_ok(metrics_list: Array) -> bool:
 	if metrics_list.size() < 3:
 		return false
-	var saw_density := false
+	var peak_player_soldiers := 0
 	var elapsed_total := 0.0
 	var combat_count := 0
 	for metrics in metrics_list:
@@ -63,11 +66,16 @@ static func first_five_ok(metrics_list: Array) -> bool:
 			return false
 		elapsed_total += elapsed
 		combat_count += 1
-		if int(metrics.get("visible_soldiers", 0)) >= 10:
-			saw_density = true
+		var player_soldiers := int(metrics.get("visible_soldiers", 0))
+		var total_soldiers := int(metrics.get("total_visible_soldiers", player_soldiers + int(metrics.get("enemy_visible_soldiers", 0))))
+		if player_soldiers < FIRST_FIVE_MIN_PLAYER_SOLDIERS:
+			return false
+		if total_soldiers < FIRST_FIVE_MIN_TOTAL_SOLDIERS:
+			return false
+		peak_player_soldiers = maxi(peak_player_soldiers, player_soldiers)
 	if combat_count <= 0 or elapsed_total / float(combat_count) > FIRST_FIVE_AVERAGE_COMBAT_TIME:
 		return false
-	return saw_density
+	return peak_player_soldiers >= FIRST_FIVE_PEAK_PLAYER_SOLDIERS
 
 static func _level_sum(levels: Dictionary) -> int:
 	var total := 0

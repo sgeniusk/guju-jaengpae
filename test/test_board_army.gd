@@ -75,7 +75,7 @@ func test_build_board_army_applies_squad_level_growth() -> void:
 		return
 	var archer: BattleUnit = army[0]
 	eq(archer.squad_level, 2, "squad_level 운반")
-	eq(archer.squad_count, 14, "궁병 Lv.2는 병력 14명")
+	eq(archer.squad_count, 15, "궁병 Lv.2는 병력 15명")
 	truthy(archer.max_hp > cat.get_card(&"troop_archer").max_hp, "병력 증가로 총 체력 증가")
 	truthy(archer.attack > cat.get_card(&"troop_archer").attack, "레벨업으로 공격 증가")
 

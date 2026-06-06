@@ -21,7 +21,7 @@ static func for_card(card: UnitCardData, level: int) -> Dictionary:
 	}
 	if card.card_type == "troop":
 		var base_count := base_squad_count(card.troop_type)
-		var squad_count := base_count + (clamped - 1) * 4
+		var squad_count := mini(18, base_count + (clamped - 1) * 3)
 		out["squad_count"] = squad_count
 		out["hp_mult"] = float(squad_count) / float(base_count)
 		out["attack_mult"] = 1.0 + float(clamped - 1) * 0.28
@@ -30,7 +30,7 @@ static func for_card(card: UnitCardData, level: int) -> Dictionary:
 		out["body_scale"] = 0.74
 		out["label"] = "Lv.%d 분대 %d" % [clamped, squad_count]
 	elif card.card_type == "general":
-		out["retinue_count"] = 5 + (clamped - 1) * 2
+		out["retinue_count"] = 7 + (clamped - 1) * 2
 		out["hp_mult"] = 1.0 + float(clamped - 1) * 0.16
 		out["attack_mult"] = 1.0 + float(clamped - 1) * 0.20
 		out["speed_mult"] = 1.10
@@ -56,10 +56,10 @@ static func apply_to_unit(unit: BattleUnit, card: UnitCardData, level: int) -> v
 static func base_squad_count(troop_type: String) -> int:
 	match troop_type:
 		"cavalry":
-			return 8
-		"navy":
-			return 9
-		"fantasy":
-			return 6
-		_:
 			return 10
+		"navy":
+			return 11
+		"fantasy":
+			return 8
+		_:
+			return 12
