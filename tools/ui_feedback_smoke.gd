@@ -60,10 +60,13 @@ func _run_map_first_combat_case() -> int:
 	await _frames(8)
 	var errors := 0
 	errors += _assert_any_text(screen, "첫 전투입니다", "첫 전투 안내 문구")
+	errors += _assert_any_text(screen, "진행 리듬 — 현재 1 전투", "첫 전투 진행 리듬")
+	errors += _assert_any_text(screen, "다음 흐름: 2 전투 -> 3 칙령 -> 4 상점", "첫 전투 다음 흐름")
 	errors += _assert_any_text(screen, "빈 타일에 배치", "첫 배치 행동 안내")
 	errors += _assert_any_text(screen, "전투 준비 — 손패 3장 중 1장", "첫 전투 준비 요약")
 	errors += _assert_any_text(screen, "성 위치: 미선택", "첫 전투 성 위치 요약")
 	errors += _assert_any_text(screen, "증원 후보", "첫 전투 손패 후보 요약")
+	errors += _assert_any_tooltip(screen, "런맵에서 전투 시작", "첫 전투 진행 리듬 tooltip")
 	errors += _assert_any_tooltip(screen, "성 위치는 아직", "첫 전투 준비 tooltip")
 	errors += _assert_button_tooltip(screen, "전투 시작", "손패 1장", "첫 전투 시작 버튼 tooltip")
 	screen.queue_free()
@@ -86,6 +89,9 @@ func _run_map_shop_case() -> int:
 	root.add_child(screen)
 	await _frames(8)
 	var errors := 0
+	errors += _assert_any_text(screen, "진행 리듬 — 현재 4 상점", "상점 진행 리듬")
+	errors += _assert_any_text(screen, "다음 흐름: 5 보스 -> 6 칙령 -> 7 정예", "상점 다음 흐름")
+	errors += _assert_any_tooltip(screen, "상점 떠나기", "상점 진행 리듬 tooltip")
 	errors += _assert_button_tooltip(screen, "상점 떠나기", "다음 스테이지", "상점 떠나기 tooltip")
 	errors += _assert_any_text(screen, "다음 전투 손패", "상점 다음 전투 손패 요약")
 	errors += _assert_any_tooltip(screen, "드로우 더미", "상점 손패 정리 tooltip")

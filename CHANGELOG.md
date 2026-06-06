@@ -2,6 +2,12 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-062 런맵 진행 리듬 안내
+런맵에서 현재 스테이지가 어떤 행동을 요구하고, 앞으로 어떤 노드가 이어지는지 바로 읽히도록 진행 리듬 안내를 추가했다.
+- **RunFlowSummary helper** — `scripts/run/run_flow_summary.gd`가 현재 stage의 준비 행동과 앞으로 3스테이지의 전투/칙령/상점/보스 리듬을 순수 계산한다.
+- **런맵 공통 안내** — `run_map.gd`가 전투, 칙령, 상점, 사건 화면 모두에서 `진행 리듬 — 현재 ...`, `현재 행동`, `다음 흐름: ...`을 표시한다.
+- **검증** — `test_run_flow_summary.gd`가 전투/상점/최종 보스/비정상 stage 보정 문구를 검증하고, `tools/ui_feedback_smoke.gd`가 첫 전투와 상점 화면의 진행 리듬 및 tooltip을 확인한다. `./init.sh` 카드 22개, 단위 테스트 2920/2920 green.
+
 ## 2026-06-06 — feat-061 전투 결과 복귀 안내
 전투 결과 화면에서 현재 런을 계속하는 경로와 현재 런을 끝내고 새 런으로 돌아가는 경로를 더 분명히 구분했다.
 - **BattleOutcomeGuide helper** — `scripts/battle/battle_outcome_guide.gd`가 패배, 최종 승리, 일반 승리의 `런 종료`/`런 계속` 문구와 새 런/다음 스테이지 tooltip을 순수 계산한다.

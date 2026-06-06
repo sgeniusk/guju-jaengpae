@@ -4,35 +4,24 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-06
-**활성 피처** — feat-061 전투 결과 복귀 안내 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 전투 결과 화면에서 현재 런 계속과 새 런 시작 경로를 명확히 구분하는 작업이다.
+**활성 피처** — feat-062 런맵 진행 리듬 안내 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 런맵에서 현재 스테이지 행동과 앞으로 이어질 전투·칙령·상점·보스 흐름을 읽히게 하는 작업이다.
 
 ## 완료
-- [x] **feat-061 전투 결과 복귀 안내** — `docs/specs/feat-061-battle-result-return-guide.md`와 `BattleOutcomeGuide`를 추가했다. battle 결과 오버레이가 `런 종료`/`런 계속` 안내를 표시하고, 다음 스테이지 버튼은 현재 런 유지, 새 런 버튼은 완료 기록 보존 또는 현재 런 포기를 tooltip으로 말한다. `./init.sh` 카드 22개 / 2890 단언 green.
-- [x] **feat-060 상점 손패 정리 안내** — `docs/specs/feat-060-shop-hand-prep-summary.md`와 `ShopHandSummary`를 추가했다. run_map 상점 패널이 `다음 전투 손패 — 후보 3장 중 1장`, 구매 후 `상점 손패 4장 → 전투 후보 3장`, 드로우 더미 tooltip을 표시한다. UI smoke가 상점 화면과 구매 직후 정리 문구를 검증한다. `./init.sh` 카드 22개 / 2868 단언 green.
-- [x] **feat-059 자동저장 슬롯 삭제 UX** — `docs/specs/feat-059-run-save-delete-ux.md`를 추가했다. `lord_select.gd`가 유효 저장/손상 저장 모두에 `저장된 런 삭제` 버튼을 표시하고, tooltip으로 autosave 슬롯만 지우며 프로필 기록은 유지된다고 안내한다. 삭제 후 `RunManager.reset_run()`으로 런 저장과 현재 state를 초기화하고 이어하기/삭제 버튼이 사라진 군주 선택 화면으로 돌아간다. `./init.sh` 카드 22개 / 2847 단언 green.
-- [x] **feat-058 다음 배치 손패 미리보기** — `docs/specs/feat-058-deploy-hand-preview.md`와 `RunState.deploy_hand_preview()`를 추가했다. run_map 전투 준비 패널과 battle 결과 오버레이가 다음 배치 preview 손패를 기준으로 `다음 배치 손패 — 후보 3장 중 1장`, `다음 손패 X→3`, 드로우 더미 정리 안내를 표시한다. `./init.sh` 카드 22개 / 2839 단언 green.
-- [x] **feat-057 런맵 전투 준비 패널 강화** — `docs/specs/feat-057-run-map-combat-prep.md`와 `scripts/run/run_prep_summary.gd`를 추가했다. run_map 전투/정예/보스 스테이지가 전투 시작 버튼 위에 `전투 준비 — 손패 3장 중 1장`, 성 위치, 군세, 증원/배치/계략 후보 수를 표시한다. `./init.sh` 카드 22개 / 2829 단언 green.
-- [x] **feat-056 보상 후 다음 스테이지 준비 안내** — `docs/specs/feat-056-next-stage-prep.md`를 추가했다. `StageCadence.stage_prep_label/tooltip`이 stage kind별 준비 행동을 제공하고, battle 결과 오버레이는 보상 선택 후 `다음 준비 — 스테이지 2 — 전투`과 다음 행동 문구를 표시한다. 다음 스테이지 버튼에도 stage label과 tooltip을 붙였다. `./init.sh` 카드 22개 / 2802 단언 green.
-- [x] **feat-055 보상 선택 비교 UX** — `docs/specs/feat-055-reward-choice-comparison.md`를 추가했다. `CardChoiceAdvisor`가 유닛 증원, 새 장수/병종, 건물, 계략, 보패의 선택 전후 변화를 `비교 — ...` 문구와 tooltip으로 계산한다. `battle.gd` 전리품 버튼은 기존 추천 문구 아래 비교 문구를 함께 표시하고, 줄 수에 따라 버튼 최소 높이를 보정한다. `./init.sh` 카드 22개 / 2797 단언 green.
-- [x] **feat-054 손상 저장 이어하기 보호** — `docs/specs/feat-054-corrupt-save-resume-guard.md`를 추가했다. `RunManager.run_save_status()`와 `has_resumeable_run_save()`가 파일 존재뿐 아니라 ConfigFile payload와 RunState 호환성까지 확인한다. `lord_select.gd`는 로드 가능한 저장만 이어하기 버튼을 띄우고, 손상/호환 불가 저장은 비활성 안내와 새 군주 선택 복구 tooltip을 표시한다. `run_map.gd`도 재개 가능한 저장만 자동 로드한다. `./init.sh` 카드 22개 / 2790 단언 green.
-- [x] **feat-053 충돌 중 타격감 VFX 반복** — `docs/specs/feat-053-hit-impact-feedback.md`와 `scripts/battle/battle_hit_feedback.gd`를 추가했다. 데미지 이벤트가 positive amount일 때 spark를 만들고, 치명타는 crit ring, 스킬/계략은 burst를 추가한다. `battle.gd`는 `hit_impact_vfx` meta가 있는 Polygon2D를 VFX layer에 띄우며, UI smoke가 첫 수동 전투에서 spark/crit/burst 생성을 검증한다. `./init.sh` 카드 22개 / 2769 단언 green.
-- [x] **feat-052 병력 밀도/함성 체감 패스** — `docs/specs/feat-052-force-density-and-rally.md`를 추가했다. 병종 분대 렌더/visible cap을 18명, 장수 호위 cap을 10명으로 올리고, `rally` SFX cue를 기존 전투 시작 wav에 연결했다. battle.gd가 시작 순간 rally banner, charge line, clash pulse를 meta 태그로 표시하고 UI smoke가 첫 수동 플레이에서 검증한다. `./init.sh` 카드 22개 / 2746 단언 green.
-- [x] **feat-051 저장/이어하기 UX 스모크** — `docs/specs/feat-051-resume-ux-smoke.md`와 `tools/resume_ux_smoke.gd`를 추가했다. 저장 파일이 없으면 군주 선택 화면에 이어하기 버튼이 없고, autosave 런이 있으면 `저장된 런 이어하기` 버튼/tooltip이 보인다. 버튼 실행 후 run_map route와 stage, 성 위치, 보드, 손패, 골드 복원을 검증한다. `./init.sh` 카드 22개 / 2740 단언 green.
-- [x] **feat-050 카드 선택 추천순 정렬** — `docs/specs/feat-050-card-choice-priority.md`를 추가했다. `CardChoiceAdvisor.ranked_ids()`가 추천 점수순 stable sort를 제공하고, run_map 상점과 battle 전리품 버튼이 이 순서로 렌더된다. 상점에서는 살 수 없는 카드는 뒤로 밀리며, UI smoke가 보병 증원 후보가 첫 추천 카드로 올라오는지 검증한다. `./init.sh` 카드 22개 / 2740 단언 green.
-- [x] **feat-049 전투 템포 예산** — `docs/specs/feat-049-battle-tempo-budget.md`를 추가했다. battle 화면 기본 속도를 x3으로 올리고, UI smoke가 x3 버튼 기본 선택을 확인한다. `PlaytestMetrics.first_five_ok()`는 첫 5스테이지 전투를 개별 24초, 평균 20초 이하로 검증하며 `test_fun_contract.gd`가 느린 전투 회귀를 잡는다. `./init.sh` 카드 22개 / 2734 단언 green.
-- [x] **feat-048 수동 플레이 QA 자동화** — `docs/specs/feat-048-manual-playthrough-smoke.md`를 추가했다. `tools/ui_feedback_smoke.gd`가 첫 손패를 계략/보병/건물로 고정하고 성 선택, 계략 타일 배치 거부, 보병 배치, 즉시 교전 시작을 검증한다. 교전 시작 후 성/아군/적 생성, 손패 감소, 교전당 1장 제한, 전군 돌격 hint를 확인한다. `./init.sh` 카드 22개 / 2731 단언 green.
-- [x] **feat-047 현세 3군주 장기런 스모크** — `docs/specs/feat-047-three-lord-long-run-smoke.md`를 추가했다. `tools/long_run_smoke.gd`가 유비·조조·손권을 각각 새 런으로 시작해 stage 15 최종 보스까지 통과한다. 스모크 선택기는 건물 배치, 망루 오라, 계략 battle/run 효과, 병법서 보패를 반영한다. 조조 첫 정예에서 막히던 원거리 스파이크를 `WaveFactory` 정예 명궁 수치로 좁게 보정했고, 손권은 주유 우선 루트로 오나라 화공 축을 검증한다. `./init.sh` 카드 22개 / 2731 단언 green.
-- [x] **feat-046 카드 선택 전략 안내** — `docs/specs/feat-046-card-choice-advisor.md`와 `scripts/run/card_choice_advisor.gd`를 추가했다. run_map 상점 카드와 battle 전리품 버튼이 `추천 — 증원 후보`, `추천 — 경제 확장`, `추천 — 자금 부족` 같은 visible text와 tooltip을 표시한다. `test_card_choice_advisor.gd`와 `tools/ui_feedback_smoke.gd`가 전략 추천 렌더를 검증한다. `./init.sh` 카드 22개 / 2726 단언 green.
-- [x] **feat-045 집중표적 체감 피드백** — 전투 중 집중표적 버튼 tooltip, 성공/실패 힌트, 표적 위 `집중` 라벨, 장수→표적 지휘선, 사망/빈 곳 자동 복귀 문구를 추가했다. `./init.sh` 카드 22개 / 2701 단언 green.
-- [x] **feat-044 장기런 자동 스모크** — `tools/long_run_smoke.gd`가 stage 1~15 전투·보스·칙령·상점·사건·확장을 결정적으로 통과한다. stage 15 result=1, wins=8, board=4, rows=6.
-- [x] **feat-040~043 MVP 재미 루프 보강** — 성 위치 선택, 3장 손패 중 1장 플레이, 분대/증원 성장, 첫 전투 군세 체감, 진형 전술 시너지, 배치 전술 미리보기를 완료했다.
-- [x] **feat-038~039 루프 hotfix** — 방어전식 다중 파도 느낌을 성 선점→단일 교전으로 바꾸고, 장수/병종을 분대와 레벨 성장 단위로 바꿨다.
+- [x] **feat-062 런맵 진행 리듬 안내** — `docs/specs/feat-062-run-flow-rhythm-guide.md`와 `RunFlowSummary`를 추가했다. run_map 전투/칙령/상점/사건 화면이 `진행 리듬 — 현재 ...`, `현재 행동`, `다음 흐름: 2 전투 -> 3 칙령 -> 4 상점` 같은 안내를 표시한다. UI smoke가 첫 전투와 상점의 다음 흐름/tooltip을 검증한다. `./init.sh` 카드 22개 / 2920 단언 green.
+- [x] **feat-061 전투 결과 복귀 안내** — `BattleOutcomeGuide`로 패배/최종승리/일반승리 결과 안내와 버튼 tooltip을 분리했다. battle 결과 오버레이가 `런 종료`/`런 계속` 안내를 표시하고, 다음 스테이지 버튼은 현재 런 유지, 새 런 버튼은 현재 런 포기 또는 완료 기록 보존을 말한다. `./init.sh` 카드 22개 / 2890 단언 green.
+- [x] **feat-060 상점 손패 정리 안내** — `ShopHandSummary`가 상점 손패와 다음 전투 후보 3장의 차이를 계산한다. run_map 상점 패널이 `다음 전투 손패 — 후보 3장 중 1장`, 구매 후 `상점 손패 4장 → 전투 후보 3장`, 드로우 더미 tooltip을 표시한다.
+- [x] **feat-059 자동저장 슬롯 삭제 UX** — 군주 선택 화면에서 유효 저장/손상 저장 모두 `저장된 런 삭제` 버튼을 표시하고 autosave 슬롯 삭제 후 새 런 시작 상태로 복구한다.
+- [x] **feat-058 다음 배치 손패 미리보기** — `RunState.deploy_hand_preview()`와 RunManager preview API가 다음 전투 후보 3장을 비파괴 계산하고 run_map/battle 결과 안내가 드로우 더미 정리를 표시한다.
+- [x] **feat-057 런맵 전투 준비 패널 강화** — `RunPrepSummary`가 성 위치, 손패 3장 중 1장 규칙, 군세, 증원/배치/계략 후보 수를 표시한다.
+- [x] **feat-056 보상 후 다음 스테이지 준비 안내** — `StageCadence.stage_prep_label/tooltip`이 결과 오버레이와 다음 스테이지 버튼의 다음 행동 문구를 제공한다.
+- [x] **feat-055 보상 선택 비교 UX** — `CardChoiceAdvisor`가 전리품 후보의 선택 전후 변화를 `비교 — ...` 문구와 tooltip으로 설명한다.
+- [x] **feat-038~054 MVP 이후 루프 보강** — 성 선점→3장 손패→1장 플레이, 분대/증원 성장, 군세 체감, 진형 전술, 수동 QA, 전투 템포, 카드 추천순, 저장/이어하기 UX, 병력 밀도/함성 VFX, 피격 VFX, 손상 저장 보호를 완료했다.
 - [x] **v0.7 릴리스 준비 기준선** — 밸런스 수치 계약, macOS export preset, full app export smoke, fresh clone green, 릴리스 리스크 문서를 완료했다.
 
 ## 진행 중
 - [ ] 수동 플레이 감각 확인 — 첫 손패 장수+병종, 성 위치 선택, 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령, stage 4 상점, 전리품 추천 문구를 사용자 플레이로 확인한다.
-- [ ] 완성판 안전 개선 계속 — 다음 피처 후보는 run_map 다음 스테이지 준비 흐름 보강, 상점 구매 제한/선택 피드백 보강, 장기런 결과 요약 UX다.
+- [ ] 완성판 안전 개선 계속 — 다음 후보는 상점 구매 제한/선택 피드백 보강, 장기런 결과 요약 UX, 전투 화면 정보 밀도 정리다.
 - [ ] Codex goal은 완성판까지 계속 활성이다. MVP 이후 핵심 루프 재미와 안정성을 단계적으로 개선한다.
 
 ## 다음
@@ -47,73 +36,20 @@
 - [ ] Godot 4.6.3 macOS headless 종료 시 resource leak 경고가 남지만 종료 코드는 0이고 테스트 실패는 아니다.
 
 ## 이번 세션 수정 파일
-- `docs/specs/feat-061-battle-result-return-guide.md`
-- `scripts/battle/battle_outcome_guide.gd`
-- `test/test_battle_outcome_guide.gd`
-- `scripts/battle/battle.gd`
-- `tools/battle_result_smoke.gd`
-- `tools/ui_feedback_smoke.gd`
-- `docs/specs/feat-060-shop-hand-prep-summary.md`
-- `scripts/run/shop_hand_summary.gd`
-- `test/test_shop_hand_summary.gd`
+- `docs/specs/feat-062-run-flow-rhythm-guide.md`
+- `scripts/run/run_flow_summary.gd`
+- `test/test_run_flow_summary.gd`
 - `scripts/screens/run_map.gd`
 - `tools/ui_feedback_smoke.gd`
-- `docs/specs/feat-059-run-save-delete-ux.md`
-- `scripts/screens/lord_select.gd`
-- `tools/resume_ux_smoke.gd`
-- `test/test_lord_select.gd`
-- `docs/specs/feat-058-deploy-hand-preview.md`
-- `scripts/run/run_state.gd`
-- `scripts/autoloads/run_manager.gd`
-- `scripts/battle/battle.gd`
-- `docs/specs/feat-057-run-map-combat-prep.md`
-- `scripts/run/run_prep_summary.gd`
-- `scripts/screens/run_map.gd`
-- `tools/ui_feedback_smoke.gd`
-- `test/test_deploy_hand_preview.gd`
-- `test/test_run_prep_summary.gd`
 - `feature_list.json`
 - `progress.md`
 - `session-handoff.md`
 - `CHANGELOG.md`
 
 ## 검증 증거
-- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-061-unit.log --script res://test/runner.gd` (2026-06-06, feat-061) — BattleOutcomeGuide helper 포함 단위 테스트 2890/2890 green.
-- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-061-result.log --script res://tools/battle_result_smoke.gd` (2026-06-06, feat-061) — 패배/최종 승리 결과 화면의 `런 종료` 안내와 새 런 tooltip 확인.
-- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-061-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-061) — 일반 승리 보상 뒤 현재 런 유지 tooltip과 새 런 포기 tooltip 확인.
-- [x] `./init.sh` (2026-06-06, feat-061) — 카드 22개 검증 OK, 전투 결과 복귀 안내 smoke 포함, 단위 테스트 2890/2890 green.
-- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-060-unit.log --script res://test/runner.gd` (2026-06-06, feat-060) — ShopHandSummary helper 포함 단위 테스트 2868/2868 green.
-- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-060-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-060) — 상점 다음 전투 손패 요약, 드로우 더미 tooltip, 구매 후 `상점 손패 4장 → 전투 후보 3장` 문구 확인.
-- [x] `./init.sh` (2026-06-06, feat-060) — 카드 22개 검증 OK, 상점 손패 정리 안내 smoke 포함, 단위 테스트 2868/2868 green.
-- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-059-unit.log --script res://test/runner.gd` (2026-06-06, feat-059) — lord_select 저장 삭제 버튼 테스트 포함 단위 테스트 2847/2847 green.
-- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-059-resume.log --script res://tools/resume_ux_smoke.gd` (2026-06-06, feat-059) — no-save, corrupt-save, valid-save 이어하기, valid-save 삭제 네 케이스 통과.
-- [x] `./init.sh` (2026-06-06, feat-059) — 카드 22개 검증 OK, 저장 런 삭제 UX smoke 포함, 단위 테스트 2847/2847 green.
-- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-058-unit.log --script res://test/runner.gd` (2026-06-06, feat-058) — deploy hand preview와 RunPrepSummary 손패 정리 문구 포함 단위 테스트 2839/2839 green.
-- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-058-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-058) — 보상 후 다음 배치 손패 안내와 드로우 더미 tooltip 렌더 확인.
-- [x] `./init.sh` (2026-06-06, feat-058) — 카드 22개 검증 OK, 다음 배치 손패 안내 smoke 포함, 단위 테스트 2839/2839 green.
-- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-057-unit.log --script res://test/runner.gd` (2026-06-06, feat-057) — RunPrepSummary 준비 요약 helper 포함 단위 테스트 2829/2829 green.
-- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-057-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-057) — 런맵 첫 전투 준비 요약과 tooltip 렌더 확인.
-- [x] `./init.sh` (2026-06-06, feat-057) — 카드 22개 검증 OK, 런맵 전투 준비 패널 smoke 포함, 단위 테스트 2829/2829 green.
-- [x] `godot --headless --path . --script res://test/runner.gd` (2026-06-06, feat-056) — StageCadence 준비 문구 helper 포함 단위 테스트 2802/2802 green.
-- [x] `godot --headless --path . --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-056) — 보상 선택 후 다음 준비 안내와 다음 스테이지 버튼 렌더 확인.
-- [x] `./init.sh` (2026-06-06, feat-056) — 카드 22개 검증 OK, 보상 후 다음 스테이지 준비 안내 smoke 포함, 단위 테스트 2802/2802 green.
-- [x] `godot --headless --path . --script res://test/runner.gd` (2026-06-06, feat-055) — CardChoiceAdvisor 비교 helper 분기 포함 단위 테스트 2797/2797 green.
-- [x] `godot --headless --path . --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-055) — 전투 보상 화면에서 `비교 —` visible text와 tooltip 렌더 확인.
-- [x] `./init.sh` (2026-06-06, feat-055) — 카드 22개 검증 OK, 보상 선택 비교 UX smoke 포함, 단위 테스트 2797/2797 green.
-- [x] `godot --headless --path . --script res://test/runner.gd` (2026-06-06, feat-054) — `test_run_resume.gd` run_save_status와 `test_lord_select.gd` 손상 저장 안내 포함 단위 테스트 2790/2790 green.
-- [x] `godot --headless --path . --script res://tools/resume_ux_smoke.gd` (2026-06-06, feat-054) — no-save, corrupt-save 안내, valid-save 이어하기 세 케이스 통과.
-- [x] `./init.sh` (2026-06-06, feat-054) — 카드 22개 검증 OK, 손상 저장 이어하기 보호 smoke 포함, 단위 테스트 2790/2790 green.
-- [x] `godot --headless --path . --script res://test/runner.gd` (2026-06-06, feat-053) — `test_battle_hit_feedback.gd` 포함 단위 테스트 2769/2769 green.
-- [x] `godot --headless --path . --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-053) — 첫 수동 플레이에서 시작 함성 VFX와 hit impact spark/crit/burst VFX 생성 확인.
-- [x] `./init.sh` (2026-06-06, feat-053) — 카드 22개 검증 OK, 저장/이어하기 UX 스모크와 병력 밀도/함성/피격 VFX UI smoke 포함, 단위 테스트 2769/2769 green.
-- [x] `godot --headless --path . --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-052) — 첫 수동 플레이에서 시작 함성 힌트, rally banner, charge line, clash pulse VFX 확인.
-- [x] `godot --headless --path . --script res://test/runner.gd` (2026-06-06, feat-052) — BattleFeel cap/rally cue, FormationRenderer cap, AudioManager rally cue 포함 단위 테스트 2746/2746 green.
-- [x] `./init.sh` (2026-06-06, feat-052) — 카드 22개 검증 OK, 저장/이어하기 UX 스모크와 병력 밀도/함성 UI smoke 포함, 단위 테스트 2746/2746 green.
-- [x] `godot --headless --path . --script res://tools/resume_ux_smoke.gd` (2026-06-06, feat-051) — no-save 이어하기 미노출, autosave 런 이어하기 버튼/tooltip, run_map route, stage/성/보드/손패/골드 복원 확인.
-- [x] `./init.sh` (2026-06-06, feat-051) — 카드 22개 검증 OK, 저장/이어하기 UX 스모크 포함, 단위 테스트 2740/2740 green.
-- [x] `godot --headless --path . --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-050) — 상점 추천순 첫 카드가 `추천 — 증원 후보`로 렌더됨을 포함해 UI 스모크 통과.
-- [x] `./init.sh` (2026-06-06, feat-050) — 카드 22개 검증 OK, CardChoiceAdvisor ranked_ids 테스트와 상점/보상 추천순 렌더 포함, 단위 테스트 2740/2740 green.
-- [x] `godot --headless --path . --script res://tools/playtest_loop_smoke.gd` (2026-06-06, feat-049) — stage 1/2/5 전투 21.1s/18.3s/14.6s로 개별 24초와 평균 20초 예산 통과.
-- [x] `./init.sh` (2026-06-06, feat-049) — 카드 22개 검증 OK, UI 스모크 기본 x3 검증 포함, PlaytestMetrics tempo budget 테스트 포함, 단위 테스트 2734/2734 green.
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-062-unit.log --script res://test/runner.gd` (2026-06-06, feat-062) — RunFlowSummary helper 포함 단위 테스트 2920/2920 green.
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-062-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-062) — 런맵 첫 전투 `진행 리듬 — 현재 1 전투`, 상점 `다음 흐름: 5 보스 -> 6 칙령 -> 7 정예` 렌더 확인.
+- [x] `./init.sh` (2026-06-06, feat-062) — 카드 22개 검증 OK, run_map/lord_select/battle/보스/결과/UI/저장/플레이테스트/장기런 스모크 포함, 단위 테스트 2920/2920 green.
+
 ## 다음 세션 메모
-`./init.sh` 2890 단언 green. feat-061 done. 다음 안전 피처는 run_map 다음 스테이지 준비 흐름 보강 또는 상점 구매 제한/선택 피드백 보강이 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+feat-062 done. 다음 안전 피처는 상점 구매 제한/선택 피드백 보강 또는 장기런 결과 요약 UX가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.

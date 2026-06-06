@@ -10,6 +10,7 @@ const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const _RunPrepSummary := preload("res://scripts/run/run_prep_summary.gd")
 const _ShopHandSummary := preload("res://scripts/run/shop_hand_summary.gd")
+const _RunFlowSummary := preload("res://scripts/run/run_flow_summary.gd")
 
 var _root: VBoxContainer
 var _shop_status_message := ""
@@ -84,6 +85,8 @@ func _build_stage_panel() -> void:
 	boss_note.add_theme_font_size_override("font_size", 24)
 	boss_note.modulate = Color(1.0, 0.75, 0.45) if _has_accent_note(kind) else Color(0.78, 0.82, 0.78)
 	_root.add_child(boss_note)
+
+	_add_run_flow_summary()
 
 	var board_box := VBoxContainer.new()
 	board_box.add_theme_constant_override("separation", 8)
@@ -413,6 +416,36 @@ func _add_shop_hand_summary() -> void:
 	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail.modulate = Color(1.0, 0.86, 0.48)
 	box.add_child(detail)
+
+func _add_run_flow_summary() -> void:
+	var summary := _RunFlowSummary.for_stage(RunManager.stage_index())
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	box.tooltip_text = String(summary.get("tooltip", ""))
+	_root.add_child(box)
+
+	var title := Label.new()
+	title.text = String(summary.get("title", "진행 리듬"))
+	title.tooltip_text = String(summary.get("tooltip", ""))
+	title.add_theme_font_size_override("font_size", 24)
+	title.modulate = Color(0.74, 0.92, 1.0)
+	box.add_child(title)
+
+	var current := Label.new()
+	current.text = String(summary.get("current", ""))
+	current.tooltip_text = String(summary.get("tooltip", ""))
+	current.add_theme_font_size_override("font_size", 20)
+	current.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	current.modulate = Color(0.88, 0.90, 0.78)
+	box.add_child(current)
+
+	var upcoming := Label.new()
+	upcoming.text = String(summary.get("upcoming", ""))
+	upcoming.tooltip_text = String(summary.get("tooltip", ""))
+	upcoming.add_theme_font_size_override("font_size", 20)
+	upcoming.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	upcoming.modulate = Color(1.0, 0.86, 0.48)
+	box.add_child(upcoming)
 
 func _shop_card_tooltip(card: CardData, can_afford: bool, choice_context: Dictionary) -> String:
 	var text := _CardUiText.tooltip(card)
