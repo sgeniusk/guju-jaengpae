@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-080 첫 보드 지면 라벨 절제
+빈 타일마다 보이던 설명 문구와 밝은 격자가 첫 보드를 공중 UI판처럼 보이게 하던 문제를 줄였다.
+- **빈 타일 라벨 숨김** — `battle.gd`가 `성 후보`, `손패 선택`, `계략 버튼`, `배치 가능` 같은 generic state를 visible label로 그리지 않고 `state_label`/`tooltip`/Area2D meta로 유지한다.
+- **hover 안내 유지** — 빈 타일 위로 마우스를 올리면 숨겨진 state tooltip의 첫 줄이 하단 hint로 표시된다. 첫 플레이 안내는 남기되 격자 안 반복 문구는 제거했다.
+- **지면 선 절제** — 성/배치/전술 preview 라벨은 유지하고, idle tile fill/outline alpha를 더 낮춰 흰 9칸 격자가 유닛 앞쪽 UI선처럼 읽히는 느낌을 줄였다.
+- **검증** — `tools/ui_feedback_smoke.gd`가 hidden generic label, hover hint, deploy unit depth, outline alpha <=0.50, 전술 preview visible label을 확인한다. GUI 캡처(`/tmp/guju-feat-080-label-discipline-v2`)와 `./init.sh` 카드 22개, 단위 테스트 3065/3065 green.
+
 ## 2026-06-06 — feat-079 전장 지면 격자/타격 리듬 polish
 배치 보드가 여전히 공중에 뜬 9칸 판처럼 보이고, 교전 중 타격이 공중 spark 위주로 가볍게 읽히던 문제를 함께 보정했다.
 - **지면 격자화** — `battle.gd`가 타일 fill alpha를 낮추고 `TileGroundOutline` Line2D를 추가해 보드를 채워진 판이 아니라 바닥에 그려진 격자로 렌더한다.

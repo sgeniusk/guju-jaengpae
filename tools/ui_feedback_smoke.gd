@@ -195,7 +195,8 @@ func _battle_deploy_case() -> int:
 	errors += _assert_button_tooltip(battle, "계략 발동", "손패에서 계략", "계략 버튼 기본 tooltip")
 	errors += _assert_any_text(battle, "전황 — 배치 준비", "전투 배치 전황 요약")
 	errors += _assert_any_tooltip(battle, "병력 수 기준", "전투 배치 전황 tooltip")
-	errors += _assert_tile_label_and_tooltip(battle, "1:1", "성 후보", "성 위치가 됩니다", "첫 전투 성 후보 타일")
+	errors += _assert_tile_state_hidden_and_tooltip(battle, "1:1", "성 후보", "성 위치가 됩니다", "첫 전투 성 후보 타일")
+	errors += _assert_tile_hover_hint(battle, "1:1", "성 후보", "첫 전투 성 후보 hover hint")
 	errors += _assert_button_tooltip(battle, "우물", "+10골드", "우물 버튼 tooltip")
 	errors += _assert_button_tooltip(battle, "교전 시작", "성 위치", "교전 시작 비활성 tooltip")
 	errors += _assert_button_tooltip(battle, "계략 발동", "계략 발동 버튼", "계략 손패 tooltip")
@@ -245,10 +246,10 @@ func _battle_manual_first_play_case() -> int:
 		errors += _fail("수동 첫 플레이 성 선택 실패: %s" % run_manager.get_castle_key())
 	if battle._hint_label.text.find("성 위치") < 0:
 		errors += _fail("수동 첫 플레이 성 선택 힌트 누락: %s" % battle._hint_label.text)
-	errors += _assert_tile_label_and_tooltip(battle, "0:0", "손패 선택", "손패 3장", "성 선택 후 손패 선택 타일")
+	errors += _assert_tile_state_hidden_and_tooltip(battle, "0:0", "손패 선택", "손패 3장", "성 선택 후 손패 선택 타일")
 	battle._select_hand(0)
 	await _frames(2)
-	errors += _assert_tile_label_and_tooltip(battle, "0:0", "계략 버튼", "계략은 타일", "계략 선택 후 타일 안내")
+	errors += _assert_tile_state_hidden_and_tooltip(battle, "0:0", "계략 버튼", "계략은 타일", "계략 선택 후 타일 안내")
 	battle._on_tile_pressed("0:0")
 	await _frames(2)
 	if run_manager.state.board.size() != 0:
@@ -259,7 +260,8 @@ func _battle_manual_first_play_case() -> int:
 		errors += _fail("계략 타일 거부 힌트 누락: %s" % battle._hint_label.text)
 	battle._select_hand(1)
 	await _frames(2)
-	errors += _assert_tile_label_and_tooltip(battle, "0:0", "배치 가능", "보병 배치", "병종 선택 후 배치 가능 타일")
+	errors += _assert_tile_state_hidden_and_tooltip(battle, "0:0", "배치 가능", "보병 배치", "병종 선택 후 배치 가능 타일")
+	errors += _assert_tile_hover_hint(battle, "0:0", "보병 배치", "병종 선택 후 배치 hover hint")
 	battle._on_tile_pressed("0:0")
 	await _frames(8)
 	errors += _assert_manual_first_play_started(battle, run_manager)
@@ -297,6 +299,7 @@ func _battle_formation_preview_case() -> int:
 		battle._select_hand(0)
 		await _frames(2)
 		errors += _assert_tile_label_and_tooltip(battle, "1:1", "엄호 +15%", "궁병 배치", "궁병 엄호 미리보기")
+		errors += _assert_deploy_unit_visuals_above_field(battle)
 	else:
 		errors += _fail("battle._select_hand 없음")
 	battle.queue_free()
@@ -466,10 +469,63 @@ func _assert_tile_label_and_tooltip(battle: Node, block_key: String, text_needle
 	var label := tile.get("label", null) as Label
 	if label == null:
 		return _fail("%s 누락: label 없음" % msg)
+	if not label.visible:
+		return _fail("%s 실패: visible label 아님" % msg)
 	if label.text.find(text_needle) < 0:
 		return _fail("%s 누락: text=%s expected~=%s" % [msg, label.text, text_needle])
 	if label.tooltip_text.find(tooltip_needle) < 0:
 		return _fail("%s 누락: tooltip=%s expected~=%s" % [msg, label.tooltip_text, tooltip_needle])
+	return 0
+
+func _assert_tile_state_hidden_and_tooltip(battle: Node, block_key: String, state_needle: String, tooltip_needle: String, msg: String) -> int:
+	var tiles: Dictionary = battle._tile_buttons
+	if not tiles.has(block_key):
+		return _fail("%s 누락: tile=%s" % [msg, block_key])
+	var tile: Dictionary = tiles[block_key]
+	var label := tile.get("label", null) as Label
+	if label == null:
+		return _fail("%s 누락: label 없음" % msg)
+	if label.visible and not label.text.strip_edges().is_empty():
+		return _fail("%s 실패: 숨길 generic label이 보임: %s" % [msg, label.text])
+	var state_label := String(tile.get("state_label", ""))
+	if state_label.find(state_needle) < 0:
+		return _fail("%s 누락: state=%s expected~=%s" % [msg, state_label, state_needle])
+	var tooltip := String(tile.get("tooltip", ""))
+	if tooltip.find(tooltip_needle) < 0:
+		return _fail("%s 누락: tooltip=%s expected~=%s" % [msg, tooltip, tooltip_needle])
+	var area := tile.get("area", null) as Area2D
+	if area != null and String(area.get_meta(&"tile_tooltip", "")).find(tooltip_needle) < 0:
+		return _fail("%s 누락: area tooltip=%s expected~=%s" % [msg, String(area.get_meta(&"tile_tooltip", "")), tooltip_needle])
+	return 0
+
+func _assert_tile_hover_hint(battle: Node, block_key: String, hint_needle: String, msg: String) -> int:
+	if not battle.has_method("_on_tile_area_hovered"):
+		return _fail("%s 누락: hover handler 없음" % msg)
+	battle._on_tile_area_hovered(block_key)
+	if battle._hint_label.text.find(hint_needle) < 0:
+		return _fail("%s 누락: hint=%s expected~=%s" % [msg, battle._hint_label.text, hint_needle])
+	battle._on_tile_area_unhovered(block_key)
+	return 0
+
+func _assert_deploy_unit_visuals_above_field(battle: Node) -> int:
+	if battle._iso_base_layer == null or battle._units_layer == null:
+		return _fail("배치 유닛 depth 검증용 레이어 누락")
+	var field_total_z: int = int(battle._iso_base_layer.z_index) + _max_field_visual_z(battle)
+	var checked := false
+	for unit in battle._vis.keys():
+		var battle_unit := unit as BattleUnit
+		if battle_unit == null or battle_unit.is_castle:
+			continue
+		var visual: Dictionary = battle._vis[unit]
+		var root := visual.get("root", null) as Node2D
+		if root == null:
+			continue
+		checked = true
+		var unit_total_z: int = int(battle._units_layer.z_index) + root.z_index
+		if unit_total_z <= field_total_z:
+			return _fail("배치 유닛이 필드 뒤에 그려짐: unit=%d field=%d" % [unit_total_z, field_total_z])
+	if not checked:
+		return _fail("배치 유닛 depth 검증 대상 없음")
 	return 0
 
 func _assert_command_feedback(battle: Node, target: BattleUnit) -> int:
@@ -594,6 +650,9 @@ func _assert_battlefield_ground_plane(battle: Node) -> int:
 	var max_tile_fill_alpha := _max_tile_fill_alpha(battle)
 	if max_tile_fill_alpha > 0.32:
 		errors += _fail("전장 타일 fill이 너무 진해 공중 판처럼 보임: alpha=%.2f" % max_tile_fill_alpha)
+	var max_tile_outline_alpha := _max_tile_outline_alpha(battle)
+	if max_tile_outline_alpha > 0.50:
+		errors += _fail("전장 타일 outline이 너무 밝아 공중 격자처럼 보임: alpha=%.2f" % max_tile_outline_alpha)
 	var floor_band_count := _count_bool_meta(battle._background_layer, &"battlefield_floor_band")
 	if floor_band_count < 1:
 		errors += _fail("전장 배경 지면 밴드 누락")
@@ -691,6 +750,16 @@ func _max_tile_fill_alpha(battle: Node) -> float:
 		var poly := tile.get("poly", null) as Polygon2D
 		if poly != null:
 			max_alpha = maxf(max_alpha, poly.color.a)
+	return max_alpha
+
+func _max_tile_outline_alpha(battle: Node) -> float:
+	var max_alpha := 0.0
+	for value in battle._tile_buttons.values():
+		if not (value is Dictionary):
+			continue
+		var outline := (value as Dictionary).get("outline", null) as Line2D
+		if outline != null:
+			max_alpha = maxf(max_alpha, outline.default_color.a)
 	return max_alpha
 
 func _assert_hit_impact_vfx(battle: Node) -> int:

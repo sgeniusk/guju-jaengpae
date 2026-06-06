@@ -571,11 +571,13 @@ func _build_iso_base() -> void:
 			area.position = center
 			area.input_pickable = true
 			area.input_event.connect(_on_tile_area_input.bind(block_key))
+			area.mouse_entered.connect(_on_tile_area_hovered.bind(block_key))
+			area.mouse_exited.connect(_on_tile_area_unhovered.bind(block_key))
 			var shape := CollisionPolygon2D.new()
 			shape.polygon = _diamond_points()
 			area.add_child(shape)
 			_iso_base_layer.add_child(area)
-			_tile_buttons[block_key] = { "area": area, "shadow": tile_shadow, "sprite": tile_sprite, "poly": fallback_poly, "outline": tile_outline, "label": label }
+			_tile_buttons[block_key] = { "area": area, "shadow": tile_shadow, "sprite": tile_sprite, "poly": fallback_poly, "outline": tile_outline, "label": label, "state_label": "", "tooltip": "" }
 
 func _board_tile_centers() -> Array:
 	var centers: Array = []
@@ -740,8 +742,8 @@ func _make_tile_ground_outline(center: Vector2) -> Line2D:
 	outline.set_meta(&"battlefield_tile_outline", true)
 	outline.points = _diamond_points()
 	outline.closed = true
-	outline.width = 2.0
-	outline.default_color = Color(0.88, 0.82, 0.62, 0.48)
+	outline.width = 1.4
+	outline.default_color = Color(0.88, 0.82, 0.62, 0.26)
 	outline.position = center + Vector2(0.0, 2.0)
 	outline.z_index = FIELD_TILE_OUTLINE_Z
 	outline.antialiased = true
@@ -992,42 +994,43 @@ func _refresh_board_tiles() -> void:
 		_iso_base_layer.modulate.a = 1.0
 	for key in _tile_buttons.keys():
 		var tile: Dictionary = _tile_buttons[key]
-		var label := tile.get("label", null) as Label
 		var poly := tile.get("poly", null) as Polygon2D
 		var sprite := tile.get("sprite", null) as Sprite2D
 		var outline := tile.get("outline", null) as Line2D
 		var area := tile.get("area", null) as Area2D
 		if key == castle_key:
-			if label != null:
-				label.text = "성"
-				label.tooltip_text = "선택한 성 위치입니다."
+			_set_tile_feedback(tile, "성", "선택한 성 위치입니다.", true)
 			if poly != null:
-				poly.color = Color(0.48, 0.28, 0.18, 0.24)
+				poly.color = Color(0.48, 0.28, 0.18, 0.16)
 			if sprite != null:
-				sprite.modulate = Color(1.10, 0.88, 0.56, 0.30)
+				sprite.modulate = Color(1.10, 0.88, 0.56, 0.20)
 			if outline != null:
-				outline.default_color = Color(1.0, 0.76, 0.42, 0.82)
+				outline.default_color = Color(1.0, 0.76, 0.42, 0.46)
 			if area != null:
 				area.input_pickable = false
 		elif board.has(key):
 			var card := CardLibrary.get_card(StringName(board[key]))
-			if label != null:
-				label.text = "%s Lv.%d" % [card.display_name, RunManager.get_board_level(key)] if card != null else String(board[key])
-				label.tooltip_text = _CardUiText.tooltip(card) if card != null else String(board[key])
+			var board_label := "%s Lv.%d" % [card.display_name, RunManager.get_board_level(key)] if card != null else String(board[key])
+			var board_tooltip := _CardUiText.tooltip(card) if card != null else String(board[key])
+			_set_tile_feedback(tile, board_label, board_tooltip, true)
 			if poly != null:
-				poly.color = Color(0.24, 0.42, 0.26, 0.18)
+				poly.color = Color(0.24, 0.42, 0.26, 0.12)
 			if sprite != null:
-				sprite.modulate = Color(0.98, 1.0, 0.78, 0.24)
+				sprite.modulate = Color(0.98, 1.0, 0.78, 0.16)
 			if outline != null:
-				outline.default_color = Color(0.82, 1.0, 0.64, 0.70)
+				outline.default_color = Color(0.82, 1.0, 0.64, 0.36)
 			if area != null:
 				area.input_pickable = false
 		else:
 			var preview := _placement_preview_for_block(key)
 			var empty_state := _empty_tile_state(key, preview)
-			if label != null:
-				label.text = String(empty_state.get("label", ""))
-				label.tooltip_text = String(empty_state.get("tooltip", ""))
+			_set_tile_feedback(
+				tile,
+				String(empty_state.get("label", "")),
+				String(empty_state.get("tooltip", "")),
+				bool(empty_state.get("label_visible", false)),
+				String(empty_state.get("state_label", ""))
+			)
 			if poly != null:
 				if _phase != Phase.DEPLOY:
 					poly.color = Color(0.17, 0.27, 0.17, 0.0)
@@ -1047,11 +1050,26 @@ func _refresh_board_tiles() -> void:
 				outline.default_color = _empty_tile_outline_color(preview) if _phase == Phase.DEPLOY else Color(1.0, 1.0, 1.0, 0.0)
 			if area != null:
 				area.input_pickable = _phase == Phase.DEPLOY
+		_tile_buttons[key] = tile
 
 func _clear_children(node: Node) -> void:
 	for child in node.get_children():
 		node.remove_child(child)
 		child.queue_free()
+
+func _set_tile_feedback(tile: Dictionary, label_text: String, tooltip: String, label_visible: bool, state_label: String = "") -> void:
+	var semantic_label := state_label if not state_label.is_empty() else label_text
+	tile["state_label"] = semantic_label
+	tile["tooltip"] = tooltip
+	var label := tile.get("label", null) as Label
+	if label != null:
+		label.text = label_text if label_visible else ""
+		label.visible = label_visible and not label_text.is_empty()
+		label.tooltip_text = tooltip
+	var area := tile.get("area", null) as Area2D
+	if area != null:
+		area.set_meta(&"tile_state_label", semantic_label)
+		area.set_meta(&"tile_tooltip", tooltip)
 
 func _placement_preview_for_block(block_key: String) -> Dictionary:
 	if _phase != Phase.DEPLOY or not RunManager.has_castle() or not RunManager.can_place_deploy_card():
@@ -1079,67 +1097,62 @@ func _placement_preview_for_block(block_key: String) -> Dictionary:
 
 func _empty_tile_state(_block_key: String, preview: Dictionary) -> Dictionary:
 	if _phase != Phase.DEPLOY:
-		return {"label": "", "tooltip": ""}
+		return _hidden_empty_tile_state("", "")
 	if not RunManager.has_castle():
-		return {
-			"label": "성 후보",
-			"tooltip": "성 후보 — 이 빈 타일을 클릭하면 성 위치가 됩니다.\n성 위치를 고른 뒤 손패 3장 중 1장을 배치합니다.",
-		}
+		return _hidden_empty_tile_state("성 후보", "성 후보 — 이 빈 타일을 클릭하면 성 위치가 됩니다.\n성 위치를 고른 뒤 손패 3장 중 1장을 배치합니다.")
 	if not RunManager.can_place_deploy_card():
-		return {"label": "", "tooltip": ""}
+		return _hidden_empty_tile_state("", "")
 	if _selected_hand_index < 0:
-		return {
-			"label": "손패 선택",
-			"tooltip": "손패 선택 — 왼쪽 손패 3장 중 한 장을 고른 뒤 이 빈 타일에 배치합니다.",
-		}
+		return _hidden_empty_tile_state("손패 선택", "손패 선택 — 왼쪽 손패 3장 중 한 장을 고른 뒤 이 빈 타일에 배치합니다.")
 	if RunManager.can_cast_scheme_from_hand(_selected_hand_index):
-		return {
-			"label": "계략 버튼",
-			"tooltip": "계략 버튼 — 계략은 타일에 놓지 않고 왼쪽 `계략 발동` 버튼으로 사용합니다.",
-		}
+		return _hidden_empty_tile_state("계략 버튼", "계략 버튼 — 계략은 타일에 놓지 않고 왼쪽 `계략 발동` 버튼으로 사용합니다.")
 	if RunManager.can_upgrade_from_hand(_selected_hand_index):
-		return {
-			"label": "증원 카드",
-			"tooltip": "증원 카드 — 이 카드는 기존 부대를 강화합니다. 빈 타일이 아니라 기존 부대 레벨이 오릅니다.",
-		}
+		return _hidden_empty_tile_state("증원 카드", "증원 카드 — 이 카드는 기존 부대를 강화합니다. 빈 타일이 아니라 기존 부대 레벨이 오릅니다.")
 	if not RunManager.can_place_hand_card(_selected_hand_index):
-		return {
-			"label": "배치 불가",
-			"tooltip": "배치 불가 — 선택한 카드는 이 타일에 놓을 수 없습니다.",
-		}
+		return _hidden_empty_tile_state("배치 불가", "배치 불가 — 선택한 카드는 이 타일에 놓을 수 없습니다.")
 	if not preview.is_empty():
-		return {
-			"label": String(preview.get("label", "")),
-			"tooltip": String(preview.get("tooltip", "")),
-		}
+		return _visible_empty_tile_state(String(preview.get("label", "")), String(preview.get("tooltip", "")))
 	var card := _selected_hand_card()
 	var card_name := card.display_name if card != null else "선택 카드"
+	return _hidden_empty_tile_state("배치 가능", "%s 배치 — 이 빈 타일에 놓으면 바로 교전합니다." % card_name)
+
+func _hidden_empty_tile_state(state_label: String, tooltip: String) -> Dictionary:
 	return {
-		"label": "배치 가능",
-		"tooltip": "%s 배치 — 이 빈 타일에 놓으면 바로 교전합니다." % card_name,
+		"label": "",
+		"state_label": state_label,
+		"tooltip": tooltip,
+		"label_visible": false,
+	}
+
+func _visible_empty_tile_state(label_text: String, tooltip: String) -> Dictionary:
+	return {
+		"label": label_text,
+		"state_label": label_text,
+		"tooltip": tooltip,
+		"label_visible": not label_text.is_empty(),
 	}
 
 func _empty_tile_sprite_modulate(preview: Dictionary) -> Color:
 	if not RunManager.has_castle():
-		return Color(1.02, 0.82, 0.52, 0.26)
+		return Color(1.02, 0.82, 0.52, 0.18)
 	if _selected_hand_index < 0:
-		return Color(0.72, 0.88, 0.72, 0.12)
+		return Color(0.72, 0.88, 0.72, 0.08)
 	if not preview.is_empty():
-		return Color(0.78, 1.04, 0.60, 0.28)
+		return Color(0.78, 1.04, 0.60, 0.20)
 	if not RunManager.can_place_hand_card(_selected_hand_index):
-		return Color(0.74, 0.72, 0.66, 0.10)
-	return Color(0.70, 0.92, 0.60, 0.20)
+		return Color(0.74, 0.72, 0.66, 0.06)
+	return Color(0.70, 0.92, 0.60, 0.14)
 
 func _empty_tile_outline_color(preview: Dictionary) -> Color:
 	if not RunManager.has_castle():
-		return Color(1.0, 0.78, 0.44, 0.82)
+		return Color(1.0, 0.78, 0.44, 0.48)
 	if _selected_hand_index < 0:
-		return Color(0.74, 0.92, 0.78, 0.54)
+		return Color(0.74, 0.92, 0.78, 0.28)
 	if not preview.is_empty():
-		return Color(0.78, 1.0, 0.54, 0.88)
+		return Color(0.78, 1.0, 0.54, 0.68)
 	if not RunManager.can_place_hand_card(_selected_hand_index):
-		return Color(0.62, 0.58, 0.48, 0.36)
-	return Color(0.74, 0.96, 0.58, 0.72)
+		return Color(0.62, 0.58, 0.48, 0.22)
+	return Color(0.74, 0.96, 0.58, 0.42)
 
 func _find_army_unit_at_block(army: Array, block_key: String) -> BattleUnit:
 	var parts := block_key.split(":")
@@ -1212,6 +1225,41 @@ func _on_tile_area_input(_viewport: Node, event: InputEvent, _shape_idx: int, bl
 		return
 	_on_tile_pressed(block_key)
 	get_viewport().set_input_as_handled()
+
+func _on_tile_area_hovered(block_key: String) -> void:
+	if _phase != Phase.DEPLOY or _hint_label == null:
+		return
+	var tile: Dictionary = _tile_buttons.get(block_key, {})
+	var tooltip := String(tile.get("tooltip", "")).strip_edges()
+	if tooltip.is_empty():
+		return
+	var lines := tooltip.split("\n", false)
+	_hint_label.text = String(lines[0]) if not lines.is_empty() else tooltip
+
+func _on_tile_area_unhovered(_block_key: String) -> void:
+	if _phase != Phase.DEPLOY or _hint_label == null:
+		return
+	_hint_label.text = _deploy_hint_for_current_selection()
+
+func _deploy_hint_for_current_selection() -> String:
+	if not RunManager.has_castle():
+		return "성 위치를 먼저 고르세요."
+	if not RunManager.can_place_deploy_card():
+		return "이번 교전에는 이미 한 장을 냈습니다."
+	if _selected_hand_index < 0:
+		return "손패 3장 중 한 장을 먼저 선택하세요."
+	var hand := RunManager.get_hand()
+	if _selected_hand_index >= hand.size():
+		return "선택한 카드가 없습니다."
+	if RunManager.can_cast_scheme_from_hand(_selected_hand_index):
+		return "선택한 계략은 왼쪽 계략 발동 버튼으로 사용합니다."
+	if RunManager.can_upgrade_from_hand(_selected_hand_index):
+		return "증원 카드는 기존 부대를 강화하고 교전을 시작합니다."
+	if not RunManager.can_place_hand_card(_selected_hand_index):
+		return "선택한 카드는 지금 보드에 배치할 수 없습니다."
+	var card := _selected_hand_card()
+	var card_name := card.display_name if card != null else "선택 카드"
+	return "%s — 빈 타일에 두면 바로 교전합니다." % card_name
 
 func _tile_key_at_screen_position(screen_pos: Vector2) -> String:
 	for col in BattleSim.COL_COUNT:
