@@ -11,8 +11,8 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var errors := 0
-	errors += await _result_case(3, BattleSim.Result.PLAYER_LOSE, "defeat", ["런 종료 — 성이 함락되었습니다", "런 실패", "군주 선택으로 새 런"], ["전리품", "다음 스테이지로", "런 승리"])
-	errors += await _result_case(15, BattleSim.Result.PLAYER_WIN, "victory", ["런 종료 — 구주 정복 완료", "구주 정복!", "런 승리 — 구주 정복", "군주 선택으로 새 런"], ["전리품", "다음 스테이지로"])
+	errors += await _result_case(3, BattleSim.Result.PLAYER_LOSE, "defeat", ["런 종료 — 성이 함락되었습니다", "런 결산 — 패배", "스테이지 3", "군세 6/18", "런 실패", "군주 선택으로 새 런"], ["전리품", "다음 스테이지로", "런 승리"])
+	errors += await _result_case(15, BattleSim.Result.PLAYER_WIN, "victory", ["런 종료 — 구주 정복 완료", "런 결산 — 승리", "스테이지 15", "군세 6/18", "구주 정복!", "런 승리 — 구주 정복", "군주 선택으로 새 런"], ["전리품", "다음 스테이지로"])
 	if errors == 0:
 		print("✅ 전투 결과 화면 스모크 통과")
 		quit(0)
@@ -61,6 +61,10 @@ func _result_case(stage: int, sim_result: int, run_result: String, expected: Arr
 			errors += _fail("stage %d 결과 화면 금지 문구 노출: %s" % [stage, String(text)])
 	if not _has_text_containing(tooltips, "프로필에 남습니다"):
 		errors += _fail("stage %d 새 런 버튼 tooltip 누락" % stage)
+	if not _has_text_containing(tooltips, "칙령 0개"):
+		errors += _fail("stage %d 결산 tooltip 칙령 누락" % stage)
+	if not _has_text_containing(tooltips, "드로우"):
+		errors += _fail("stage %d 결산 tooltip 드로우 누락" % stage)
 	battle.queue_free()
 	await _frames(2)
 	if errors == 0:

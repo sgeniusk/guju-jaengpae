@@ -17,6 +17,7 @@ const _BattleFeel := preload("res://scripts/battle/battle_feel.gd")
 const _BattleCommandFeedback := preload("res://scripts/battle/battle_command_feedback.gd")
 const _BattleHitFeedback := preload("res://scripts/battle/battle_hit_feedback.gd")
 const _BattleOutcomeGuide := preload("res://scripts/battle/battle_outcome_guide.gd")
+const _RunResultSummary := preload("res://scripts/run/run_result_summary.gd")
 const _FormationTactics := preload("res://scripts/run/formation_tactics.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
@@ -2153,6 +2154,7 @@ func _build_outcome_ui(win: bool) -> void:
 	var box := _new_overlay_box()
 	_add_profile_result_summary(box, _battle_outcome)
 	_add_outcome_guide(box)
+	_add_run_result_summary(box)
 	if not win:
 		var fail := Label.new()
 		fail.text = "런 실패"
@@ -2279,6 +2281,33 @@ func _add_outcome_guide(box: VBoxContainer) -> void:
 	action.add_theme_font_size_override("font_size", 18)
 	action.add_theme_color_override("font_color", Color(0.86, 0.90, 1.0))
 	box.add_child(action)
+
+func _add_run_result_summary(box: VBoxContainer) -> void:
+	if not bool(_battle_outcome.get("run_complete", false)):
+		return
+	var summary: Dictionary = _RunResultSummary.for_state(RunManager.state, _battle_outcome, CardLibrary.catalog)
+	var title := Label.new()
+	title.text = String(summary.get("title", "런 결산"))
+	title.tooltip_text = String(summary.get("tooltip", ""))
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(1.0, 0.82, 0.46))
+	box.add_child(title)
+
+	var detail := Label.new()
+	detail.text = String(summary.get("detail", ""))
+	detail.tooltip_text = String(summary.get("tooltip", ""))
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail.add_theme_font_size_override("font_size", 18)
+	detail.add_theme_color_override("font_color", Color(0.92, 0.96, 1.0))
+	box.add_child(detail)
+
+	var progress := Label.new()
+	progress.text = String(summary.get("progress", ""))
+	progress.tooltip_text = String(summary.get("tooltip", ""))
+	progress.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	progress.add_theme_font_size_override("font_size", 18)
+	progress.add_theme_color_override("font_color", Color(0.78, 0.90, 0.98))
+	box.add_child(progress)
 
 func _make_restart_button() -> Button:
 	var button := _make_button("군주 선택으로 새 런", _restart_run)

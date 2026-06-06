@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-064 장기런 결과 요약 UX
+최종 패배와 최종 승리 화면에서 방금 끝난 런의 성과가 보이도록 결산 블록을 추가했다.
+- **RunResultSummary helper** — `scripts/run/run_result_summary.gd`가 RunState와 battle outcome으로 `런 결산 — 승리/패배`, 스테이지, 점수, 군세, 최고 Lv, 골드, 칙령/보패/손패/드로우 요약을 순수 계산한다.
+- **결과 오버레이 결산** — `battle.gd`가 run_complete 결과에서만 결산 title/detail/progress를 표시한다. 일반 승리의 전리품 흐름은 그대로 유지한다.
+- **결산 tooltip** — tooltip에는 군주명, 스테이지, 점수, 군세, 골드, 칙령/보패/손패/드로우 상태가 같이 남는다.
+- **검증** — `test_run_result_summary.gd`가 helper 문구를 검증하고, `tools/battle_result_smoke.gd`가 패배/최종승리 결과 화면의 결산 문구와 tooltip을 확인한다. `./init.sh` 카드 22개, 단위 테스트 2972/2972 green.
+
 ## 2026-06-06 — feat-063 상점 구매 피드백
 상점에서 구매 가능한 카드와 자금 부족 카드를 더 분명하게 구분하고, 구매 뒤 남은 자금과 다음 전투 손패 정리를 visible text로 남겼다.
 - **ShopPurchaseFeedback helper** — `scripts/run/shop_purchase_feedback.gd`가 구매 가능/자금 부족 상태, 구매 성공, 구매 실패 문구와 tooltip을 순수 계산한다.

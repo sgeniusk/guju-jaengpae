@@ -595,6 +595,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-063-shop-purchase-feedback.md 추가. ShopPurchaseFeedback이 구매 가능, 자금 부족, 구매 성공/실패 문구를 순수 계산하고 run_map 상점 카드가 `구매 가능`/`자금 부족`, 구매 후 남은 자금과 다음 전투 후보 정리 안내를 표시한다. UI smoke가 고자금/저자금 상점과 구매 완료 문구를 검증한다. ./init.sh 카드 22개 / 2946 단언 green."
+    },
+    {
+      "id": "feat-064",
+      "name": "장기런 결과 요약 UX",
+      "description": "최종 패배/최종 승리 결과 화면에 스테이지, 점수, 군세, 최고 레벨, 칙령/보패/손패/드로우 요약을 표시한다.",
+      "dependencies": ["feat-061", "feat-044"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-064-run-result-summary.md 추가. RunResultSummary가 RunState와 battle outcome으로 `런 결산 — 승리/패배`, 스테이지, 점수, 군세, 최고 Lv, 골드, 칙령/보패/손패/드로우 tooltip을 순수 계산하고 battle 결과 오버레이가 run_complete일 때 표시한다. battle_result_smoke가 패배/최종승리 결산 문구와 tooltip을 검증한다. ./init.sh 카드 22개 / 2972 단언 green."
     }
   ]
 }
