@@ -22,6 +22,31 @@ static func action_line(outcome: Dictionary) -> String:
 		_:
 			return "보상 선택 후 다음 스테이지 버튼이 열립니다. 현재 런을 유지합니다."
 
+static func banner_title(outcome: Dictionary) -> String:
+	var run_result := String(outcome.get("run_result", "ongoing"))
+	match run_result:
+		"defeat":
+			return "결과 — 성 함락"
+		"victory":
+			return "결과 — 구주 정복"
+		_:
+			return "결과 — 전투 승리"
+
+static func banner_detail(outcome: Dictionary) -> String:
+	var run_result := String(outcome.get("run_result", "ongoing"))
+	match run_result:
+		"defeat":
+			return "이번 런은 종료됩니다. 기록을 확인하고 새 군주를 고르세요."
+		"victory":
+			return "최종 보스를 격파했습니다. 해금과 최고 기록을 확인하세요."
+		_:
+			return "전리품 한 장을 고른 뒤 다음 스테이지를 준비합니다."
+
+static func next_action_line(outcome: Dictionary) -> String:
+	if bool(outcome.get("run_complete", false)):
+		return "다음 행동 — 군주 선택으로 새 런"
+	return "다음 행동 — 전리품 선택 후 런맵 복귀"
+
 static func restart_tooltip(outcome: Dictionary) -> String:
 	if bool(outcome.get("run_complete", false)):
 		return "완료된 런 기록은 프로필에 남습니다.\n군주 선택 화면으로 돌아가 새 런을 시작합니다."

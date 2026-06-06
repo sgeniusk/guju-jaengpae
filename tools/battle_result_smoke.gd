@@ -11,8 +11,8 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var errors := 0
-	errors += await _result_case(3, BattleSim.Result.PLAYER_LOSE, "defeat", ["런 종료 — 성이 함락되었습니다", "런 결산 — 패배", "스테이지 3", "군세 6/18", "런 실패", "군주 선택으로 새 런"], ["전리품", "다음 스테이지로", "런 승리"])
-	errors += await _result_case(15, BattleSim.Result.PLAYER_WIN, "victory", ["런 종료 — 구주 정복 완료", "런 결산 — 승리", "스테이지 15", "군세 6/18", "구주 정복!", "런 승리 — 구주 정복", "군주 선택으로 새 런"], ["전리품", "다음 스테이지로"])
+	errors += await _result_case(3, BattleSim.Result.PLAYER_LOSE, "defeat", ["결과 — 성 함락", "다음 행동 — 군주 선택으로 새 런", "런 종료 — 성이 함락되었습니다", "런 결산 — 패배", "스테이지 3", "군세 6/18", "런 실패", "군주 선택으로 새 런"], ["전리품", "다음 스테이지로", "런 승리"])
+	errors += await _result_case(15, BattleSim.Result.PLAYER_WIN, "victory", ["결과 — 구주 정복", "다음 행동 — 군주 선택으로 새 런", "런 종료 — 구주 정복 완료", "런 결산 — 승리", "스테이지 15", "군세 6/18", "구주 정복!", "런 승리 — 구주 정복", "군주 선택으로 새 런"], ["전리품", "다음 스테이지로"])
 	if errors == 0:
 		print("✅ 전투 결과 화면 스모크 통과")
 		quit(0)

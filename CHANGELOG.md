@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-070 결과 화면 시각 polish
+전투 종료 오버레이 최상단에 결과와 다음 행동을 바로 읽는 배너를 추가했다.
+- **결과 배너 helper** — `BattleOutcomeGuide`가 패배, 최종승리, 일반승리의 배너 제목, 상세, 다음 행동을 순수 계산한다.
+- **결과 오버레이 첫머리** — `battle.gd`가 `결과 — 성 함락`, `결과 — 구주 정복`, `결과 — 전투 승리`와 다음 행동 라인을 기존 결산/보상 안내 위에 표시한다.
+- **기존 흐름 유지** — 패배/최종승리는 새 런 버튼으로 닫히고, 일반 승리는 전리품 선택 뒤 다음 스테이지 버튼으로 이어진다.
+- **검증** — `test_battle_outcome_guide.gd`, `tools/battle_result_smoke.gd`, `tools/ui_feedback_smoke.gd`가 새 배너를 검증한다. `./init.sh` 카드 22개, 단위 테스트 2992/2992 green.
+
 ## 2026-06-06 — feat-069 스크린샷 validator 속도 최적화
 PIL 없이 동작하는 screenshot bundle validator의 기본 경로를 빠른 PNG 검사로 바꿨다.
 - **fast PNG mode** — 기본 검증은 PNG signature/chunk/IHDR/IDAT, 최소 해상도, 압축 스트림 샘플 다양성을 확인한다.

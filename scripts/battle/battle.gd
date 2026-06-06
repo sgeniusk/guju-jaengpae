@@ -2257,6 +2257,7 @@ func _end_battle() -> void:
 
 func _build_outcome_ui(win: bool) -> void:
 	var box := _new_overlay_box()
+	_add_result_banner(box)
 	_add_profile_result_summary(box, _battle_outcome)
 	_add_outcome_guide(box)
 	_add_run_result_summary(box)
@@ -2371,6 +2372,45 @@ func _add_next_stage_button(box: VBoxContainer) -> void:
 	]
 	box.add_child(next_button)
 	box.add_child(_make_restart_button())
+
+func _add_result_banner(box: VBoxContainer) -> void:
+	var title := Label.new()
+	title.text = _BattleOutcomeGuide.banner_title(_battle_outcome)
+	title.tooltip_text = _BattleOutcomeGuide.banner_detail(_battle_outcome)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_color_override("font_color", _result_banner_color())
+	box.add_child(title)
+
+	var detail := Label.new()
+	detail.text = _BattleOutcomeGuide.banner_detail(_battle_outcome)
+	detail.tooltip_text = _BattleOutcomeGuide.next_action_line(_battle_outcome)
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail.add_theme_font_size_override("font_size", 18)
+	detail.add_theme_color_override("font_color", Color(0.94, 0.96, 1.0))
+	box.add_child(detail)
+
+	var action := Label.new()
+	action.text = _BattleOutcomeGuide.next_action_line(_battle_outcome)
+	action.tooltip_text = _BattleOutcomeGuide.action_line(_battle_outcome)
+	action.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	action.add_theme_font_size_override("font_size", 18)
+	action.add_theme_color_override("font_color", Color(1.0, 0.84, 0.46))
+	box.add_child(action)
+
+	var separator := HSeparator.new()
+	separator.custom_minimum_size = Vector2(0.0, 8.0)
+	box.add_child(separator)
+
+func _result_banner_color() -> Color:
+	var run_result := String(_battle_outcome.get("run_result", "ongoing"))
+	match run_result:
+		"defeat":
+			return Color(1.0, 0.58, 0.52)
+		"victory":
+			return Color(0.72, 1.0, 0.78)
+		_:
+			return Color(0.96, 0.90, 0.74)
 
 func _add_outcome_guide(box: VBoxContainer) -> void:
 	var summary := Label.new()

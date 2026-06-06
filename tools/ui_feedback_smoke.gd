@@ -373,6 +373,8 @@ func _battle_reward_case() -> int:
 	battle._end_battle()
 	await _frames(8)
 	var errors := 0
+	errors += _assert_any_text(battle, "결과 — 전투 승리", "보상 화면 결과 배너")
+	errors += _assert_any_text(battle, "다음 행동 — 전리품 선택 후 런맵 복귀", "보상 화면 다음 행동")
 	errors += _assert_any_text(battle, "런 계속 — 전리품을 고르고 런맵으로 복귀", "보상 화면 런 계속 안내")
 	errors += _assert_any_text(battle, "전리품 — 한 장을 고르세요", "보상 선택 제목")
 	errors += _assert_any_text(battle, "카드 버튼을 누르면", "보상 선택 행동 안내")
