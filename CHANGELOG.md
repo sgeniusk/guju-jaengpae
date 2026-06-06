@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-07 — feat-083 실제 교전 screenshot QA 정정
+전투 스크린샷 하네스가 배치 화면은 찍지만 실제 교전 phase로 못 넘어갈 수 있던 QA 구멍을 막았다.
+- **교전 시작 계약 복구** — `tools/shoot_battle.gd`가 QA용 직접 배치 후 `deploy_cards_played = 1`, `deploy_stage_index = target_stage`를 명시해 본편의 “한 수를 낸 뒤 교전 시작” 조건과 맞춘다.
+- **시연 배치 정리** — 직접 배치가 계략 카드를 보드에 심지 않도록 유닛/건물만 배치하고, 유닛이 없을 경우 촬영용 보병을 보충한다.
+- **strict QA 메타** — `SHOT_STRICT=1` 실행 시 battle phase 진입 실패를 종료 코드 1로 드러내고, 성공 시 `battle_phase`, `deploy_cards_played`, `board_units`를 출력한다.
+- **검증** — `test_shoot_battle_harness.gd`가 하네스 준비 상태를 검증한다. headless 실행은 `battle_phase=1`, `deploy_cards_played=1`, `board_units=3`을 출력했고 PNG 저장은 headless 특성상 `headless_display`로 종료했다. `./init.sh` 카드 22개, 단위 테스트 3072/3072 green.
+
 ## 2026-06-06 — feat-082 전장 footline/depth 재수정
 사용자가 다시 지적한 “필드 9칸이 하늘에 떠 있고, 유닛이 필드 뒤에 나타나는 느낌”을 수치 계약까지 더 강하게 잡았다.
 - **footline 전진** — `FIELD_FOOT_OFFSET_Y`를 타일 다이아몬드 하단보다 앞으로 키워 유닛, 성, 건물 발이 격자 안쪽에 걸리지 않게 했다.

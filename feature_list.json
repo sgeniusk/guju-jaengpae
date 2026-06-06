@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~082로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 보호→보상/상점/결과 UX→전투 HUD→유닛/필드 접지감→스크린샷 QA→초반 군세 밀도→전장 보드 지면화→장기런 전투 템포 계약→전투 첫 화면 지면/깊이 재보정→첫 보드 라벨/격자 절제→전장 접지/depth 재보정→전장 footline/depth 재수정까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 3067 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~083으로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 보호→보상/상점/결과 UX→전투 HUD→유닛/필드 접지감→스크린샷 QA→초반 군세 밀도→전장 보드 지면화→장기런 전투 템포 계약→전투 첫 화면 지면/깊이 재보정→첫 보드 라벨/격자 절제→전장 접지/depth 재보정→전장 footline/depth 재수정→실제 교전 screenshot QA 정정까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 3072 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -766,6 +766,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-082-battlefield-footline-pass.md 추가. battle.gd가 보드 origin y를 더 낮추고 FIELD_FOOT_OFFSET_Y를 타일 하단보다 앞쪽으로 재설정했으며 성/배치/빈 타일 fill·outline alpha를 낮췄다. VisualQaConfig에 SHOT_SKIP_POST_DRAW 우회 옵션을 추가했다. test_unit_walk_visuals와 UI smoke가 보드 y>=630, fill alpha<=0.14, outline alpha<=0.30, footline>=tile+54를 검증한다. headless screenshot 하네스는 hang 없이 headless_display로 종료, ./init.sh 카드 22개 / 3067 단언 green."
+    },
+    {
+      "id": "feat-083",
+      "name": "실제 교전 screenshot QA 정정",
+      "description": "전투 스크린샷 하네스가 배치 화면뿐 아니라 실제 교전 phase까지 진입해 battle_fight 캡처를 시도하도록 정정한다.",
+      "dependencies": ["feat-072", "feat-082"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-083-battle-fight-screenshot-harness.md 추가. shoot_battle.gd가 QA용 보드 준비를 분리하고 유닛/건물만 직접 배치하며 deploy_cards_played=1과 deploy_stage_index를 갱신해 battle_fight가 battle_phase=1에서 찍히게 한다. test_shoot_battle_harness가 교전 시작 계약을 검증하고 SHOT_STRICT=1 headless 실행이 battle_phase=1/deploy_cards_played=1/board_units=3으로 종료, ./init.sh 카드 22개 / 3072 단언 green."
     }
   ]
 }
