@@ -61,7 +61,11 @@ func _run_map_first_combat_case() -> int:
 	var errors := 0
 	errors += _assert_any_text(screen, "첫 전투입니다", "첫 전투 안내 문구")
 	errors += _assert_any_text(screen, "빈 타일에 배치", "첫 배치 행동 안내")
-	errors += _assert_button_tooltip(screen, "전투 시작", "손패를 배치", "첫 전투 시작 버튼 tooltip")
+	errors += _assert_any_text(screen, "전투 준비 — 손패 3장 중 1장", "첫 전투 준비 요약")
+	errors += _assert_any_text(screen, "성 위치: 미선택", "첫 전투 성 위치 요약")
+	errors += _assert_any_text(screen, "증원 후보", "첫 전투 손패 후보 요약")
+	errors += _assert_any_tooltip(screen, "성 위치는 아직", "첫 전투 준비 tooltip")
+	errors += _assert_button_tooltip(screen, "전투 시작", "손패 1장", "첫 전투 시작 버튼 tooltip")
 	screen.queue_free()
 	await _frames(2)
 	if errors == 0:

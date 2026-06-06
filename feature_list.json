@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~056로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2802 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~057로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2829 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -532,6 +532,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-056-next-stage-prep.md 추가. StageCadence가 stage_prep_label/tooltip을 제공하고 battle 결과 오버레이가 `다음 준비 — 스테이지 2 — 전투`와 준비 행동을 표시한다. UI smoke가 보상 선택 후 다음 준비 안내와 다음 스테이지 버튼을 검증한다. ./init.sh 카드 22개 / 2802 단언 green."
+    },
+    {
+      "id": "feat-057",
+      "name": "런맵 전투 준비 패널 강화",
+      "description": "전투 진입 전 런맵에서 성 위치, 손패 3장 중 1장 규칙, 보드 군세, 증원/배치/계략 후보 수를 표시한다.",
+      "dependencies": ["feat-038", "feat-056"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-057-run-map-combat-prep.md 추가. RunPrepSummary가 성 위치/손패/보드 군세/증원·배치·계략 후보를 계산하고 run_map 전투 스테이지가 준비 요약과 tooltip을 표시한다. UI smoke가 첫 전투 준비 요약을 검증한다. ./init.sh 카드 22개 / 2829 단언 green."
     }
   ]
 }

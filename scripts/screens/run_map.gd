@@ -8,6 +8,7 @@ const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 const _CardChoiceAdvisor := preload("res://scripts/run/card_choice_advisor.gd")
 const _CardUiText := preload("res://scripts/ui/card_ui_text.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
+const _RunPrepSummary := preload("res://scripts/run/run_prep_summary.gd")
 
 var _root: VBoxContainer
 var _shop_status_message := ""
@@ -100,9 +101,11 @@ func _build_stage_panel() -> void:
 		_build_event_panel()
 		return
 
+	_add_battle_prep_summary()
+
 	var start := Button.new()
 	start.text = "전투 시작"
-	start.tooltip_text = "전투 화면으로 들어가 손패를 배치하고 전투를 시작합니다." if RunManager.get_board().is_empty() else "현재 보드 군세로 전투를 시작합니다."
+	start.tooltip_text = "전투 화면으로 들어가 성 위치를 고르고 손패 1장을 사용한 뒤 전투를 시작합니다." if RunManager.get_board().is_empty() else "현재 보드 군세에 손패 1장을 더하거나 계략/우물을 쓰고 전투를 시작합니다."
 	start.custom_minimum_size = Vector2(360.0, 64.0)
 	start.add_theme_font_size_override("font_size", 28)
 	start.pressed.connect(_on_battle_pressed)
@@ -359,6 +362,35 @@ func _add_board_summary(parent: VBoxContainer) -> void:
 		label.tooltip_text = _CardUiText.tooltip(card) if card != null else String(board[key])
 		label.add_theme_font_size_override("font_size", 21)
 		parent.add_child(label)
+
+func _add_battle_prep_summary() -> void:
+	var summary := _RunPrepSummary.for_run(
+		RunManager.get_board(),
+		RunManager.get_board_levels(),
+		RunManager.get_hand(),
+		RunManager.get_castle_key(),
+		RunManager.get_board_capacity(),
+		CardLibrary.catalog
+	)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 4)
+	box.tooltip_text = String(summary.get("tooltip", ""))
+	_root.add_child(box)
+
+	var title := Label.new()
+	title.text = String(summary.get("title", "전투 준비"))
+	title.tooltip_text = String(summary.get("tooltip", ""))
+	title.add_theme_font_size_override("font_size", 27)
+	title.modulate = Color(0.78, 0.94, 1.0)
+	box.add_child(title)
+
+	var detail := Label.new()
+	detail.text = String(summary.get("detail", ""))
+	detail.tooltip_text = String(summary.get("tooltip", ""))
+	detail.add_theme_font_size_override("font_size", 22)
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail.modulate = Color(0.86, 0.88, 0.78)
+	box.add_child(detail)
 
 func _shop_card_tooltip(card: CardData, can_afford: bool, choice_context: Dictionary) -> String:
 	var text := _CardUiText.tooltip(card)
