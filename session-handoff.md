@@ -2,10 +2,12 @@
 
 이 문서는 **Codex CLI가 다음 세션을 이어받기 위한 진입점**이다. 에이전트-중립 규칙은 [AGENTS.md](AGENTS.md), 세계관 정본은 [docs/worldview.md](docs/worldview.md), 구조 이력은 [CHANGELOG.md](CHANGELOG.md)를 본다.
 
-## 현재 상태 (2026-06-06) — feat-080 첫 보드 지면 라벨 절제 완료
-`./init.sh` 카드 **22개 / 3065 단언 green**. 최신 완료는 `feat-080-first-board-label-discipline`이다. 사용자가 지적한 “필드 9칸이 하늘에 떠 있고, 유닛이 필드 뒤에 나타나는 느낌” 중 첫 보드 UI판 착시를 줄였다.
+## 현재 상태 (2026-06-06) — feat-081 전장 접지/depth 재보정 완료
+`./init.sh` 카드 **22개 / 3066 단언 green**. 최신 완료는 `feat-081-battlefield-grounding-pass`다. 사용자가 다시 지적한 “필드 9칸이 하늘에 떠 있고, 유닛이 필드 뒤에 나타나는 느낌”을 더 줄이기 위해 보드 위치와 유닛/성/건물 발 위치를 재보정했다.
 
-`battle.gd`는 빈 타일 generic state(`성 후보`, `손패 선택`, `계략 버튼`, `배치 가능`)를 visible label로 그리지 않고 `state_label`/`tooltip`/Area2D meta/hover hint로 유지한다. 성, 배치된 카드, `엄호 +15%` 같은 전술 preview 라벨은 계속 보인다. 기본 fill/outline alpha를 낮춰 흰 9칸 격자가 유닛 앞쪽 UI선처럼 읽히는 느낌을 줄였다.
+`battle.gd`는 `VIEW_ORIGIN.y`를 낮춰 첫 보드 9칸이 전경 지면에 더 가깝게 놓이도록 했고, 유닛/성/건물/root 및 지면 VFX를 타일 중심보다 앞쪽 `foot` 지점에 세운다. 빈 타일 fill/outline alpha도 낮춰 전체 9칸이 밝은 공중 UI 격자로 읽히는 느낌을 줄였다.
+
+직전 `feat-080`은 빈 타일 generic state(`성 후보`, `손패 선택`, `계략 버튼`, `배치 가능`)를 visible label로 그리지 않고 `state_label`/`tooltip`/Area2D meta/hover hint로 유지했다. 성, 배치된 카드, `엄호 +15%` 같은 전술 preview 라벨은 계속 보인다.
 
 직전 `feat-079`는 배치 타일 fill을 낮추고 `TileGroundOutline`/납작한 contact shadow로 보드를 지면 격자화했으며, `BattleHitFeedback` 발밑 impact와 강타 camera shake를 추가했다.
 
@@ -14,10 +16,11 @@
 직전 `feat-077`은 배경 지면 밴드와 3레인 진군 바닥선을 추가해 보드, 성, 유닛의 지면 축을 연결했다.
 
 ## 최신 검증
-- `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-080-unit.log --script res://test/runner.gd` — 단위 테스트 3065/3065 green.
-- `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-080-ui.log --script res://tools/ui_feedback_smoke.gd` — hidden generic label, hover hint, deploy unit depth, outline alpha 포함 UI smoke green.
-- `HOME=$PWD/.godot/home SHOT_DIR=/tmp/guju-feat-080-label-discipline-v2 LORD=lord_liubei SHOOT_STAGE=1 SHOOT_FIGHT_FRAMES=120 godot --path . --scene res://tools/shoot_battle.tscn` — 배치 GUI PNG 생성 및 확인.
-- `./init.sh` — 카드 22개 검증 OK, UI smoke, 저장/이어하기 smoke, playtest loop, 장기런 tempo gate, 단위 테스트 3065/3065 포함 전체 green.
+- `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-081-unit.log --script res://test/runner.gd` — 단위 테스트 3066/3066 green.
+- `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-081-ui.log --script res://tools/ui_feedback_smoke.gd` — 보드 y/alpha/유닛 foot 검증 포함 UI smoke green.
+- `HOME=$PWD/.godot/home SHOT_DIR=/tmp/guju-feat-081-grounding LORD=lord_liubei SHOOT_STAGE=1 godot --path . --scene res://tools/shoot_first_board_states.tscn` — 첫 보드 4상태 PNG 생성 및 확인.
+- `HOME=$PWD/.godot/home SHOT_DIR=/tmp/guju-feat-081-grounding LORD=lord_liubei SHOOT_STAGE=1 SHOOT_FIGHT_FRAMES=120 godot --path . --scene res://tools/shoot_battle.tscn` — 유닛/건물 채움 배치 PNG 생성 및 확인.
+- `./init.sh` — 카드 22개 검증 OK, UI smoke, 저장/이어하기 smoke, playtest loop, 장기런 tempo gate, 단위 테스트 3066/3066 포함 전체 green.
 
 ## 작업 규칙
 - 코드를 쓰기 전 `pwd`, `AGENTS.md`, `CLAUDE.md`, `./init.sh`, `feature_list.json`, `progress.md` 확인.
@@ -28,7 +31,7 @@
 - push/tag/delete는 사용자 확인 전 실행 금지다.
 
 ## 다음 작업 후보
-1. **실제 첫 보드 screenshot bundle 갱신** — `tools/shoot_first_board_states.gd`의 과거 `성 후보/손패 선택/계략 버튼/배치 가능` visible-label 전제를 feat-080 기준으로 바꾸고 GUI bundle을 다시 남긴다.
+1. **실제 교전 screenshot 하네스 정정** — `tools/shoot_battle.gd`의 QA용 직접 배치가 `deploy_cards_played`를 갱신하지 않아 `battle_fight` 캡처가 실제 교전으로 못 넘어갈 수 있다.
 2. **배치 카드 UI 정리** — 왼쪽 패널 카드/버튼이 아직 정보 텍스트 중심이다. 카드 3장 선택 UX를 레퍼런스처럼 큰 카드/현재 선택/발동 버튼 분리로 정리한다.
 3. **교전 phase 군세 충돌 polish** — field 착시는 줄었지만 전투 재미는 여전히 “많은 군사가 뒤엉켜 싸우는” 밀도와 함성/충돌 속도를 더 봐야 한다.
 
@@ -51,4 +54,4 @@
 - Codex goal은 완성판까지 계속 활성이다. 현재 피처 단위 완료가 전체 goal 완료는 아니다.
 
 ## Codex 시작 프롬프트
-> 구주쟁패(`/Users/taewookkim/dev/guju-jaengpae`) 이어서. 현재 브랜치는 `codex/feat-040-mvp`. `AGENTS.md`, `CLAUDE.md`, `progress.md`, `feature_list.json`를 읽고 `./init.sh` baseline을 먼저 확인한다. 최신 완료는 feat-080 첫 보드 지면 라벨 절제다. `battle.gd`는 빈 타일 generic label을 숨기고 state/tooltip/hover hint로 유지하며, 성/배치/전술 preview 라벨만 표시한다. 기본 tile fill/outline alpha도 낮춰 공중 9칸 UI판 착시를 줄였다. UI smoke가 hidden generic label, hover hint, deploy unit depth, outline alpha를 검증한다. GUI 캡처는 `/tmp/guju-feat-080-label-discipline-v2`에서 확인했다. G055/G056/G058/G060/G061/G062는 명칭 승인 대기 blocked이므로 사용자/편집장 승인 전 천계·마계 nation id와 Resource를 추가하지 않는다. push/tag는 사용자 확인 전 금지다. 다음은 실제 첫 보드 screenshot bundle 갱신, 배치 카드 UI 정리, 교전 phase 군세 충돌 polish 중 하나를 잡아 `docs/specs/` 스펙 → 구현 → `./init.sh` green → 상태 파일 갱신 → 중요 커밋 순서로 진행한다.
+> 구주쟁패(`/Users/taewookkim/dev/guju-jaengpae`) 이어서. 현재 브랜치는 `codex/feat-040-mvp`. `AGENTS.md`, `CLAUDE.md`, `progress.md`, `feature_list.json`를 읽고 `./init.sh` baseline을 먼저 확인한다. 최신 완료는 feat-081 전장 접지/depth 재보정이다. `battle.gd`는 첫 보드 위치를 더 아래 지면 영역으로 내리고, 유닛/성/건물/root 및 지면 VFX를 타일 중심보다 앞쪽 foot 지점에 세운다. 빈 타일 fill/outline alpha도 낮춰 9칸 공중 격자 착시를 줄였다. UI smoke와 `test_unit_walk_visuals.gd`가 보드 y>=610, outline alpha<=0.38, 유닛 foot 위치를 검증한다. GUI 캡처는 `/tmp/guju-feat-081-grounding`에서 확인했다. G055/G056/G058/G060/G061/G062는 명칭 승인 대기 blocked이므로 사용자/편집장 승인 전 천계·마계 nation id와 Resource를 추가하지 않는다. push/tag는 사용자 확인 전 금지다. 다음은 실제 교전 screenshot 하네스 정정, 배치 카드 UI 정리, 교전 phase 군세 충돌 polish 중 하나를 잡아 `docs/specs/` 스펙 → 구현 → `./init.sh` green → 상태 파일 갱신 → 중요 커밋 순서로 진행한다.

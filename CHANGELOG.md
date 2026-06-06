@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-081 전장 접지/depth 재보정
+첫 보드 9칸이 여전히 배경 중경 위에 떠 보이고, 유닛이 필드 뒤에서 나타나는 듯한 착시를 줄이기 위해 보드와 발 위치를 다시 맞췄다.
+- **보드 하향 재배치** — `battle.gd`의 view origin y를 낮춰 첫 배치 보드 중심이 산/하늘이 아니라 전경 바닥 영역에 놓이게 했다.
+- **foot 기준 렌더링** — 유닛, 성, 건물, 지면 VFX가 타일 중심이 아니라 타일 앞쪽 foot 지점에 서도록 `_field_foot_screen()` 경로를 추가했다.
+- **빈 격자 약화** — 성 후보/빈 타일 fill과 outline alpha를 더 낮춰 9칸 전체가 밝은 공중 UI판처럼 보이지 않게 했다.
+- **검증** — `test_unit_walk_visuals.gd`와 `tools/ui_feedback_smoke.gd`가 보드 y>=610, outline alpha<=0.38, 유닛 foot 위치를 검증한다. GUI 캡처(`/tmp/guju-feat-081-grounding`)와 `./init.sh` 카드 22개, 단위 테스트 3066/3066 green.
+
 ## 2026-06-06 — feat-080 첫 보드 지면 라벨 절제
 빈 타일마다 보이던 설명 문구와 밝은 격자가 첫 보드를 공중 UI판처럼 보이게 하던 문제를 줄였다.
 - **빈 타일 라벨 숨김** — `battle.gd`가 `성 후보`, `손패 선택`, `계략 버튼`, `배치 가능` 같은 generic state를 visible label로 그리지 않고 `state_label`/`tooltip`/Area2D meta로 유지한다.

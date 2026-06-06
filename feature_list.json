@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~080으로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 보호→보상/상점/결과 UX→전투 HUD→유닛/필드 접지감→스크린샷 QA→초반 군세 밀도→전장 보드 지면화→장기런 전투 템포 계약→전투 첫 화면 지면/깊이 재보정→첫 보드 라벨/격자 절제까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 3065 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~081로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 보호→보상/상점/결과 UX→전투 HUD→유닛/필드 접지감→스크린샷 QA→초반 군세 밀도→전장 보드 지면화→장기런 전투 템포 계약→전투 첫 화면 지면/깊이 재보정→첫 보드 라벨/격자 절제→전장 접지/depth 재보정까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 3066 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -748,6 +748,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-080-first-board-label-discipline.md 추가. battle.gd가 빈 타일 generic 라벨을 숨기고 state_label/tooltip/hover hint로 안내를 유지하며, 성/배치/전술 preview 라벨만 표시한다. idle outline/fill alpha를 낮춰 9칸 공중 격자 착시를 줄이고 UI smoke가 hidden generic label, hover hint, deploy unit depth, outline alpha <=0.50을 검증한다. GUI 캡처 /tmp/guju-feat-080-label-discipline-v2 확인, ./init.sh 카드 22개 / 3065 단언 green."
+    },
+    {
+      "id": "feat-081",
+      "name": "전장 접지/depth 재보정",
+      "description": "첫 배치 보드가 하늘에 떠 보이고 유닛이 필드 뒤에서 나타나는 착시를 줄이도록 보드 y, 유닛/성/건물 발 위치, 기본 격자 alpha를 재보정한다.",
+      "dependencies": ["feat-071", "feat-080"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-081-battlefield-grounding-pass.md 추가. battle.gd가 보드 origin y를 낮추고 유닛/성/건물/지면 VFX를 타일 앞쪽 foot 위치에 세우며 빈 타일 fill/outline alpha를 더 낮춘다. test_unit_walk_visuals와 UI smoke가 보드 y>=610, outline alpha<=0.38, 유닛 foot 위치를 검증한다. GUI 캡처 /tmp/guju-feat-081-grounding 확인, ./init.sh 카드 22개 / 3066 단언 green."
     }
   ]
 }

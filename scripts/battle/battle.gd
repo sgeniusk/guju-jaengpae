@@ -22,11 +22,12 @@ const _FormationTactics := preload("res://scripts/run/formation_tactics.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
 
-const VIEW_ORIGIN := Vector2(520.0, 486.0)
+const VIEW_ORIGIN := Vector2(520.0, 530.0)
 const VIEW_SCALE_X := 1.28
 const VIEW_SCALE_Y := 0.62
 const ISO_HALF_W := 96.0
 const ISO_HALF_H := 48.0
+const FIELD_FOOT_OFFSET_Y := 24.0
 const TILE_TEXTURE_SCALE := 0.75
 const FIELD_LAYER_Z := 0
 const BACKGROUND_FLOOR_BAND_Z := -960
@@ -622,8 +623,8 @@ func _add_battlefield_floor_context(centers: Array) -> void:
 	_background_layer.add_child(combat_floor)
 	for lane in BattleSim.COL_COUNT:
 		var lane_y := BattleSim.start_y_for_col(lane)
-		var start := field_to_screen(10.0, lane_y)
-		var end := field_to_screen(BattleSim.FIELD_W, lane_y)
+		var start := _field_foot_screen(10.0, lane_y)
+		var end := _field_foot_screen(BattleSim.FIELD_W, lane_y)
 		var lane_band := Polygon2D.new()
 		lane_band.name = "BattlefieldDepthLane%d" % lane
 		lane_band.set_meta(&"battlefield_depth_lane", true)
@@ -731,8 +732,8 @@ func _make_tile_contact_shadow(center: Vector2) -> Polygon2D:
 	shadow.name = "TileContactShadow"
 	shadow.set_meta(&"battlefield_tile_contact", true)
 	shadow.polygon = _ellipse_points(72.0, 18.0, 18)
-	shadow.position = center + Vector2(0.0, 19.0)
-	shadow.color = Color(0.02, 0.01, 0.0, 0.075)
+	shadow.position = center + Vector2(0.0, FIELD_FOOT_OFFSET_Y)
+	shadow.color = Color(0.02, 0.01, 0.0, 0.060)
 	shadow.z_index = FIELD_TILE_SHADOW_Z
 	return shadow
 
@@ -743,7 +744,7 @@ func _make_tile_ground_outline(center: Vector2) -> Line2D:
 	outline.points = _diamond_points()
 	outline.closed = true
 	outline.width = 1.4
-	outline.default_color = Color(0.88, 0.82, 0.62, 0.26)
+	outline.default_color = Color(0.88, 0.82, 0.62, 0.18)
 	outline.position = center + Vector2(0.0, 2.0)
 	outline.z_index = FIELD_TILE_OUTLINE_Z
 	outline.antialiased = true
@@ -765,6 +766,12 @@ func field_to_screen(px: float, py: float) -> Vector2:
 
 func field_to_screen_position(pos: Vector2) -> Vector2:
 	return field_to_screen(pos.x, pos.y)
+
+func _field_foot_screen(px: float, py: float) -> Vector2:
+	return field_to_screen(px, py) + Vector2(0.0, FIELD_FOOT_OFFSET_Y)
+
+func _field_foot_screen_position(pos: Vector2) -> Vector2:
+	return _field_foot_screen(pos.x, pos.y)
 
 func _build_panel() -> void:
 	var panel_frame := PanelContainer.new()
@@ -1001,11 +1008,11 @@ func _refresh_board_tiles() -> void:
 		if key == castle_key:
 			_set_tile_feedback(tile, "성", "선택한 성 위치입니다.", true)
 			if poly != null:
-				poly.color = Color(0.48, 0.28, 0.18, 0.16)
+				poly.color = Color(0.48, 0.28, 0.18, 0.12)
 			if sprite != null:
-				sprite.modulate = Color(1.10, 0.88, 0.56, 0.20)
+				sprite.modulate = Color(1.10, 0.88, 0.56, 0.16)
 			if outline != null:
-				outline.default_color = Color(1.0, 0.76, 0.42, 0.46)
+				outline.default_color = Color(1.0, 0.76, 0.42, 0.38)
 			if area != null:
 				area.input_pickable = false
 		elif board.has(key):
@@ -1014,11 +1021,11 @@ func _refresh_board_tiles() -> void:
 			var board_tooltip := _CardUiText.tooltip(card) if card != null else String(board[key])
 			_set_tile_feedback(tile, board_label, board_tooltip, true)
 			if poly != null:
-				poly.color = Color(0.24, 0.42, 0.26, 0.12)
+				poly.color = Color(0.24, 0.42, 0.26, 0.10)
 			if sprite != null:
-				sprite.modulate = Color(0.98, 1.0, 0.78, 0.16)
+				sprite.modulate = Color(0.98, 1.0, 0.78, 0.12)
 			if outline != null:
-				outline.default_color = Color(0.82, 1.0, 0.64, 0.36)
+				outline.default_color = Color(0.82, 1.0, 0.64, 0.30)
 			if area != null:
 				area.input_pickable = false
 		else:
@@ -1035,15 +1042,15 @@ func _refresh_board_tiles() -> void:
 				if _phase != Phase.DEPLOY:
 					poly.color = Color(0.17, 0.27, 0.17, 0.0)
 				elif not preview.is_empty():
-					poly.color = Color(0.40, 0.54, 0.20, 0.22)
+					poly.color = Color(0.40, 0.54, 0.20, 0.16)
 				elif not RunManager.has_castle():
-					poly.color = Color(0.54, 0.36, 0.18, 0.22)
+					poly.color = Color(0.54, 0.36, 0.18, 0.12)
 				elif _selected_hand_index < 0:
-					poly.color = Color(0.23, 0.34, 0.30, 0.12)
+					poly.color = Color(0.23, 0.34, 0.30, 0.07)
 				elif not RunManager.can_place_hand_card(_selected_hand_index):
-					poly.color = Color(0.32, 0.30, 0.25, 0.10)
+					poly.color = Color(0.32, 0.30, 0.25, 0.06)
 				else:
-					poly.color = Color(0.25, 0.42, 0.28, 0.16)
+					poly.color = Color(0.25, 0.42, 0.28, 0.10)
 			if sprite != null:
 				sprite.modulate = _empty_tile_sprite_modulate(preview) if _phase == Phase.DEPLOY else Color(1.0, 1.0, 1.0, 0.0)
 			if outline != null:
@@ -1134,25 +1141,25 @@ func _visible_empty_tile_state(label_text: String, tooltip: String) -> Dictionar
 
 func _empty_tile_sprite_modulate(preview: Dictionary) -> Color:
 	if not RunManager.has_castle():
-		return Color(1.02, 0.82, 0.52, 0.18)
+		return Color(1.02, 0.82, 0.52, 0.10)
 	if _selected_hand_index < 0:
-		return Color(0.72, 0.88, 0.72, 0.08)
+		return Color(0.72, 0.88, 0.72, 0.06)
 	if not preview.is_empty():
-		return Color(0.78, 1.04, 0.60, 0.20)
+		return Color(0.78, 1.04, 0.60, 0.16)
 	if not RunManager.can_place_hand_card(_selected_hand_index):
-		return Color(0.74, 0.72, 0.66, 0.06)
-	return Color(0.70, 0.92, 0.60, 0.14)
+		return Color(0.74, 0.72, 0.66, 0.05)
+	return Color(0.70, 0.92, 0.60, 0.10)
 
 func _empty_tile_outline_color(preview: Dictionary) -> Color:
 	if not RunManager.has_castle():
-		return Color(1.0, 0.78, 0.44, 0.48)
+		return Color(1.0, 0.78, 0.44, 0.30)
 	if _selected_hand_index < 0:
-		return Color(0.74, 0.92, 0.78, 0.28)
+		return Color(0.74, 0.92, 0.78, 0.22)
 	if not preview.is_empty():
-		return Color(0.78, 1.0, 0.54, 0.68)
+		return Color(0.78, 1.0, 0.54, 0.48)
 	if not RunManager.can_place_hand_card(_selected_hand_index):
-		return Color(0.62, 0.58, 0.48, 0.22)
-	return Color(0.74, 0.96, 0.58, 0.42)
+		return Color(0.62, 0.58, 0.48, 0.18)
+	return Color(0.74, 0.96, 0.58, 0.32)
 
 func _find_army_unit_at_block(army: Array, block_key: String) -> BattleUnit:
 	var parts := block_key.split(":")
@@ -1479,7 +1486,7 @@ func _run_export_first_battle_smoke() -> void:
 func _spawn_visual(u: BattleUnit) -> void:
 	var size := _unit_size(u)
 	var root := Node2D.new()
-	root.position = field_to_screen(u.px, u.py)
+	root.position = _field_foot_screen(u.px, u.py)
 	root.y_sort_enabled = true
 	var shadow := _make_ground_shadow(size, Vector2(0.0, 0.0), 0.34, 0.28, 0.075)
 	root.add_child(shadow)
@@ -1705,7 +1712,7 @@ func _update_bar_row(id: String, ratio: float, active: bool, label_text: String)
 func _position_visual(u: BattleUnit) -> void:
 	var root := _vis[u]["root"] as Node2D
 	var offset := _unit_visual_offset(u)
-	root.position = field_to_screen(u.px, u.py) + offset
+	root.position = _field_foot_screen(u.px, u.py) + offset
 	root.z_index = int(root.position.y)
 
 func _sync_unit_walk_animation(u: BattleUnit) -> void:
@@ -1805,7 +1812,7 @@ func _spawn_charge_line(from_field: Vector2, to_field: Vector2, color: Color) ->
 	line.width = 7.0
 	line.default_color = color
 	line.z_index = VFX_RALLY_Z - 1
-	line.points = PackedVector2Array([field_to_screen(from_field.x, from_field.y), field_to_screen(to_field.x, to_field.y)])
+	line.points = PackedVector2Array([_field_foot_screen(from_field.x, from_field.y), _field_foot_screen(to_field.x, to_field.y)])
 	_vfx_layer.add_child(line)
 	var tween := create_tween()
 	tween.set_parallel(true)
@@ -1826,7 +1833,7 @@ func _spawn_advance_ground_dust() -> void:
 		dust.set_meta(&"advance_lane", int(marker.get("lane", -1)))
 		dust.polygon = _ellipse_points(30.0 * scale, 7.0 * scale, 16)
 		dust.color = Color(0.72, 0.56, 0.34, 0.25) if side == "player" else Color(0.70, 0.32, 0.24, 0.24)
-		dust.position = field_to_screen_position(field)
+		dust.position = _field_foot_screen_position(field)
 		dust.rotation = -0.10 if side == "player" else 0.10
 		dust.z_index = VFX_RALLY_Z - 4
 		_vfx_layer.add_child(dust)
@@ -1847,7 +1854,7 @@ func _spawn_ground_clash_lines() -> void:
 		clash.set_meta(&"advance_lane", int(marker.get("lane", -1)))
 		clash.polygon = _ellipse_points(float(marker.get("radius_x", 54.0)), float(marker.get("radius_y", 8.0)), 18)
 		clash.color = Color(1.0, 0.78, 0.36, 0.36)
-		clash.position = field_to_screen_position(field)
+		clash.position = _field_foot_screen_position(field)
 		clash.z_index = VFX_RALLY_Z - 3
 		_vfx_layer.add_child(clash)
 		var tween := create_tween()
@@ -1864,7 +1871,7 @@ func _spawn_clash_pulses() -> void:
 		pulse.set_meta("battle_start_vfx", "pulse")
 		pulse.polygon = _ellipse_points(38.0, 16.0, 18)
 		pulse.color = Color(1.0, 0.78, 0.34, 0.40)
-		pulse.position = field_to_screen(555.0, y)
+		pulse.position = _field_foot_screen(555.0, y)
 		pulse.z_index = VFX_RALLY_Z - 2
 		_vfx_layer.add_child(pulse)
 		var tween := create_tween()
@@ -1908,8 +1915,8 @@ func _spawn_command_line(hero: BattleUnit, target: BattleUnit) -> void:
 	line.default_color = Color(1.0, 0.86, 0.18, 0.78)
 	line.z_index = VFX_RALLY_Z - 1
 	line.points = PackedVector2Array([
-		field_to_screen(hero.px, hero.py) + Vector2(0.0, -44.0),
-		field_to_screen(target.px, target.py) + Vector2(0.0, -72.0),
+		_field_foot_screen(hero.px, hero.py) + Vector2(0.0, -44.0),
+		_field_foot_screen(target.px, target.py) + Vector2(0.0, -72.0),
 	])
 	_vfx_layer.add_child(line)
 	var tween := create_tween()
@@ -1924,7 +1931,7 @@ func _spawn_command_banner(target: BattleUnit, hero_count: int) -> void:
 	label.text = _BattleCommandFeedback.command_banner(target, hero_count)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.position = field_to_screen(target.px, target.py) + Vector2(-120.0, -148.0)
+	label.position = _field_foot_screen(target.px, target.py) + Vector2(-120.0, -148.0)
 	label.size = Vector2(240.0, 58.0)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.z_index = VFX_RALLY_Z
@@ -1957,7 +1964,7 @@ func _spawn_damage_number(event: Dictionary) -> void:
 	label.text = "%d%s" % [amount, "!" if is_crit else ""]
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.position = field_to_screen(float(event.get("px", 0.0)), float(event.get("py", 0.0))) + Vector2(-48.0, -96.0)
+	label.position = _field_foot_screen(float(event.get("px", 0.0)), float(event.get("py", 0.0))) + Vector2(-48.0, -96.0)
 	label.size = Vector2(96.0, 34.0)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.z_index = VFX_FLOATING_Z
@@ -1987,7 +1994,7 @@ func _spawn_hit_impact_vfx(event: Dictionary) -> void:
 	var profiles: Array[Dictionary] = _BattleHitFeedback.profiles_for_event(event)
 	if profiles.is_empty():
 		return
-	var base_pos := field_to_screen(float(event.get("px", 0.0)), float(event.get("py", 0.0))) + Vector2(0.0, -42.0)
+	var base_pos := _field_foot_screen(float(event.get("px", 0.0)), float(event.get("py", 0.0))) + Vector2(0.0, -42.0)
 	for profile in profiles:
 		var kind := String(profile.get("kind", "spark"))
 		var impact := Polygon2D.new()
@@ -2014,7 +2021,7 @@ func _spawn_ground_impact_vfx(event: Dictionary) -> void:
 	var profiles: Array[Dictionary] = _BattleHitFeedback.ground_profiles_for_event(event)
 	if profiles.is_empty():
 		return
-	var foot_pos := field_to_screen(float(event.get("px", 0.0)), float(event.get("py", 0.0)))
+	var foot_pos := _field_foot_screen(float(event.get("px", 0.0)), float(event.get("py", 0.0)))
 	for profile in profiles:
 		var kind := String(profile.get("kind", _BattleHitFeedback.KIND_GROUND_DUST))
 		var impact := Polygon2D.new()
@@ -2125,10 +2132,10 @@ func _spawn_building_for_board_key(block_key: String, board: Dictionary) -> bool
 		return true
 	var col := int(parts[0])
 	var row := int(parts[1])
-	var center := field_to_screen_position(BattleSim.position_for_tile(col, row))
+	var foot := _field_foot_screen_position(BattleSim.position_for_tile(col, row))
 	var root := Node2D.new()
-	root.position = center
-	root.z_index = int(center.y) - 1
+	root.position = foot
+	root.z_index = int(foot.y) - 1
 	var body := Sprite2D.new()
 	body.centered = true
 	var texture := _building_texture(card)
