@@ -322,8 +322,10 @@ func _battle_reward_case() -> int:
 	errors += _assert_any_text(battle, "카드 버튼을 누르면", "보상 선택 행동 안내")
 	errors += _assert_button_text(battle, "선택 —", "보상 선택 버튼")
 	errors += _assert_button_text(battle, "추천 —", "보상 선택 전략 추천")
+	errors += _assert_button_text(battle, "비교 —", "보상 선택 비교 문구")
 	errors += _assert_any_tooltip(battle, "이 전리품을 선택합니다", "보상 선택 tooltip")
 	errors += _assert_any_tooltip(battle, "추천 —", "보상 전략 추천 tooltip")
+	errors += _assert_any_tooltip(battle, "비교 —", "보상 비교 tooltip")
 	battle.queue_free()
 	await _frames(2)
 	if errors == 0:

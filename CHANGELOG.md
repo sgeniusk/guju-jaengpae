@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-055 보상 선택 비교 UX
+전투 승리 뒤 보상 후보가 현재 판과 비교해 무엇을 바꾸는지 바로 읽히도록 전리품 UX를 보강했다.
+- **비교 helper** — `CardChoiceAdvisor`가 후보 카드별 선택 전후 변화를 `비교 — 기존 부대 Lv.2 -> Lv.3`, `장수 0 -> 1`, `건물 0 -> 1`, `손패 0 -> 1`, `보패 즉시 장착` 같은 player-facing 문구로 계산한다.
+- **전리품 버튼 비교 문구** — `battle.gd` 보상 버튼이 기존 `추천 — ...` 아래에 `비교 — ...`를 함께 표시하고, tooltip에도 자세한 비교 설명을 붙인다.
+- **버튼 높이 보정** — 전리품 버튼이 세 줄 설명을 담을 수 있도록 `_make_button()`이 텍스트 줄 수에 맞춰 최소 높이를 계산한다.
+- **검증** — `test_card_choice_advisor.gd`가 비교 helper 주요 분기를 검증하고, `tools/ui_feedback_smoke.gd`가 보상 화면에서 비교 문구와 tooltip이 렌더되는지 확인한다. `./init.sh` 카드 22개, 단위 테스트 2797/2797 green.
+
 ## 2026-06-06 — feat-054 손상 저장 이어하기 보호
 저장 파일이 존재해도 실제로 이어갈 수 있는 런인지 확인한 뒤 UX에 노출하도록 저장 재시작 경계를 보강했다.
 - **Resumeable save status** — `RunManager.run_save_status()`와 `has_resumeable_run_save()`가 ConfigFile 로드, run section, RunState payload 호환성, started 여부를 확인한다. 조회는 현재 런 상태를 변경하지 않는다.

@@ -2204,10 +2204,12 @@ func _build_outcome_ui(win: bool) -> void:
 	for id in candidates:
 		var card := CardLibrary.get_card(id)
 		var advice_line := _CardChoiceAdvisor.line_for_card(card, choice_context, _CardChoiceAdvisor.MODE_REWARD)
-		var reward_button := _make_button("선택 — %s (%d) — %s\n%s" % [card.display_name, card.cost, _card_brief(card), advice_line], _pick_reward.bind(id))
-		reward_button.tooltip_text = "이 전리품을 선택합니다.\n%s\n%s" % [
+		var comparison_line := _CardChoiceAdvisor.comparison_line_for_card(card, choice_context, _CardChoiceAdvisor.MODE_REWARD)
+		var reward_button := _make_button("선택 — %s (%d) — %s\n%s\n%s" % [card.display_name, card.cost, _card_brief(card), advice_line, comparison_line], _pick_reward.bind(id))
+		reward_button.tooltip_text = "이 전리품을 선택합니다.\n%s\n%s\n%s" % [
 			_CardUiText.tooltip(card),
 			_CardChoiceAdvisor.tooltip_for_card(card, choice_context, _CardChoiceAdvisor.MODE_REWARD),
+			_CardChoiceAdvisor.comparison_tooltip_for_card(card, choice_context, _CardChoiceAdvisor.MODE_REWARD),
 		]
 		box.add_child(reward_button)
 
@@ -2317,7 +2319,8 @@ func _make_button(text: String, cb: Callable) -> Button:
 	var b := Button.new()
 	b.theme = _hud_theme
 	b.text = text
-	b.custom_minimum_size = Vector2(0.0, 40.0)
+	var line_count := text.split("\n").size()
+	b.custom_minimum_size = Vector2(0.0, maxf(40.0, 28.0 * float(line_count)))
 	b.pressed.connect(cb)
 	return b
 
