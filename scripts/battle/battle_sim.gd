@@ -111,6 +111,11 @@ func step(delta: float) -> void:
 				var dmg := int(round(u.effective_attack() * type_multiplier))
 				target.take_damage(dmg)
 				last_damage_events.append({
+					"attacker": u,
+					"attacker_team": u.team,
+					"attacker_px": u.px,
+					"attacker_py": u.py,
+					"attack_range": u.attack_range,
 					"target": target,
 					"amount": dmg,
 					"px": target.px,

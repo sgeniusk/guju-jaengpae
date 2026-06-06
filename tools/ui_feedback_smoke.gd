@@ -588,18 +588,27 @@ func _assert_battlefield_ground_plane(battle: Node) -> int:
 	var contact_count := _count_bool_meta(battle._iso_base_layer, &"battlefield_tile_contact")
 	if contact_count < battle._tile_buttons.size():
 		errors += _fail("전장 타일 접지 shadow 부족: %d/%d" % [contact_count, battle._tile_buttons.size()])
+	var outline_count := _count_bool_meta(battle._iso_base_layer, &"battlefield_tile_outline")
+	if outline_count < battle._tile_buttons.size():
+		errors += _fail("전장 타일 지면 outline 부족: %d/%d" % [outline_count, battle._tile_buttons.size()])
+	var max_tile_fill_alpha := _max_tile_fill_alpha(battle)
+	if max_tile_fill_alpha > 0.32:
+		errors += _fail("전장 타일 fill이 너무 진해 공중 판처럼 보임: alpha=%.2f" % max_tile_fill_alpha)
 	var floor_band_count := _count_bool_meta(battle._background_layer, &"battlefield_floor_band")
 	if floor_band_count < 1:
 		errors += _fail("전장 배경 지면 밴드 누락")
 	var max_floor_alpha := _max_polygon_meta_alpha(battle._background_layer, &"battlefield_floor_band")
-	if max_floor_alpha > 0.06:
+	if max_floor_alpha > 0.025:
 		errors += _fail("전장 지면 밴드가 너무 진해 공중 plate처럼 보임: alpha=%.2f" % max_floor_alpha)
 	var max_plate_alpha := _max_polygon_meta_alpha(battle._iso_base_layer, &"battlefield_ground_plate")
-	if max_plate_alpha > 0.08:
+	if max_plate_alpha > 0.03:
 		errors += _fail("전장 지면 plate가 너무 진해 필드판처럼 보임: alpha=%.2f" % max_plate_alpha)
 	var depth_lane_count := _count_bool_meta(battle._background_layer, &"battlefield_depth_lane")
 	if depth_lane_count < BattleSim.COL_COUNT:
 		errors += _fail("전장 진군 레인 부족: %d/%d" % [depth_lane_count, BattleSim.COL_COUNT])
+	var max_lane_alpha := _max_polygon_meta_alpha(battle._background_layer, &"battlefield_depth_lane")
+	if max_lane_alpha > 0.06:
+		errors += _fail("전장 진군 레인이 너무 진해 공중 판처럼 보임: alpha=%.2f" % max_lane_alpha)
 	if min_y < 560.0:
 		errors += _fail("전장 보드가 지면 밴드보다 위에 있음: min_y=%.1f" % min_y)
 	if max_y > 820.0:
@@ -664,11 +673,25 @@ func _max_field_visual_z(battle: Node) -> int:
 		if not (value is Dictionary):
 			continue
 		var tile := value as Dictionary
-		for key in ["sprite", "poly", "label"]:
+		for key in ["sprite", "poly", "outline", "label"]:
 			var item := tile.get(key, null) as CanvasItem
 			if item != null:
 				max_z = maxi(max_z, item.z_index)
 	return max_z
+
+func _max_tile_fill_alpha(battle: Node) -> float:
+	var max_alpha := 0.0
+	for value in battle._tile_buttons.values():
+		if not (value is Dictionary):
+			continue
+		var tile := value as Dictionary
+		var sprite := tile.get("sprite", null) as Sprite2D
+		if sprite != null:
+			max_alpha = maxf(max_alpha, sprite.modulate.a)
+		var poly := tile.get("poly", null) as Polygon2D
+		if poly != null:
+			max_alpha = maxf(max_alpha, poly.color.a)
+	return max_alpha
 
 func _assert_hit_impact_vfx(battle: Node) -> int:
 	var enemy := _first_alive_enemy(battle)
@@ -699,12 +722,20 @@ func _assert_hit_impact_vfx(battle: Node) -> int:
 	var spark_count := _count_hit_vfx_meta(battle._vfx_layer, "spark")
 	var crit_count := _count_hit_vfx_meta(battle._vfx_layer, "crit")
 	var burst_count := _count_hit_vfx_meta(battle._vfx_layer, "burst")
+	var ground_dust_count := _count_hit_vfx_meta(battle._vfx_layer, "ground_dust")
+	var ground_ring_count := _count_hit_vfx_meta(battle._vfx_layer, "ground_ring")
 	if spark_count < 2:
 		errors += _fail("hit impact spark VFX 부족: %d" % spark_count)
 	if crit_count < 1:
 		errors += _fail("hit impact crit VFX 누락")
 	if burst_count < 1:
 		errors += _fail("hit impact skill burst VFX 누락")
+	if ground_dust_count < 2:
+		errors += _fail("hit impact ground dust VFX 부족: %d" % ground_dust_count)
+	if ground_ring_count < 2:
+		errors += _fail("hit impact ground ring VFX 부족: %d" % ground_ring_count)
+	if float(battle._impact_camera_cooldown) <= 0.0:
+		errors += _fail("hit impact camera 반응 cooldown 누락")
 	return errors
 
 func _first_alive_enemy(battle: Node) -> BattleUnit:

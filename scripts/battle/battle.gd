@@ -34,8 +34,9 @@ const BACKGROUND_DEPTH_LANE_Z := -940
 const FIELD_GROUND_SHADOW_Z := -46
 const FIELD_GROUND_PLATE_Z := -44
 const FIELD_TILE_SHADOW_Z := -36
-const FIELD_TILE_Z := -32
-const FIELD_LABEL_Z := -22
+const FIELD_TILE_Z := -34
+const FIELD_TILE_OUTLINE_Z := -27
+const FIELD_LABEL_Z := -20
 const BUILDING_LAYER_Z := 420
 const UNIT_LAYER_Z := 520
 const UNIT_W := 140.0
@@ -65,6 +66,7 @@ const BOSS_TEXTURE_PATHS := {
 	"천공 장각": "res://assets/sprites/units/huangtian/boss_zhangjue.png",
 	"귀신 여포": "res://assets/sprites/units/wanyao/boss_lvbu.png",
 }
+const IMPACT_CAMERA_COOLDOWN := 0.18
 
 var _phase: int = Phase.DEPLOY
 var _sim := BattleSim.new()
@@ -87,6 +89,7 @@ var _battle_gold_per_sec := 0
 var _battle_gold_accum := 0.0
 var _pending_scheme_battle_effects: Array[Dictionary] = []
 var _battle_outcome: Dictionary = {}
+var _impact_camera_cooldown := 0.0
 
 var _world_root: Node2D
 var _camera: Camera2D
@@ -147,6 +150,8 @@ func _ready() -> void:
 		call_deferred("_run_export_first_battle_smoke")
 
 func _process(delta: float) -> void:
+	if _impact_camera_cooldown > 0.0:
+		_impact_camera_cooldown = maxf(0.0, _impact_camera_cooldown - delta)
 	if _phase != Phase.BATTLE:
 		_sync_hud()
 		return
@@ -540,16 +545,18 @@ func _build_iso_base() -> void:
 			tile_sprite.position = center
 			tile_sprite.scale = Vector2(TILE_TEXTURE_SCALE, TILE_TEXTURE_SCALE)
 			tile_sprite.z_index = FIELD_TILE_Z
-			tile_sprite.modulate = Color(0.92, 0.88, 0.72, 0.62)
+			tile_sprite.modulate = Color(0.78, 0.70, 0.52, 0.14)
 			_iso_base_layer.add_child(tile_sprite)
 			var fallback_poly: Polygon2D = null
 			if tile_texture == null:
 				fallback_poly = Polygon2D.new()
 				fallback_poly.polygon = _diamond_points()
 				fallback_poly.position = center
-				fallback_poly.color = Color(0.20, 0.24, 0.16, 0.88)
+				fallback_poly.color = Color(0.20, 0.24, 0.16, 0.16)
 				fallback_poly.z_index = FIELD_TILE_Z
 				_iso_base_layer.add_child(fallback_poly)
+			var tile_outline := _make_tile_ground_outline(center)
+			_iso_base_layer.add_child(tile_outline)
 			var label := Label.new()
 			label.text = ""
 			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -568,7 +575,7 @@ func _build_iso_base() -> void:
 			shape.polygon = _diamond_points()
 			area.add_child(shape)
 			_iso_base_layer.add_child(area)
-			_tile_buttons[block_key] = { "area": area, "shadow": tile_shadow, "sprite": tile_sprite, "poly": fallback_poly, "label": label }
+			_tile_buttons[block_key] = { "area": area, "shadow": tile_shadow, "sprite": tile_sprite, "poly": fallback_poly, "outline": tile_outline, "label": label }
 
 func _board_tile_centers() -> Array:
 	var centers: Array = []
@@ -678,7 +685,7 @@ func _add_battlefield_ground_plate(centers: Array) -> void:
 	shadow.set_meta(&"battlefield_ground_plate", true)
 	shadow.polygon = polygon
 	shadow.position = Vector2(0.0, 14.0)
-	shadow.color = Color(0.02, 0.01, 0.0, 0.055)
+	shadow.color = Color(0.02, 0.01, 0.0, 0.024)
 	shadow.z_index = FIELD_GROUND_SHADOW_Z
 	_iso_base_layer.add_child(shadow)
 	var plate := Polygon2D.new()
@@ -691,27 +698,27 @@ func _add_battlefield_ground_plate(centers: Array) -> void:
 
 func _battlefield_ground_plate_color() -> Color:
 	var ambient: Color = _theme.get("ambient", Color.WHITE)
-	var base := Color(0.20, 0.15, 0.09, 0.055)
-	return base.lerp(Color(ambient.r, ambient.g, ambient.b, 0.055), 0.12)
+	var base := Color(0.20, 0.15, 0.09, 0.020)
+	return base.lerp(Color(ambient.r, ambient.g, ambient.b, 0.020), 0.12)
 
 func _battlefield_floor_band_color() -> Color:
 	var ambient: Color = _theme.get("ambient", Color.WHITE)
-	var base := Color(0.16, 0.12, 0.075, 0.035)
-	var tint := Color(ambient.r * 0.18, ambient.g * 0.16, ambient.b * 0.12, 0.035)
+	var base := Color(0.16, 0.12, 0.075, 0.014)
+	var tint := Color(ambient.r * 0.18, ambient.g * 0.16, ambient.b * 0.12, 0.014)
 	return base.lerp(tint, 0.22)
 
 func _battlefield_combat_floor_color() -> Color:
 	var ambient: Color = _theme.get("ambient", Color.WHITE)
-	var base := Color(0.10, 0.075, 0.048, 0.025)
-	var tint := Color(ambient.r * 0.10, ambient.g * 0.09, ambient.b * 0.08, 0.025)
+	var base := Color(0.10, 0.075, 0.048, 0.010)
+	var tint := Color(ambient.r * 0.10, ambient.g * 0.09, ambient.b * 0.08, 0.010)
 	return base.lerp(tint, 0.12)
 
 func _battlefield_depth_lane_color(lane: int) -> Color:
 	var ambient: Color = _theme.get("ambient", Color.WHITE)
 	var lane_base := [
-		Color(0.22, 0.17, 0.10, 0.18),
-		Color(0.25, 0.19, 0.12, 0.20),
-		Color(0.18, 0.13, 0.10, 0.18),
+		Color(0.22, 0.17, 0.10, 0.045),
+		Color(0.25, 0.19, 0.12, 0.052),
+		Color(0.18, 0.13, 0.10, 0.045),
 	]
 	var base: Color = lane_base[clampi(lane, 0, lane_base.size() - 1)]
 	var tint := Color(ambient.r * 0.10, ambient.g * 0.08, ambient.b * 0.06, base.a)
@@ -721,11 +728,24 @@ func _make_tile_contact_shadow(center: Vector2) -> Polygon2D:
 	var shadow := Polygon2D.new()
 	shadow.name = "TileContactShadow"
 	shadow.set_meta(&"battlefield_tile_contact", true)
-	shadow.polygon = _diamond_points()
-	shadow.position = center + Vector2(0.0, 6.0)
-	shadow.color = Color(0.02, 0.01, 0.0, 0.11)
+	shadow.polygon = _ellipse_points(72.0, 18.0, 18)
+	shadow.position = center + Vector2(0.0, 19.0)
+	shadow.color = Color(0.02, 0.01, 0.0, 0.075)
 	shadow.z_index = FIELD_TILE_SHADOW_Z
 	return shadow
+
+func _make_tile_ground_outline(center: Vector2) -> Line2D:
+	var outline := Line2D.new()
+	outline.name = "TileGroundOutline"
+	outline.set_meta(&"battlefield_tile_outline", true)
+	outline.points = _diamond_points()
+	outline.closed = true
+	outline.width = 2.0
+	outline.default_color = Color(0.88, 0.82, 0.62, 0.48)
+	outline.position = center + Vector2(0.0, 2.0)
+	outline.z_index = FIELD_TILE_OUTLINE_Z
+	outline.antialiased = true
+	return outline
 
 func _diamond_points() -> PackedVector2Array:
 	return PackedVector2Array([Vector2(0.0, -ISO_HALF_H), Vector2(ISO_HALF_W, 0.0), Vector2(0.0, ISO_HALF_H), Vector2(-ISO_HALF_W, 0.0)])
@@ -975,15 +995,18 @@ func _refresh_board_tiles() -> void:
 		var label := tile.get("label", null) as Label
 		var poly := tile.get("poly", null) as Polygon2D
 		var sprite := tile.get("sprite", null) as Sprite2D
+		var outline := tile.get("outline", null) as Line2D
 		var area := tile.get("area", null) as Area2D
 		if key == castle_key:
 			if label != null:
 				label.text = "성"
 				label.tooltip_text = "선택한 성 위치입니다."
 			if poly != null:
-				poly.color = Color(0.48, 0.28, 0.18, 0.98)
+				poly.color = Color(0.48, 0.28, 0.18, 0.24)
 			if sprite != null:
-				sprite.modulate = Color(1.18, 0.92, 0.62, 1.0)
+				sprite.modulate = Color(1.10, 0.88, 0.56, 0.30)
+			if outline != null:
+				outline.default_color = Color(1.0, 0.76, 0.42, 0.82)
 			if area != null:
 				area.input_pickable = false
 		elif board.has(key):
@@ -992,9 +1015,11 @@ func _refresh_board_tiles() -> void:
 				label.text = "%s Lv.%d" % [card.display_name, RunManager.get_board_level(key)] if card != null else String(board[key])
 				label.tooltip_text = _CardUiText.tooltip(card) if card != null else String(board[key])
 			if poly != null:
-				poly.color = Color(0.24, 0.42, 0.26, 0.95)
+				poly.color = Color(0.24, 0.42, 0.26, 0.18)
 			if sprite != null:
-				sprite.modulate = Color(1.10, 1.10, 0.88, 1.0)
+				sprite.modulate = Color(0.98, 1.0, 0.78, 0.24)
+			if outline != null:
+				outline.default_color = Color(0.82, 1.0, 0.64, 0.70)
 			if area != null:
 				area.input_pickable = false
 		else:
@@ -1007,17 +1032,19 @@ func _refresh_board_tiles() -> void:
 				if _phase != Phase.DEPLOY:
 					poly.color = Color(0.17, 0.27, 0.17, 0.0)
 				elif not preview.is_empty():
-					poly.color = Color(0.40, 0.54, 0.20, 0.98)
+					poly.color = Color(0.40, 0.54, 0.20, 0.22)
 				elif not RunManager.has_castle():
-					poly.color = Color(0.54, 0.36, 0.18, 0.98)
+					poly.color = Color(0.54, 0.36, 0.18, 0.22)
 				elif _selected_hand_index < 0:
-					poly.color = Color(0.23, 0.34, 0.30, 0.90)
+					poly.color = Color(0.23, 0.34, 0.30, 0.12)
 				elif not RunManager.can_place_hand_card(_selected_hand_index):
-					poly.color = Color(0.32, 0.30, 0.25, 0.76)
+					poly.color = Color(0.32, 0.30, 0.25, 0.10)
 				else:
-					poly.color = Color(0.25, 0.42, 0.28, 0.92)
+					poly.color = Color(0.25, 0.42, 0.28, 0.16)
 			if sprite != null:
 				sprite.modulate = _empty_tile_sprite_modulate(preview) if _phase == Phase.DEPLOY else Color(1.0, 1.0, 1.0, 0.0)
+			if outline != null:
+				outline.default_color = _empty_tile_outline_color(preview) if _phase == Phase.DEPLOY else Color(1.0, 1.0, 1.0, 0.0)
 			if area != null:
 				area.input_pickable = _phase == Phase.DEPLOY
 
@@ -1094,14 +1121,25 @@ func _empty_tile_state(_block_key: String, preview: Dictionary) -> Dictionary:
 
 func _empty_tile_sprite_modulate(preview: Dictionary) -> Color:
 	if not RunManager.has_castle():
-		return Color(1.04, 0.86, 0.56, 0.72)
+		return Color(1.02, 0.82, 0.52, 0.26)
 	if _selected_hand_index < 0:
-		return Color(0.72, 0.88, 0.72, 0.42)
+		return Color(0.72, 0.88, 0.72, 0.12)
 	if not preview.is_empty():
-		return Color(0.78, 1.04, 0.60, 0.74)
+		return Color(0.78, 1.04, 0.60, 0.28)
 	if not RunManager.can_place_hand_card(_selected_hand_index):
-		return Color(0.74, 0.72, 0.66, 0.38)
-	return Color(0.70, 0.92, 0.60, 0.58)
+		return Color(0.74, 0.72, 0.66, 0.10)
+	return Color(0.70, 0.92, 0.60, 0.20)
+
+func _empty_tile_outline_color(preview: Dictionary) -> Color:
+	if not RunManager.has_castle():
+		return Color(1.0, 0.78, 0.44, 0.82)
+	if _selected_hand_index < 0:
+		return Color(0.74, 0.92, 0.78, 0.54)
+	if not preview.is_empty():
+		return Color(0.78, 1.0, 0.54, 0.88)
+	if not RunManager.can_place_hand_card(_selected_hand_index):
+		return Color(0.62, 0.58, 0.48, 0.36)
+	return Color(0.74, 0.96, 0.58, 0.72)
 
 func _find_army_unit_at_block(army: Array, block_key: String) -> BattleUnit:
 	var parts := block_key.split(":")
@@ -1662,10 +1700,14 @@ func _flash_skill_casts() -> void:
 		tween.tween_property(body, "modulate", base_color, 0.15)
 
 func _play_damage_events() -> void:
+	var camera_strength := 0.0
 	for event in _sim.last_damage_events:
 		_spawn_hit_impact_vfx(event)
+		_spawn_ground_impact_vfx(event)
 		_spawn_damage_number(event)
 		_flash_damaged_target(event)
+		camera_strength = maxf(camera_strength, _BattleHitFeedback.camera_shake_strength_for_event(event))
+	_shake_camera_for_damage(camera_strength)
 
 func _spawn_battle_start_vfx() -> void:
 	if _vfx_layer == null:
@@ -1784,15 +1826,24 @@ func _spawn_clash_pulses() -> void:
 		tween.set_parallel(false)
 		tween.tween_callback(Callable(pulse, "queue_free"))
 
-func _shake_camera() -> void:
+func _shake_camera(strength: float = 1.0) -> void:
 	if _camera == null:
 		return
-	_camera.offset = Vector2(-8.0, 0.0)
+	var s := clampf(strength, 0.0, 1.0)
+	if s <= 0.0:
+		return
+	_camera.offset = Vector2(-8.0 * s, 0.0)
 	var tween := create_tween()
-	tween.tween_property(_camera, "offset", Vector2(7.0, 0.0), 0.05)
-	tween.tween_property(_camera, "offset", Vector2(-5.0, 2.0), 0.05)
-	tween.tween_property(_camera, "offset", Vector2(3.0, -1.0), 0.05)
+	tween.tween_property(_camera, "offset", Vector2(7.0 * s, 0.0), 0.05)
+	tween.tween_property(_camera, "offset", Vector2(-5.0 * s, 2.0 * s), 0.05)
+	tween.tween_property(_camera, "offset", Vector2(3.0 * s, -1.0 * s), 0.05)
 	tween.tween_property(_camera, "offset", Vector2.ZERO, 0.08)
+
+func _shake_camera_for_damage(strength: float) -> void:
+	if strength <= 0.0 or _impact_camera_cooldown > 0.0:
+		return
+	_impact_camera_cooldown = IMPACT_CAMERA_COOLDOWN
+	_shake_camera(strength)
 
 func _spawn_command_vfx(target: BattleUnit, heroes: Array[BattleUnit]) -> void:
 	if _vfx_layer == null or target == null:
@@ -1906,6 +1957,35 @@ func _spawn_hit_impact_vfx(event: Dictionary) -> void:
 		tween.set_parallel(true)
 		tween.tween_property(impact, "scale", Vector2(scale, scale), duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tween.tween_property(impact, "modulate:a", 0.0, duration).set_delay(duration * 0.25)
+		tween.set_parallel(false)
+		tween.tween_callback(Callable(impact, "queue_free"))
+
+func _spawn_ground_impact_vfx(event: Dictionary) -> void:
+	if _vfx_layer == null:
+		return
+	var profiles: Array[Dictionary] = _BattleHitFeedback.ground_profiles_for_event(event)
+	if profiles.is_empty():
+		return
+	var foot_pos := field_to_screen(float(event.get("px", 0.0)), float(event.get("py", 0.0)))
+	for profile in profiles:
+		var kind := String(profile.get("kind", _BattleHitFeedback.KIND_GROUND_DUST))
+		var impact := Polygon2D.new()
+		impact.name = "GroundImpact"
+		impact.set_meta("hit_impact_vfx", kind)
+		impact.set_meta(&"combat_ground_impact", true)
+		impact.polygon = _ellipse_points(float(profile.get("radius_x", 30.0)), float(profile.get("radius_y", 7.0)), 18)
+		impact.color = profile.get("color", Color(0.70, 0.55, 0.35, 0.28))
+		impact.position = foot_pos + Vector2(0.0, float(profile.get("y_offset", 0.0)))
+		impact.rotation = -0.08 if kind == _BattleHitFeedback.KIND_GROUND_DUST else 0.0
+		impact.z_index = VFX_FLOATING_Z - 8
+		_vfx_layer.add_child(impact)
+		var duration := float(profile.get("duration", 0.36))
+		var scale := float(profile.get("scale", 1.5))
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(impact, "scale", Vector2(scale, scale), duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(impact, "position:y", impact.position.y + 4.0, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(impact, "modulate:a", 0.0, duration).set_delay(duration * 0.28)
 		tween.set_parallel(false)
 		tween.tween_callback(Callable(impact, "queue_free"))
 

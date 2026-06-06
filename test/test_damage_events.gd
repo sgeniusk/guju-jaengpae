@@ -20,9 +20,14 @@ func test_attack_damage_event_matches_hp_loss_and_crit_fields() -> void:
 	eq(event.get("amount"), 15, "상성 배수 피해량 기록")
 	eq(event.get("team"), BattleUnit.Team.ENEMY, "피격 팀 기록")
 	eq(event.get("kind"), "attack", "일반공격 kind 기록")
+	eq(event.get("attacker"), attacker, "공격자 기록")
+	eq(event.get("attacker_team"), BattleUnit.Team.PLAYER, "공격자 팀 기록")
+	eq(event.get("attack_range"), "melee", "공격 사거리 종류 기록")
 	truthy(bool(event.get("is_crit", false)), "강상성은 크리 표시")
 	almost(float(event.get("px", 0.0)), target.px, 0.001, "피격 x 기록")
 	almost(float(event.get("py", 0.0)), target.py, 0.001, "피격 y 기록")
+	almost(float(event.get("attacker_px", 0.0)), attacker.px, 0.001, "공격자 x 기록")
+	almost(float(event.get("attacker_py", 0.0)), attacker.py, 0.001, "공격자 y 기록")
 
 func test_damage_events_clear_each_step() -> void:
 	var sim := BattleSim.new()

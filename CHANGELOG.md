@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-079 전장 지면 격자/타격 리듬 polish
+배치 보드가 여전히 공중에 뜬 9칸 판처럼 보이고, 교전 중 타격이 공중 spark 위주로 가볍게 읽히던 문제를 함께 보정했다.
+- **지면 격자화** — `battle.gd`가 타일 fill alpha를 낮추고 `TileGroundOutline` Line2D를 추가해 보드를 채워진 판이 아니라 바닥에 그려진 격자로 렌더한다.
+- **큰 plate 약화** — `battlefield_floor_band`, `battlefield_ground_plate`, `battlefield_depth_lane` alpha 상한을 더 낮춰 중앙의 큰 반투명 플랫폼 착시를 줄였다. 타일 contact shadow는 다이아몬드 그림자에서 납작한 발밑 그림자로 바꿨다.
+- **발밑 hit impact** — `BattleHitFeedback`이 근접/강타 피해의 `ground_dust`, `ground_ring`, camera shake strength를 계산하고, `battle.gd`가 damage event 재생 시 발밑 impact와 강타 카메라 반응을 만든다.
+- **검증** — `test_unit_walk_visuals.gd`가 tile outline/fill alpha와 유닛 발밑 y/z 계약을 검증하고, `tools/ui_feedback_smoke.gd`가 plate/lane alpha, ground impact, camera cooldown을 확인한다. GUI 캡처(`/tmp/guju-feat-079-ground-grid`)와 `./init.sh` 카드 22개, 단위 테스트 3065/3065 green.
+
 ## 2026-06-06 — feat-078 배치 필드 접지감 재수정
 배치 보드 뒤의 큰 어두운 plate가 공중 플랫폼처럼 보이고, 유닛이 필드 뒤에서 나타나는 듯한 착시를 더 줄였다.
 - **전장 투영 하향** — `battle.gd`의 view origin/scale을 다시 조정해 첫 보드 중심이 전경 지면 영역에 더 낮게 놓이게 했다.

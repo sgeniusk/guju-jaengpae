@@ -173,6 +173,30 @@ func test_battlefield_floor_context_draws_persistent_band_and_lanes() -> void:
 	truthy(_count_bool_meta(view._background_layer, &"battlefield_floor_band") >= 1, "배경 레이어에 전장 바닥 밴드")
 	eq(_count_bool_meta(view._background_layer, &"battlefield_depth_lane"), BattleSim.COL_COUNT, "배경 레이어에 3레인 진군 바닥선")
 	truthy(_count_bool_meta(view._iso_base_layer, &"battlefield_tile_contact") >= BattleSim.COL_COUNT * RunManager.get_board_rows(), "보드 타일마다 접지 shadow")
+	eq(_count_bool_meta(view._iso_base_layer, &"battlefield_tile_outline"), BattleSim.COL_COUNT * RunManager.get_board_rows(), "보드 타일은 지면 outline으로 표시")
+	truthy(_max_tile_sprite_alpha(view) <= 0.32, "타일 fill은 공중 plate처럼 보이지 않도록 낮은 alpha")
+	view.free()
+
+func test_deploy_unit_feet_share_ground_grid_and_draw_above_it() -> void:
+	RunManager.reset_run()
+	RunManager.ensure_started(&"lord_liubei")
+	var view := BattleView.new()
+	view._bind_scene_nodes()
+	view._build_field()
+	var tile_pos := BattleSim.position_for_tile(1, 1)
+	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 1, tile_pos.x, "검증 보병", 100, 10, 1.0, "melee", 0.0, &"troop_infantry", &"", "infantry", 1, tile_pos.y)
+
+	view._sim.add_unit(unit)
+	view._spawn_visual(unit)
+
+	var root := view._vis[unit].get("root", null) as Node2D
+	not_null(root, "배치 유닛 visual root 생성")
+	if root != null:
+		var ground_center := view.field_to_screen_position(tile_pos)
+		almost(root.position.y, ground_center.y, 0.001, "유닛 발밑 y는 선택 타일 지면과 일치")
+		var unit_total_z := int(view._units_layer.z_index) + root.z_index
+		var field_total_z := int(view._iso_base_layer.z_index) + _max_tile_canvas_z(view)
+		truthy(unit_total_z > field_total_z, "배치 유닛은 같은 지면 격자 뒤가 아니라 위에 그려짐")
 	view.free()
 
 func _player_unit(troop_type: String) -> BattleUnit:
@@ -199,3 +223,28 @@ func _count_bool_meta(node: Node, key: StringName) -> int:
 	for child in node.get_children():
 		count += _count_bool_meta(child, key)
 	return count
+
+func _max_tile_sprite_alpha(view: Node) -> float:
+	var max_alpha := 0.0
+	for value in view._tile_buttons.values():
+		if not (value is Dictionary):
+			continue
+		var sprite := (value as Dictionary).get("sprite", null) as Sprite2D
+		if sprite != null:
+			max_alpha = maxf(max_alpha, sprite.modulate.a)
+		var poly := (value as Dictionary).get("poly", null) as Polygon2D
+		if poly != null:
+			max_alpha = maxf(max_alpha, poly.color.a)
+	return max_alpha
+
+func _max_tile_canvas_z(view: Node) -> int:
+	var max_z := -4096
+	for value in view._tile_buttons.values():
+		if not (value is Dictionary):
+			continue
+		var tile := value as Dictionary
+		for key in ["sprite", "poly", "outline", "label"]:
+			var item := tile.get(key, null) as CanvasItem
+			if item != null:
+				max_z = maxi(max_z, item.z_index)
+	return max_z

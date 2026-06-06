@@ -730,6 +730,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-078-battlefield-contact-plane.md 추가. battle.gd가 전장 투영 y를 더 낮추고 floor band/ground plate/tile contact shadow alpha를 줄여 공중 플랫폼 착시를 완화했다. UI smoke가 보드 y 560~820, floor alpha <=0.06, plate alpha <=0.08을 검증한다. GUI 캡처 /private/tmp/guju-feat078-after 및 /private/tmp/guju-feat078-after-battle 확인, ./init.sh 카드 22개 / 단위 테스트 3043/3043 green."
+    },
+    {
+      "id": "feat-079",
+      "name": "전장 지면 격자/타격 리듬 polish",
+      "description": "배치 타일을 공중 판이 아닌 지면 격자로 바꾸고, 교전 중 피해 이벤트에 발밑 impact와 강타 카메라 반응을 붙인다.",
+      "dependencies": ["feat-073", "feat-074", "feat-078"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-079-combat-impact-rhythm.md 추가. battle.gd가 타일 fill을 낮추고 TileGroundOutline/납작한 contact shadow로 배치 필드를 지면 격자화했으며, lane/plate alpha를 더 낮췄다. BattleHitFeedback ground impact/camera shake와 BattleSim attack_range metadata를 추가했다. UI smoke가 tile outline/fill alpha, plate/lane alpha, ground_dust/ground_ring/camera cooldown을 검증하고 GUI 캡처 /tmp/guju-feat-079-ground-grid 확인. ./init.sh 카드 22개 / 3065 단언 green."
     }
   ]
 }
