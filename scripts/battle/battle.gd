@@ -22,12 +22,19 @@ const _FormationTactics := preload("res://scripts/run/formation_tactics.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
 
-const VIEW_ORIGIN := Vector2(520.0, 225.0)
+const VIEW_ORIGIN := Vector2(520.0, 310.0)
 const VIEW_SCALE_X := 1.28
 const VIEW_SCALE_Y := 0.86
 const ISO_HALF_W := 48.0
 const ISO_HALF_H := 24.0
 const TILE_TEXTURE_SCALE := 0.75
+const FIELD_LAYER_Z := 0
+const FIELD_GROUND_SHADOW_Z := -46
+const FIELD_GROUND_PLATE_Z := -44
+const FIELD_TILE_Z := -32
+const FIELD_LABEL_Z := -22
+const BUILDING_LAYER_Z := 420
+const UNIT_LAYER_Z := 520
 const UNIT_W := 140.0
 const UNIT_H := 130.0
 const UNIT_MEMBER_W := 48.0
@@ -193,9 +200,12 @@ func _bind_scene_nodes() -> void:
 	_camera.zoom = Vector2.ONE
 	_background_layer = _ensure_node2d(_world_root, "BackgroundLayer")
 	_iso_base_layer = _ensure_node2d(_world_root, "IsoBaseLayer")
+	_iso_base_layer.z_index = FIELD_LAYER_Z
 	_buildings_layer = _ensure_node2d(_world_root, "BuildingsLayer")
+	_buildings_layer.z_index = BUILDING_LAYER_Z
 	_buildings_layer.y_sort_enabled = true
 	_units_layer = _ensure_node2d(_world_root, "UnitsLayer")
+	_units_layer.z_index = UNIT_LAYER_Z
 	_units_layer.y_sort_enabled = true
 	_vfx_layer = _ensure_node2d(_world_root, "VfxLayer")
 	_hud = get_node_or_null("HUD") as CanvasLayer
@@ -509,6 +519,8 @@ func _build_fallback_background() -> void:
 
 func _build_iso_base() -> void:
 	var tile_texture := _load_texture(_BattlefieldTheme.tile_path(_theme))
+	var centers := _board_tile_centers()
+	_add_battlefield_ground_plate(centers)
 	for col in BattleSim.COL_COUNT:
 		for row in RunManager.get_board_rows():
 			var block_key := _tile_key(col, row)
@@ -519,22 +531,23 @@ func _build_iso_base() -> void:
 			tile_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 			tile_sprite.position = center
 			tile_sprite.scale = Vector2(TILE_TEXTURE_SCALE, TILE_TEXTURE_SCALE)
-			tile_sprite.z_index = int(center.y)
-			tile_sprite.modulate = Color(1.0, 1.0, 1.0, 0.5)
+			tile_sprite.z_index = FIELD_TILE_Z
+			tile_sprite.modulate = Color(0.92, 0.88, 0.72, 0.62)
 			_iso_base_layer.add_child(tile_sprite)
 			var fallback_poly: Polygon2D = null
 			if tile_texture == null:
 				fallback_poly = Polygon2D.new()
 				fallback_poly.polygon = _diamond_points()
 				fallback_poly.position = center
-				fallback_poly.color = Color(0.20, 0.34, 0.20, 0.90)
-				fallback_poly.z_index = int(center.y)
+				fallback_poly.color = Color(0.20, 0.24, 0.16, 0.88)
+				fallback_poly.z_index = FIELD_TILE_Z
 				_iso_base_layer.add_child(fallback_poly)
 			var label := Label.new()
 			label.text = ""
 			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			label.position = center + Vector2(-58.0, -12.0)
 			label.size = Vector2(116.0, 24.0)
+			label.z_index = FIELD_LABEL_Z
 			label.add_theme_font_size_override("font_size", 12)
 			label.modulate = Color(0.10, 0.07, 0.03, 0.86)
 			label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -548,6 +561,53 @@ func _build_iso_base() -> void:
 			area.add_child(shape)
 			_iso_base_layer.add_child(area)
 			_tile_buttons[block_key] = { "area": area, "sprite": tile_sprite, "poly": fallback_poly, "label": label }
+
+func _board_tile_centers() -> Array:
+	var centers: Array = []
+	for col in BattleSim.COL_COUNT:
+		for row in RunManager.get_board_rows():
+			centers.append(field_to_screen_position(BattleSim.position_for_tile(col, row)))
+	return centers
+
+func _add_battlefield_ground_plate(centers: Array) -> void:
+	if centers.is_empty():
+		return
+	var min_x := INF
+	var max_x := -INF
+	var min_y := INF
+	var max_y := -INF
+	for item in centers:
+		var center := item as Vector2
+		min_x = minf(min_x, center.x)
+		max_x = maxf(max_x, center.x)
+		min_y = minf(min_y, center.y)
+		max_y = maxf(max_y, center.y)
+	var polygon := PackedVector2Array([
+		Vector2(min_x - ISO_HALF_W * 1.65, min_y + ISO_HALF_H * 0.15),
+		Vector2(max_x + ISO_HALF_W * 1.75, min_y + ISO_HALF_H * 1.10),
+		Vector2(max_x + ISO_HALF_W * 0.95, max_y + ISO_HALF_H * 2.20),
+		Vector2(min_x - ISO_HALF_W * 1.75, max_y + ISO_HALF_H * 1.40),
+	])
+	var shadow := Polygon2D.new()
+	shadow.name = "BattlefieldGroundShadow"
+	shadow.set_meta(&"battlefield_ground_plate", true)
+	shadow.polygon = polygon
+	shadow.position = Vector2(0.0, 20.0)
+	shadow.color = Color(0.02, 0.01, 0.0, 0.34)
+	shadow.z_index = FIELD_GROUND_SHADOW_Z
+	_iso_base_layer.add_child(shadow)
+	var plate := Polygon2D.new()
+	plate.name = "BattlefieldGroundPlate"
+	plate.set_meta(&"battlefield_ground_plate", true)
+	plate.polygon = polygon
+	plate.color = _battlefield_ground_plate_color()
+	plate.z_index = FIELD_GROUND_PLATE_Z
+	_iso_base_layer.add_child(plate)
+
+func _battlefield_ground_plate_color() -> Color:
+	var ambient: Color = _theme.get("ambient", Color.WHITE)
+	var base := Color(0.16, 0.11, 0.065, 0.52)
+	return base.lerp(Color(ambient.r, ambient.g, ambient.b, 0.52), 0.10)
 
 func _diamond_points() -> PackedVector2Array:
 	return PackedVector2Array([Vector2(0.0, -ISO_HALF_H), Vector2(ISO_HALF_W, 0.0), Vector2(0.0, ISO_HALF_H), Vector2(-ISO_HALF_W, 0.0)])
@@ -1442,7 +1502,7 @@ func _position_visual(u: BattleUnit) -> void:
 	var root := _vis[u]["root"] as Node2D
 	var offset := _unit_visual_offset(u)
 	root.position = field_to_screen(u.px, u.py) + offset
-	root.z_index = int(u.py)
+	root.z_index = int(root.position.y)
 
 func _sync_unit_walk_animation(u: BattleUnit) -> void:
 	var visual: Dictionary = _vis[u]

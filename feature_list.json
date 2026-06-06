@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~070으로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널→다음 배치 손패 미리보기→자동저장 슬롯 삭제 UX→상점 손패 정리 안내→전투 결과 복귀 안내→런맵 진행 리듬 안내→상점 구매 피드백→장기런 결과 요약→전투 전황 요약 HUD→유닛 접지감 보강→첫 전투 보드 가독성→첫 보드 스크린샷 QA→screenshot validator 속도 최적화→결과 화면 시각 polish까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2992 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~071으로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널→다음 배치 손패 미리보기→자동저장 슬롯 삭제 UX→상점 손패 정리 안내→전투 결과 복귀 안내→런맵 진행 리듬 안내→상점 구매 피드백→장기런 결과 요약→전투 전황 요약 HUD→유닛 접지감 보강→첫 전투 보드 가독성→첫 보드 스크린샷 QA→screenshot validator 속도 최적화→결과 화면 시각 polish→전장 필드 접지/깊이 보정까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2992 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -658,6 +658,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-070-result-screen-polish.md 추가. BattleOutcomeGuide가 결과 배너 제목/상세/다음 행동을 순수 계산하고 battle 결과 오버레이가 `결과 — 성 함락/구주 정복/전투 승리`와 다음 행동을 표시한다. battle_result_smoke와 UI smoke가 패배/최종승리/일반승리 배너를 검증한다. ./init.sh 카드 22개 / 2992 단언 green."
+    },
+    {
+      "id": "feat-071",
+      "name": "전장 필드 접지/깊이 보정",
+      "description": "배치 필드 9칸이 하늘에 떠 보이지 않고 유닛 뒤에 깔리지 않도록 전장 위치, 지면 plate, z-order를 보정한다.",
+      "dependencies": ["feat-022", "feat-066", "feat-067"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-071-battlefield-ground-depth.md 추가. battle.gd가 전장을 아래로 내려 바닥 영역에 맞추고, 필드 아래 ground plate/shadow를 렌더하며, field/building/unit 레이어 z-order와 유닛 screen-y depth를 고정한다. UI smoke가 battlefield_ground_plate와 field < unit z 순서를 검증한다. ./init.sh 카드 22개 / 2992 단언 green."
     }
   ]
 }

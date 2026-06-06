@@ -533,8 +533,48 @@ func _assert_manual_first_play_started(battle: Node, run_manager) -> int:
 	var ground_shadow_count := _count_bool_meta(battle._units_layer, &"ground_shadow")
 	if ground_shadow_count < 10:
 		errors += _fail("수동 첫 플레이 ground shadow 부족: %d" % ground_shadow_count)
+	errors += _assert_battlefield_depth_order(battle)
 	errors += _assert_hit_impact_vfx(battle)
 	return errors
+
+func _assert_battlefield_depth_order(battle: Node) -> int:
+	var errors := 0
+	if battle._iso_base_layer == null or battle._units_layer == null:
+		return _fail("전장 depth 검증용 레이어 누락")
+	if battle._iso_base_layer.z_index >= battle._units_layer.z_index:
+		errors += _fail("전장 depth 순서 오류: field=%d units=%d" % [battle._iso_base_layer.z_index, battle._units_layer.z_index])
+	var plate_count := _count_bool_meta(battle._iso_base_layer, &"battlefield_ground_plate")
+	if plate_count < 2:
+		errors += _fail("전장 지면 plate/shadow 부족: %d" % plate_count)
+	var unit_root := _first_visual_root(battle)
+	if unit_root == null:
+		errors += _fail("전장 depth 검증용 유닛 visual 누락")
+	else:
+		var unit_total_z: int = int(battle._units_layer.z_index) + unit_root.z_index
+		var field_total_z: int = int(battle._iso_base_layer.z_index) + _max_field_visual_z(battle)
+		if unit_total_z <= field_total_z:
+			errors += _fail("전장 depth 총 z 오류: unit=%d field=%d" % [unit_total_z, field_total_z])
+	return errors
+
+func _first_visual_root(battle: Node) -> Node2D:
+	for value in battle._vis.values():
+		if value is Dictionary:
+			var root := (value as Dictionary).get("root", null) as Node2D
+			if root != null:
+				return root
+	return null
+
+func _max_field_visual_z(battle: Node) -> int:
+	var max_z := -4096
+	for value in battle._tile_buttons.values():
+		if not (value is Dictionary):
+			continue
+		var tile := value as Dictionary
+		for key in ["sprite", "poly", "label"]:
+			var item := tile.get(key, null) as CanvasItem
+			if item != null:
+				max_z = maxi(max_z, item.z_index)
+	return max_z
 
 func _assert_hit_impact_vfx(battle: Node) -> int:
 	var enemy := _first_alive_enemy(battle)

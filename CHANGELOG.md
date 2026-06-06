@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-071 전장 필드 접지/깊이 보정
+배치 필드가 공중 UI처럼 떠 보이고 유닛이 필드 뒤에 깔리는 느낌을 줄이도록 전장 렌더 깊이를 보정했다.
+- **전장 위치 보정** — battle view origin을 아래로 내려 필드와 유닛이 배경의 바닥 영역에 더 자연스럽게 앉도록 했다.
+- **지면 plate/shadow** — 아이소 필드 아래에 `battlefield_ground_plate` meta가 있는 반투명 지면판과 그림자를 추가해 9칸이 허공에 뜬 판처럼 보이지 않게 했다.
+- **depth 계약 고정** — field, building, unit 레이어 z-order를 명시하고 유닛 visual root z-index를 실제 screen y 기준으로 계산해 유닛이 필드 타일 뒤에 렌더되지 않게 했다.
+- **검증** — `tools/ui_feedback_smoke.gd`가 지면 plate 존재와 field < unit depth를 검증한다. `./init.sh` 카드 22개, 단위 테스트 2992/2992 green.
+
 ## 2026-06-06 — feat-070 결과 화면 시각 polish
 전투 종료 오버레이 최상단에 결과와 다음 행동을 바로 읽는 배너를 추가했다.
 - **결과 배너 helper** — `BattleOutcomeGuide`가 패배, 최종승리, 일반승리의 배너 제목, 상세, 다음 행동을 순수 계산한다.
