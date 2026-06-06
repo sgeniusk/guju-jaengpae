@@ -65,8 +65,30 @@ func test_corrupt_run_save_shows_recovery_notice_instead_of_continue() -> void:
 	if notice != null:
 		truthy(notice.disabled, "손상 저장 안내는 비활성")
 		truthy(notice.tooltip_text.find("새 군주") >= 0, "손상 저장 tooltip은 새 런 복구 안내")
+	var clear_btn := _find_button(screen, "저장된 런 삭제")
+	truthy(clear_btn != null, "손상 저장도 삭제 버튼 표시")
+	if clear_btn != null:
+		falsy(clear_btn.disabled, "손상 저장 삭제 버튼은 활성")
+		truthy(clear_btn.tooltip_text.find("자동저장 슬롯만 삭제") >= 0, "손상 저장 삭제 tooltip")
 	screen.free()
 	RunManager.clear_run_save()
+
+func test_valid_run_save_shows_continue_and_delete_actions() -> void:
+	RunManager.ensure_started(&"lord_liubei")
+	RunManager.add_gold(9)
+	truthy(RunManager.has_resumeable_run_save(), "유효 저장 생성")
+
+	var screen := _LordSelectScreen.new()
+	screen._build_root()
+	screen._build_lord_panels()
+	var continue_btn := _find_button(screen, "저장된 런 이어하기")
+	truthy(continue_btn != null, "유효 저장 이어하기 버튼 표시")
+	var clear_btn := _find_button(screen, "저장된 런 삭제")
+	truthy(clear_btn != null, "유효 저장 삭제 버튼 표시")
+	if clear_btn != null:
+		falsy(clear_btn.disabled, "유효 저장 삭제 버튼은 활성")
+		truthy(clear_btn.tooltip_text.find("프로필 기록은 유지") >= 0, "유효 저장 삭제 tooltip은 프로필 유지 안내")
+	screen.free()
 
 func _has_label(node: Node, text: String) -> bool:
 	if node is Label and (node as Label).text == text:

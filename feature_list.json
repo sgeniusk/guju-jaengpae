@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~058로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널→다음 배치 손패 미리보기까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2839 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~059로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널→다음 배치 손패 미리보기→자동저장 슬롯 삭제 UX까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2847 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -550,6 +550,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-058-deploy-hand-preview.md 추가. RunState.deploy_hand_preview와 RunManager preview API가 다음 prepare_deploy_hand 결과를 비파괴 계산하고, run_map/battle 결과 안내가 다음 배치 손패 3장 규칙과 드로우 더미 정리를 표시한다. UI smoke가 보상 후 다음 배치 손패 안내를 검증한다. ./init.sh 카드 22개 / 2839 단언 green."
+    },
+    {
+      "id": "feat-059",
+      "name": "자동저장 슬롯 삭제 UX",
+      "description": "군주 선택 화면에서 유효하거나 손상된 저장 런을 플레이어가 직접 삭제해 새 런 시작 상태로 복구할 수 있게 한다.",
+      "dependencies": ["feat-051", "feat-054"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-059-run-save-delete-ux.md 추가. lord_select가 유효 저장/손상 저장 모두에 `저장된 런 삭제` 버튼과 프로필 유지 tooltip을 표시하고, 삭제 후 autosave와 현재 런 state를 초기화해 이어하기/삭제 버튼을 제거한다. Resume UX smoke가 저장 런 삭제 경로를 검증한다. ./init.sh 카드 22개 / 2847 단언 green."
     }
   ]
 }

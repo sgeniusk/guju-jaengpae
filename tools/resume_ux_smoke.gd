@@ -15,6 +15,7 @@ func _run() -> void:
 	errors += await _no_save_case()
 	errors += await _corrupt_save_case()
 	errors += await _saved_run_continue_case()
+	errors += await _delete_saved_run_case()
 	_cleanup_default_save()
 	if errors == 0:
 		print("✅ 저장/이어하기 UX 스모크 통과")
@@ -74,6 +75,14 @@ func _corrupt_save_case() -> int:
 			errors += _fail("손상 저장 안내가 비활성 상태가 아님")
 		if notice.tooltip_text.find("새 군주") < 0:
 			errors += _fail("손상 저장 안내 tooltip 누락: %s" % notice.tooltip_text)
+	var clear_btn := _find_button(screen, "저장된 런 삭제")
+	if clear_btn == null:
+		errors += _fail("손상 저장 삭제 버튼 누락")
+	else:
+		if clear_btn.disabled:
+			errors += _fail("손상 저장 삭제 버튼이 비활성임")
+		if clear_btn.tooltip_text.find("자동저장 슬롯만 삭제") < 0:
+			errors += _fail("손상 저장 삭제 tooltip 누락: %s" % clear_btn.tooltip_text)
 	screen.queue_free()
 	await _frames(2)
 	run_manager.clear_run_save()
@@ -126,6 +135,52 @@ func _saved_run_continue_case() -> int:
 	run_manager.reset_run()
 	if errors == 0:
 		print("  저장 런 이어하기 OK")
+	return errors
+
+func _delete_saved_run_case() -> int:
+	var run_manager := root.get_node_or_null("/root/RunManager")
+	if run_manager == null:
+		return _fail("RunManager autoload 조회 실패")
+	if _create_saved_run(run_manager).is_empty():
+		return _fail("삭제 테스트용 저장 런 생성 실패")
+	if not run_manager.has_resumeable_run_save():
+		return _fail("삭제 테스트용 저장 런이 resumeable이 아님")
+	run_manager.state = RunState.new()
+	run_manager.last_scheme_result.clear()
+	run_manager.last_battle_outcome.clear()
+
+	var screen = _instantiate_scene(LORD_SELECT_SCENE_PATH)
+	if screen == null:
+		return _fail("lord_select.tscn delete-save 인스턴스 생성 실패")
+	root.add_child(screen)
+	await _frames(8)
+
+	var errors := 0
+	var clear_btn := _find_button(screen, "저장된 런 삭제")
+	if clear_btn == null:
+		errors += _fail("저장된 런 삭제 버튼 누락")
+	else:
+		if clear_btn.tooltip_text.find("프로필 기록은 유지") < 0:
+			errors += _fail("저장 삭제 tooltip 누락: %s" % clear_btn.tooltip_text)
+		screen._on_clear_run_save_pressed()
+		await _frames(8)
+		if run_manager.has_run_save():
+			errors += _fail("삭제 후 저장 파일이 남아 있음")
+		if run_manager.is_run_started():
+			errors += _fail("삭제 후 현재 런 state가 초기화되지 않음")
+		if _find_button(screen, "저장된 런 이어하기") != null:
+			errors += _fail("삭제 후 이어하기 버튼이 남아 있음")
+		if _find_button(screen, "저장된 런 삭제") != null:
+			errors += _fail("삭제 후 삭제 버튼이 남아 있음")
+		if not _has_label(screen, "유비"):
+			errors += _fail("삭제 후 군주 선택 버튼이 렌더되지 않음")
+
+	if is_instance_valid(screen):
+		screen.queue_free()
+	await _frames(2)
+	run_manager.reset_run()
+	if errors == 0:
+		print("  저장 런 삭제 OK")
 	return errors
 
 func _create_saved_run(run_manager: Node) -> Dictionary:
@@ -192,6 +247,14 @@ func _find_button(node: Node, needle: String) -> Button:
 		if found != null:
 			return found
 	return null
+
+func _has_label(node: Node, text: String) -> bool:
+	if node is Label and (node as Label).text == text:
+		return true
+	for child in node.get_children():
+		if _has_label(child, text):
+			return true
+	return false
 
 func _cleanup_default_save() -> void:
 	var run_manager := root.get_node_or_null("/root/RunManager")

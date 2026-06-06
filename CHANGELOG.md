@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-059 자동저장 슬롯 삭제 UX
+군주 선택 화면에서 이어갈 수 있는 저장과 손상된 저장을 플레이어가 직접 지울 수 있도록 자동저장 슬롯 삭제 UX를 추가했다.
+- **저장 삭제 액션** — `lord_select.gd`가 유효한 저장의 `저장된 런 이어하기` 아래, 손상 저장의 복구 안내 아래에 `저장된 런 삭제` 버튼을 표시한다.
+- **프로필 보존 안내** — 삭제 버튼 tooltip은 현재 autosave 슬롯만 지우며 군주 해금과 프로필 기록은 유지된다는 점을 명시한다.
+- **삭제 후 복구 상태** — 버튼 핸들러는 `RunManager.reset_run()`으로 런 저장과 현재 런 state를 초기화하고 화면을 다시 렌더해 이어하기/삭제 버튼이 사라진 군주 선택 상태로 돌아간다.
+- **검증** — `test_lord_select.gd`가 유효 저장/손상 저장의 삭제 버튼과 tooltip을 검증한다. `tools/resume_ux_smoke.gd`는 저장 런 삭제 후 파일 제거, state 초기화, 버튼 제거, 군주 선택 렌더를 확인한다. `./init.sh` 카드 22개, 단위 테스트 2847/2847 green.
+
 ## 2026-06-06 — feat-058 다음 배치 손패 미리보기
 상점이나 전리품 뒤 손패 수가 늘어도 다음 전투는 다시 3장 후보 중 1장 선택이라는 규칙이 흐려지지 않도록 preview와 안내 문구를 추가했다.
 - **Deploy hand preview** — `RunState.deploy_hand_preview()`가 다음 `prepare_deploy_hand()` 결과를 비파괴적으로 계산한다. `RunManager.get_deploy_hand_preview()`와 `deploy_hand_refresh_pending()`이 UI에서 이 상태를 읽게 한다.

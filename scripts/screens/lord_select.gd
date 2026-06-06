@@ -61,8 +61,10 @@ func _build_lord_panels() -> void:
 		continue_btn.add_theme_font_size_override("font_size", 28)
 		continue_btn.pressed.connect(_on_continue_pressed)
 		_root.add_child(continue_btn)
+		_root.add_child(_build_clear_save_button(save_status))
 	elif bool(save_status.get("exists", false)):
 		_root.add_child(_build_resume_unavailable_notice(save_status))
+		_root.add_child(_build_clear_save_button(save_status))
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 24)
@@ -80,9 +82,24 @@ func _build_resume_unavailable_notice(save_status: Dictionary) -> Button:
 	notice.disabled = true
 	return notice
 
+func _build_clear_save_button(save_status: Dictionary) -> Button:
+	var clear_btn := Button.new()
+	clear_btn.text = "저장된 런 삭제"
+	clear_btn.tooltip_text = _clear_save_tooltip(save_status)
+	clear_btn.custom_minimum_size = Vector2(420.0, 54.0)
+	clear_btn.add_theme_font_size_override("font_size", 23)
+	clear_btn.pressed.connect(_on_clear_run_save_pressed)
+	return clear_btn
+
 func _continue_tooltip(save_status: Dictionary) -> String:
 	var stage := int(save_status.get("stage", 1))
 	return "저장된 런을 불러와 현재 스테이지 %d년에서 이어갑니다." % stage
+
+func _clear_save_tooltip(save_status: Dictionary) -> String:
+	if bool(save_status.get("can_continue", false)):
+		var stage := int(save_status.get("stage", 1))
+		return "현재 자동저장 슬롯의 %d년 런만 삭제합니다. 군주 해금과 프로필 기록은 유지됩니다." % stage
+	return "%s\n자동저장 슬롯만 삭제합니다. 군주 해금과 프로필 기록은 유지됩니다." % _resume_error_text(save_status)
 
 func _resume_error_text(save_status: Dictionary) -> String:
 	var reason := String(save_status.get("reason", ""))
@@ -172,6 +189,11 @@ func _on_continue_pressed() -> void:
 	else:
 		AudioManager.play_sfx(&"defeat")
 		_render()
+
+func _on_clear_run_save_pressed() -> void:
+	RunManager.reset_run()
+	AudioManager.play_sfx(&"ui")
+	_render()
 
 func _run_export_first_battle_smoke() -> void:
 	if not _ExportSmoke.is_first_battle_requested():
