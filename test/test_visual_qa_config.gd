@@ -3,6 +3,9 @@ extends TestCase
 
 const _VisualQaConfig := preload("res://tools/visual_qa_config.gd")
 
+func before_each() -> void:
+	OS.unset_environment("SHOT_SKIP_POST_DRAW")
+
 func test_default_lords_cover_three_mortal_factions() -> void:
 	eq(_VisualQaConfig.DEFAULT_LORDS, [&"lord_liubei", &"lord_caocao", &"lord_sunquan"], "위·촉·오 군주 촬영 목록")
 
@@ -24,6 +27,11 @@ func test_first_board_shot_path_names_state_lord_and_stage() -> void:
 func test_headless_display_skips_frame_post_draw_wait() -> void:
 	falsy(_VisualQaConfig.should_wait_for_frame_post_draw("headless"), "headless는 draw signal 대기 금지")
 	truthy(_VisualQaConfig.should_wait_for_frame_post_draw("macos"), "GUI 표시 드라이버는 draw signal 대기")
+
+func test_skip_post_draw_env_disables_gui_draw_wait() -> void:
+	OS.set_environment("SHOT_SKIP_POST_DRAW", "1")
+	falsy(_VisualQaConfig.should_wait_for_frame_post_draw("macos"), "env 우회 시 GUI도 draw signal 대기 금지")
+	OS.unset_environment("SHOT_SKIP_POST_DRAW")
 
 func test_shot_path_omits_stage_for_scene_captures() -> void:
 	var path := _VisualQaConfig.shot_path("lord_select", &"all", 0, "/tmp/qa")

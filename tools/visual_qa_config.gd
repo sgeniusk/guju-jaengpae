@@ -65,6 +65,8 @@ static func display_driver_name() -> String:
 	return DisplayServer.get_name().strip_edges().to_lower()
 
 static func should_wait_for_frame_post_draw(display_driver: String = "") -> bool:
+	if _truthy_env("SHOT_SKIP_POST_DRAW"):
+		return false
 	var driver := display_driver.strip_edges().to_lower()
 	if driver.is_empty():
 		driver = display_driver_name()
@@ -74,12 +76,14 @@ static func capture_viewport_png(viewport: Viewport, tree: SceneTree, path: Stri
 	if viewport == null or tree == null:
 		print("SHOT FAIL ", path, " no_viewport")
 		return false
+	var display_driver := display_driver_name()
 	if should_wait_for_frame_post_draw():
 		await RenderingServer.frame_post_draw
 	else:
 		await wait_process_frames(tree, HEADLESS_CAPTURE_SETTLE_FRAMES)
-		print("SHOT FAIL ", path, " headless_display")
-		return false
+		if display_driver == "headless":
+			print("SHOT FAIL ", path, " headless_display")
+			return false
 	var texture := viewport.get_texture()
 	if texture == null:
 		print("SHOT FAIL ", path, " no_texture")
@@ -105,3 +109,9 @@ static func _safe_token(value: String) -> String:
 	for ch in ["/", "\\", " ", ":", ";"]:
 		safe = safe.replace(ch, "_")
 	return safe
+
+static func _truthy_env(name: String) -> bool:
+	if not OS.has_environment(name):
+		return false
+	var value := OS.get_environment(name).strip_edges().to_lower()
+	return value in ["1", "true", "yes", "y", "on"]

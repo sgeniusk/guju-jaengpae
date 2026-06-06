@@ -2,6 +2,14 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-082 전장 footline/depth 재수정
+사용자가 다시 지적한 “필드 9칸이 하늘에 떠 있고, 유닛이 필드 뒤에 나타나는 느낌”을 수치 계약까지 더 강하게 잡았다.
+- **footline 전진** — `FIELD_FOOT_OFFSET_Y`를 타일 다이아몬드 하단보다 앞으로 키워 유닛, 성, 건물 발이 격자 안쪽에 걸리지 않게 했다.
+- **보드 하향 재배치** — `VIEW_ORIGIN.y`를 한 번 더 내려 첫 배치 보드가 중경 배경이 아니라 전경 바닥에 놓이게 했다.
+- **격자 약화** — 성/배치된 카드/빈 타일의 fill과 outline alpha를 낮춰 유닛 주변에 밝은 9칸 UI판이 남지 않게 했다.
+- **시각 QA 우회 옵션** — `VisualQaConfig`에 `SHOT_SKIP_POST_DRAW=1`을 추가해 GUI `frame_post_draw` 대기 우회를 지원한다. 이번 세션의 macOS GUI 실행은 표시 서비스 연결 오류 뒤 멈춰 새 PNG는 남기지 못했고, headless 하네스 non-hang만 확인했다.
+- **검증** — `test_unit_walk_visuals.gd`와 `tools/ui_feedback_smoke.gd`가 보드 y>=630, fill alpha<=0.14, outline alpha<=0.30, footline>=tile+54를 검증한다. `./init.sh` 카드 22개, 단위 테스트 3067/3067 green.
+
 ## 2026-06-06 — feat-081 전장 접지/depth 재보정
 첫 보드 9칸이 여전히 배경 중경 위에 떠 보이고, 유닛이 필드 뒤에서 나타나는 듯한 착시를 줄이기 위해 보드와 발 위치를 다시 맞췄다.
 - **보드 하향 재배치** — `battle.gd`의 view origin y를 낮춰 첫 배치 보드 중심이 산/하늘이 아니라 전경 바닥 영역에 놓이게 했다.

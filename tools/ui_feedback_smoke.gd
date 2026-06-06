@@ -542,8 +542,8 @@ func _assert_deploy_unit_foot_forward_of_tile(battle: Node) -> int:
 			continue
 		checked = true
 		var tile_center: Vector2 = battle.field_to_screen_position(BattleSim.position_for_tile(battle_unit.lane, battle_unit.row))
-		if root.position.y <= tile_center.y + 14.0:
-			return _fail("배치 유닛 발 위치가 타일 중심 뒤에 있음: y=%.1f tile=%.1f" % [root.position.y, tile_center.y])
+		if root.position.y < tile_center.y + 54.0:
+			return _fail("배치 유닛 발 위치가 타일 하단보다 뒤에 있음: y=%.1f tile=%.1f" % [root.position.y, tile_center.y])
 	if not checked:
 		return _fail("배치 유닛 foot 검증 대상 없음")
 	return 0
@@ -668,10 +668,10 @@ func _assert_battlefield_ground_plane(battle: Node) -> int:
 	if outline_count < battle._tile_buttons.size():
 		errors += _fail("전장 타일 지면 outline 부족: %d/%d" % [outline_count, battle._tile_buttons.size()])
 	var max_tile_fill_alpha := _max_tile_fill_alpha(battle)
-	if max_tile_fill_alpha > 0.24:
+	if max_tile_fill_alpha > 0.14:
 		errors += _fail("전장 타일 fill이 너무 진해 공중 판처럼 보임: alpha=%.2f" % max_tile_fill_alpha)
 	var max_tile_outline_alpha := _max_tile_outline_alpha(battle)
-	if max_tile_outline_alpha > 0.38:
+	if max_tile_outline_alpha > 0.30:
 		errors += _fail("전장 타일 outline이 너무 밝아 공중 격자처럼 보임: alpha=%.2f" % max_tile_outline_alpha)
 	var floor_band_count := _count_bool_meta(battle._background_layer, &"battlefield_floor_band")
 	if floor_band_count < 1:
@@ -688,9 +688,9 @@ func _assert_battlefield_ground_plane(battle: Node) -> int:
 	var max_lane_alpha := _max_polygon_meta_alpha(battle._background_layer, &"battlefield_depth_lane")
 	if max_lane_alpha > 0.06:
 		errors += _fail("전장 진군 레인이 너무 진해 공중 판처럼 보임: alpha=%.2f" % max_lane_alpha)
-	if min_y < 610.0:
+	if min_y < 630.0:
 		errors += _fail("전장 보드가 지면 밴드보다 위에 있음: min_y=%.1f" % min_y)
-	if max_y > 830.0:
+	if max_y > 835.0:
 		errors += _fail("전장 보드가 하단 HUD와 겹칠 위험: max_y=%.1f" % max_y)
 	y_values.sort()
 	for i in range(1, y_values.size()):

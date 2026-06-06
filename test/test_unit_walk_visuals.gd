@@ -153,8 +153,8 @@ func test_battlefield_projection_keeps_board_on_ground_plane() -> void:
 			max_y = maxf(max_y, center.y)
 			if not ys.has(center.y):
 				ys.append(center.y)
-	truthy(min_y >= 610.0, "보드 상단은 산/하늘이 아니라 전경 지면에 위치")
-	truthy(max_y <= 830.0, "보드 하단은 HUD와 겹치지 않음")
+	truthy(min_y >= 630.0, "보드 상단은 산/하늘이 아니라 전경 지면에 위치")
+	truthy(max_y <= 835.0, "보드 하단은 HUD와 겹치지 않음")
 	ys.sort()
 	for i in range(1, ys.size()):
 		truthy(float(ys[i]) - float(ys[i - 1]) <= 104.0, "타일 세로 간격은 시각 타일 높이에 맞음")
@@ -174,7 +174,7 @@ func test_battlefield_floor_context_draws_persistent_band_and_lanes() -> void:
 	eq(_count_bool_meta(view._background_layer, &"battlefield_depth_lane"), BattleSim.COL_COUNT, "배경 레이어에 3레인 진군 바닥선")
 	truthy(_count_bool_meta(view._iso_base_layer, &"battlefield_tile_contact") >= BattleSim.COL_COUNT * RunManager.get_board_rows(), "보드 타일마다 접지 shadow")
 	eq(_count_bool_meta(view._iso_base_layer, &"battlefield_tile_outline"), BattleSim.COL_COUNT * RunManager.get_board_rows(), "보드 타일은 지면 outline으로 표시")
-	truthy(_max_tile_sprite_alpha(view) <= 0.24, "타일 fill은 공중 plate처럼 보이지 않도록 낮은 alpha")
+	truthy(_max_tile_sprite_alpha(view) <= 0.14, "타일 fill은 공중 plate처럼 보이지 않도록 낮은 alpha")
 	view.free()
 
 func test_deploy_unit_feet_share_ground_grid_and_draw_above_it() -> void:
@@ -195,7 +195,7 @@ func test_deploy_unit_feet_share_ground_grid_and_draw_above_it() -> void:
 		var ground_center := view.field_to_screen_position(tile_pos)
 		var foot_center := view._field_foot_screen_position(tile_pos)
 		almost(root.position.y, foot_center.y, 0.001, "유닛 발밑 y는 선택 타일 앞쪽 foot 지점과 일치")
-		truthy(root.position.y > ground_center.y + 14.0, "유닛은 타일 중심 뒤가 아니라 앞쪽 발 위치에 선다")
+		truthy(root.position.y >= ground_center.y + 54.0, "유닛은 타일 하단보다 앞쪽 footline에 선다")
 		var unit_total_z := int(view._units_layer.z_index) + root.z_index
 		var field_total_z := int(view._iso_base_layer.z_index) + _max_tile_canvas_z(view)
 		truthy(unit_total_z > field_total_z, "배치 유닛은 같은 지면 격자 뒤가 아니라 위에 그려짐")

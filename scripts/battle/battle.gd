@@ -22,12 +22,12 @@ const _FormationTactics := preload("res://scripts/run/formation_tactics.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
 
-const VIEW_ORIGIN := Vector2(520.0, 530.0)
+const VIEW_ORIGIN := Vector2(520.0, 540.0)
 const VIEW_SCALE_X := 1.28
 const VIEW_SCALE_Y := 0.62
 const ISO_HALF_W := 96.0
 const ISO_HALF_H := 48.0
-const FIELD_FOOT_OFFSET_Y := 24.0
+const FIELD_FOOT_OFFSET_Y := 56.0
 const TILE_TEXTURE_SCALE := 0.75
 const FIELD_LAYER_Z := 0
 const BACKGROUND_FLOOR_BAND_Z := -960
@@ -546,14 +546,14 @@ func _build_iso_base() -> void:
 			tile_sprite.position = center
 			tile_sprite.scale = Vector2(TILE_TEXTURE_SCALE, TILE_TEXTURE_SCALE)
 			tile_sprite.z_index = FIELD_TILE_Z
-			tile_sprite.modulate = Color(0.78, 0.70, 0.52, 0.14)
+			tile_sprite.modulate = Color(0.78, 0.70, 0.52, 0.08)
 			_iso_base_layer.add_child(tile_sprite)
 			var fallback_poly: Polygon2D = null
 			if tile_texture == null:
 				fallback_poly = Polygon2D.new()
 				fallback_poly.polygon = _diamond_points()
 				fallback_poly.position = center
-				fallback_poly.color = Color(0.20, 0.24, 0.16, 0.16)
+				fallback_poly.color = Color(0.20, 0.24, 0.16, 0.08)
 				fallback_poly.z_index = FIELD_TILE_Z
 				_iso_base_layer.add_child(fallback_poly)
 			var tile_outline := _make_tile_ground_outline(center)
@@ -733,7 +733,7 @@ func _make_tile_contact_shadow(center: Vector2) -> Polygon2D:
 	shadow.set_meta(&"battlefield_tile_contact", true)
 	shadow.polygon = _ellipse_points(72.0, 18.0, 18)
 	shadow.position = center + Vector2(0.0, FIELD_FOOT_OFFSET_Y)
-	shadow.color = Color(0.02, 0.01, 0.0, 0.060)
+	shadow.color = Color(0.02, 0.01, 0.0, 0.050)
 	shadow.z_index = FIELD_TILE_SHADOW_Z
 	return shadow
 
@@ -744,7 +744,7 @@ func _make_tile_ground_outline(center: Vector2) -> Line2D:
 	outline.points = _diamond_points()
 	outline.closed = true
 	outline.width = 1.4
-	outline.default_color = Color(0.88, 0.82, 0.62, 0.18)
+	outline.default_color = Color(0.88, 0.82, 0.62, 0.12)
 	outline.position = center + Vector2(0.0, 2.0)
 	outline.z_index = FIELD_TILE_OUTLINE_Z
 	outline.antialiased = true
@@ -1008,11 +1008,11 @@ func _refresh_board_tiles() -> void:
 		if key == castle_key:
 			_set_tile_feedback(tile, "성", "선택한 성 위치입니다.", true)
 			if poly != null:
-				poly.color = Color(0.48, 0.28, 0.18, 0.12)
+				poly.color = Color(0.48, 0.28, 0.18, 0.055)
 			if sprite != null:
-				sprite.modulate = Color(1.10, 0.88, 0.56, 0.16)
+				sprite.modulate = Color(1.10, 0.88, 0.56, 0.055)
 			if outline != null:
-				outline.default_color = Color(1.0, 0.76, 0.42, 0.38)
+				outline.default_color = Color(1.0, 0.76, 0.42, 0.12)
 			if area != null:
 				area.input_pickable = false
 		elif board.has(key):
@@ -1021,11 +1021,11 @@ func _refresh_board_tiles() -> void:
 			var board_tooltip := _CardUiText.tooltip(card) if card != null else String(board[key])
 			_set_tile_feedback(tile, board_label, board_tooltip, true)
 			if poly != null:
-				poly.color = Color(0.24, 0.42, 0.26, 0.10)
+				poly.color = Color(0.24, 0.42, 0.26, 0.050)
 			if sprite != null:
-				sprite.modulate = Color(0.98, 1.0, 0.78, 0.12)
+				sprite.modulate = Color(0.98, 1.0, 0.78, 0.050)
 			if outline != null:
-				outline.default_color = Color(0.82, 1.0, 0.64, 0.30)
+				outline.default_color = Color(0.82, 1.0, 0.64, 0.10)
 			if area != null:
 				area.input_pickable = false
 		else:
@@ -1141,25 +1141,25 @@ func _visible_empty_tile_state(label_text: String, tooltip: String) -> Dictionar
 
 func _empty_tile_sprite_modulate(preview: Dictionary) -> Color:
 	if not RunManager.has_castle():
-		return Color(1.02, 0.82, 0.52, 0.10)
+		return Color(1.02, 0.82, 0.52, 0.070)
 	if _selected_hand_index < 0:
-		return Color(0.72, 0.88, 0.72, 0.06)
+		return Color(0.72, 0.88, 0.72, 0.040)
 	if not preview.is_empty():
-		return Color(0.78, 1.04, 0.60, 0.16)
+		return Color(0.78, 1.04, 0.60, 0.120)
 	if not RunManager.can_place_hand_card(_selected_hand_index):
-		return Color(0.74, 0.72, 0.66, 0.05)
-	return Color(0.70, 0.92, 0.60, 0.10)
+		return Color(0.74, 0.72, 0.66, 0.035)
+	return Color(0.70, 0.92, 0.60, 0.070)
 
 func _empty_tile_outline_color(preview: Dictionary) -> Color:
 	if not RunManager.has_castle():
-		return Color(1.0, 0.78, 0.44, 0.30)
+		return Color(1.0, 0.78, 0.44, 0.16)
 	if _selected_hand_index < 0:
-		return Color(0.74, 0.92, 0.78, 0.22)
+		return Color(0.74, 0.92, 0.78, 0.10)
 	if not preview.is_empty():
-		return Color(0.78, 1.0, 0.54, 0.48)
+		return Color(0.78, 1.0, 0.54, 0.28)
 	if not RunManager.can_place_hand_card(_selected_hand_index):
-		return Color(0.62, 0.58, 0.48, 0.18)
-	return Color(0.74, 0.96, 0.58, 0.32)
+		return Color(0.62, 0.58, 0.48, 0.08)
+	return Color(0.74, 0.96, 0.58, 0.14)
 
 func _find_army_unit_at_block(army: Array, block_key: String) -> BattleUnit:
 	var parts := block_key.split(":")
