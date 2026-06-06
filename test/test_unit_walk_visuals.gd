@@ -160,6 +160,18 @@ func test_battlefield_projection_keeps_board_on_ground_plane() -> void:
 	falsy(view._is_screen_position_on_tile(center + Vector2(0.0, 70.0), center), "타일 밖 클릭은 여전히 거부")
 	view.free()
 
+func test_battlefield_floor_context_draws_persistent_band_and_lanes() -> void:
+	RunManager.reset_run()
+	RunManager.ensure_started(&"lord_liubei")
+	var view := BattleView.new()
+	view._bind_scene_nodes()
+	view._build_field()
+
+	truthy(_count_bool_meta(view._background_layer, &"battlefield_floor_band") >= 1, "배경 레이어에 전장 바닥 밴드")
+	eq(_count_bool_meta(view._background_layer, &"battlefield_depth_lane"), BattleSim.COL_COUNT, "배경 레이어에 3레인 진군 바닥선")
+	truthy(_count_bool_meta(view._iso_base_layer, &"battlefield_tile_contact") >= BattleSim.COL_COUNT * RunManager.get_board_rows(), "보드 타일마다 접지 shadow")
+	view.free()
+
 func _player_unit(troop_type: String) -> BattleUnit:
 	return BattleUnit.make(BattleUnit.Team.PLAYER, 0, 300.0, "검증", 100, 1, 1.0, "melee", 0.0, &"", &"", troop_type, -1, 300.0)
 
@@ -176,3 +188,11 @@ func _has_texture_icon(node: Node) -> bool:
 		if _has_texture_icon(child):
 			return true
 	return false
+
+func _count_bool_meta(node: Node, key: StringName) -> int:
+	if node == null:
+		return 0
+	var count := 1 if bool(node.get_meta(key, false)) else 0
+	for child in node.get_children():
+		count += _count_bool_meta(child, key)
+	return count

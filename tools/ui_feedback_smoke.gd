@@ -563,7 +563,8 @@ func _assert_battlefield_depth_order(battle: Node) -> int:
 		var unit_total_z: int = int(battle._units_layer.z_index) + unit_root.z_index
 		var field_total_z: int = int(battle._iso_base_layer.z_index) + _max_field_visual_z(battle)
 		if unit_total_z <= field_total_z:
-				errors += _fail("전장 depth 총 z 오류: unit=%d field=%d" % [unit_total_z, field_total_z])
+			errors += _fail("전장 depth 총 z 오류: unit=%d field=%d" % [unit_total_z, field_total_z])
+	errors += _assert_unit_roots_share_battlefield_y(battle)
 	return errors
 
 func _assert_battlefield_ground_plane(battle: Node) -> int:
@@ -587,6 +588,12 @@ func _assert_battlefield_ground_plane(battle: Node) -> int:
 	var contact_count := _count_bool_meta(battle._iso_base_layer, &"battlefield_tile_contact")
 	if contact_count < battle._tile_buttons.size():
 		errors += _fail("전장 타일 접지 shadow 부족: %d/%d" % [contact_count, battle._tile_buttons.size()])
+	var floor_band_count := _count_bool_meta(battle._background_layer, &"battlefield_floor_band")
+	if floor_band_count < 1:
+		errors += _fail("전장 배경 지면 밴드 누락")
+	var depth_lane_count := _count_bool_meta(battle._background_layer, &"battlefield_depth_lane")
+	if depth_lane_count < BattleSim.COL_COUNT:
+		errors += _fail("전장 진군 레인 부족: %d/%d" % [depth_lane_count, BattleSim.COL_COUNT])
 	if min_y < 500.0:
 		errors += _fail("전장 보드가 지면 밴드보다 위에 있음: min_y=%.1f" % min_y)
 	if max_y > 820.0:
@@ -597,6 +604,45 @@ func _assert_battlefield_ground_plane(battle: Node) -> int:
 		if gap > 108.0:
 			errors += _fail("전장 타일 세로 간격 과다: gap=%.1f" % gap)
 	return errors
+
+func _assert_unit_roots_share_battlefield_y(battle: Node) -> int:
+	var bounds := _battlefield_tile_y_bounds(battle)
+	if bounds.is_empty():
+		return _fail("전장 유닛 y 검증용 타일 bounds 없음")
+	var min_y := float(bounds.get("min_y", 0.0))
+	var max_y := float(bounds.get("max_y", 0.0))
+	var errors := 0
+	var checked := 0
+	for value in battle._vis.values():
+		if not (value is Dictionary):
+			continue
+		var root := (value as Dictionary).get("root", null) as Node2D
+		if root == null:
+			continue
+		checked += 1
+		if root.position.y < min_y - 36.0:
+			errors += _fail("유닛이 전장 지면보다 위에 떠 있음: y=%.1f min=%.1f" % [root.position.y, min_y])
+		if root.position.y > max_y + 96.0:
+			errors += _fail("유닛이 전장 지면 하단을 벗어남: y=%.1f max=%.1f" % [root.position.y, max_y])
+	if checked <= 0:
+		errors += _fail("전장 유닛 y 검증 대상 없음")
+	return errors
+
+func _battlefield_tile_y_bounds(battle: Node) -> Dictionary:
+	if battle == null or battle._tile_buttons.is_empty():
+		return {}
+	var min_y := INF
+	var max_y := -INF
+	for key in battle._tile_buttons.keys():
+		var parts := String(key).split(":")
+		if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
+			continue
+		var center: Vector2 = battle.field_to_screen_position(BattleSim.position_for_tile(int(parts[0]), int(parts[1])))
+		min_y = minf(min_y, center.y)
+		max_y = maxf(max_y, center.y)
+	if min_y == INF or max_y == -INF:
+		return {}
+	return {"min_y": min_y, "max_y": max_y}
 
 func _first_visual_root(battle: Node) -> Node2D:
 	for value in battle._vis.values():

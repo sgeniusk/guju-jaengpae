@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~076으로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 보호→보상/상점/결과 UX→전투 HUD→유닛/필드 접지감→스크린샷 QA→초반 군세 밀도→전장 보드 지면화→장기런 전투 템포 계약까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 3040 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~077로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 보호→보상/상점/결과 UX→전투 HUD→유닛/필드 접지감→스크린샷 QA→초반 군세 밀도→전장 보드 지면화→장기런 전투 템포 계약→전투 첫 화면 지면/깊이 재보정까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 3043 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -712,6 +712,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-076-long-run-tempo-contract.md 추가. LongRunTempoContract가 일반 24초, 최종 보스 28초, 군주별 평균 18초 예산을 제공하고 long_run_smoke가 이를 실패 조건으로 검증한다. WaveFactory boss encounter HP를 좁게 조정해 유비/조조/손권 장기런 평균 13.6/15.9/10.5초로 통과, ./init.sh 카드 22개 / 단위 테스트 3040/3040 green."
+    },
+    {
+      "id": "feat-077",
+      "name": "전투 첫 화면 지면/깊이 재보정",
+      "description": "배치 보드 뒤에 넓은 바닥 밴드와 3레인 진군 바닥선을 남겨 9칸과 유닛이 같은 지면 위에 읽히게 한다.",
+      "dependencies": ["feat-071", "feat-073", "feat-075"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-077-battle-composition-depth.md 추가. battle.gd가 배경 레이어에 battlefield_floor_band와 3개 battlefield_depth_lane을 남겨 보드/성/유닛의 지면 축을 연결한다. UI smoke가 배경 지면 밴드, 3레인, 교전 중 유닛 y 범위를 검증하고 ./init.sh 카드 22개 / 단위 테스트 3043/3043 green."
     }
   ]
 }

@@ -29,6 +29,8 @@ const ISO_HALF_W := 96.0
 const ISO_HALF_H := 48.0
 const TILE_TEXTURE_SCALE := 0.75
 const FIELD_LAYER_Z := 0
+const BACKGROUND_FLOOR_BAND_Z := -960
+const BACKGROUND_DEPTH_LANE_Z := -940
 const FIELD_GROUND_SHADOW_Z := -46
 const FIELD_GROUND_PLATE_Z := -44
 const FIELD_TILE_SHADOW_Z := -36
@@ -512,15 +514,18 @@ func _build_fallback_background() -> void:
 	var sky := Polygon2D.new()
 	sky.polygon = PackedVector2Array([Vector2.ZERO, Vector2(1920.0, 0.0), Vector2(1920.0, 420.0), Vector2(0.0, 500.0)])
 	sky.color = Color(0.13, 0.16, 0.22)
+	sky.z_index = -1000
 	_background_layer.add_child(sky)
 	var ground := Polygon2D.new()
 	ground.polygon = PackedVector2Array([Vector2(0.0, 390.0), Vector2(1920.0, 320.0), Vector2(1920.0, 1080.0), Vector2(0.0, 1080.0)])
 	ground.color = Color(0.11, 0.18, 0.12)
+	ground.z_index = -990
 	_background_layer.add_child(ground)
 
 func _build_iso_base() -> void:
 	var tile_texture := _load_texture(_BattlefieldTheme.tile_path(_theme))
 	var centers := _board_tile_centers()
+	_add_battlefield_floor_context(centers)
 	_add_battlefield_ground_plate(centers)
 	for col in BattleSim.COL_COUNT:
 		for row in RunManager.get_board_rows():
@@ -572,9 +577,54 @@ func _board_tile_centers() -> Array:
 			centers.append(field_to_screen_position(BattleSim.position_for_tile(col, row)))
 	return centers
 
-func _add_battlefield_ground_plate(centers: Array) -> void:
-	if centers.is_empty():
+func _add_battlefield_floor_context(centers: Array) -> void:
+	if centers.is_empty() or _background_layer == null:
 		return
+	var bounds := _battlefield_center_bounds(centers)
+	var min_x := float(bounds.get("min_x", 0.0))
+	var max_x := float(bounds.get("max_x", 0.0))
+	var min_y := float(bounds.get("min_y", 0.0))
+	var max_y := float(bounds.get("max_y", 0.0))
+	var left := maxf(80.0, min_x - 560.0)
+	var right := minf(1880.0, max_x + 560.0)
+	var floor_band := Polygon2D.new()
+	floor_band.name = "BattlefieldFloorBand"
+	floor_band.set_meta(&"battlefield_floor_band", true)
+	floor_band.polygon = PackedVector2Array([
+		Vector2(left, min_y - 78.0),
+		Vector2(right, min_y - 124.0),
+		Vector2(right + 110.0, max_y + 236.0),
+		Vector2(left - 80.0, max_y + 272.0),
+	])
+	floor_band.color = _battlefield_floor_band_color()
+	floor_band.z_index = BACKGROUND_FLOOR_BAND_Z
+	_background_layer.add_child(floor_band)
+	var combat_floor := Polygon2D.new()
+	combat_floor.name = "BattlefieldCombatFloor"
+	combat_floor.set_meta(&"battlefield_floor_band", true)
+	combat_floor.polygon = PackedVector2Array([
+		Vector2(left + 40.0, min_y + 36.0),
+		Vector2(right + 40.0, min_y + 4.0),
+		Vector2(right + 70.0, max_y + 126.0),
+		Vector2(left + 10.0, max_y + 154.0),
+	])
+	combat_floor.color = _battlefield_combat_floor_color()
+	combat_floor.z_index = BACKGROUND_FLOOR_BAND_Z + 1
+	_background_layer.add_child(combat_floor)
+	for lane in BattleSim.COL_COUNT:
+		var lane_y := BattleSim.start_y_for_col(lane)
+		var start := field_to_screen(10.0, lane_y)
+		var end := field_to_screen(BattleSim.FIELD_W, lane_y)
+		var lane_band := Polygon2D.new()
+		lane_band.name = "BattlefieldDepthLane%d" % lane
+		lane_band.set_meta(&"battlefield_depth_lane", true)
+		lane_band.set_meta(&"battlefield_depth_lane_index", lane)
+		lane_band.polygon = _lane_band_polygon(start, end, 44.0)
+		lane_band.color = _battlefield_depth_lane_color(lane)
+		lane_band.z_index = BACKGROUND_DEPTH_LANE_Z + lane
+		_background_layer.add_child(lane_band)
+
+func _battlefield_center_bounds(centers: Array) -> Dictionary:
 	var min_x := INF
 	var max_x := -INF
 	var min_y := INF
@@ -585,6 +635,34 @@ func _add_battlefield_ground_plate(centers: Array) -> void:
 		max_x = maxf(max_x, center.x)
 		min_y = minf(min_y, center.y)
 		max_y = maxf(max_y, center.y)
+	return {
+		"min_x": min_x,
+		"max_x": max_x,
+		"min_y": min_y,
+		"max_y": max_y,
+	}
+
+func _lane_band_polygon(start: Vector2, end: Vector2, width: float) -> PackedVector2Array:
+	var delta := end - start
+	var normal := Vector2(0.0, 1.0)
+	if delta.length_squared() > 0.0001:
+		normal = Vector2(-delta.y, delta.x).normalized()
+	var half_width := maxf(1.0, width * 0.5)
+	return PackedVector2Array([
+		start + normal * half_width,
+		end + normal * half_width,
+		end - normal * half_width,
+		start - normal * half_width,
+	])
+
+func _add_battlefield_ground_plate(centers: Array) -> void:
+	if centers.is_empty():
+		return
+	var bounds := _battlefield_center_bounds(centers)
+	var min_x := float(bounds.get("min_x", 0.0))
+	var max_x := float(bounds.get("max_x", 0.0))
+	var min_y := float(bounds.get("min_y", 0.0))
+	var max_y := float(bounds.get("max_y", 0.0))
 	var polygon := PackedVector2Array([
 		Vector2(min_x - ISO_HALF_W * 1.65, min_y + ISO_HALF_H * 0.15),
 		Vector2(max_x + ISO_HALF_W * 1.75, min_y + ISO_HALF_H * 1.10),
@@ -611,6 +689,29 @@ func _battlefield_ground_plate_color() -> Color:
 	var ambient: Color = _theme.get("ambient", Color.WHITE)
 	var base := Color(0.14, 0.085, 0.045, 0.68)
 	return base.lerp(Color(ambient.r, ambient.g, ambient.b, 0.68), 0.10)
+
+func _battlefield_floor_band_color() -> Color:
+	var ambient: Color = _theme.get("ambient", Color.WHITE)
+	var base := Color(0.12, 0.07, 0.035, 0.42)
+	var tint := Color(ambient.r * 0.18, ambient.g * 0.16, ambient.b * 0.12, 0.42)
+	return base.lerp(tint, 0.22)
+
+func _battlefield_combat_floor_color() -> Color:
+	var ambient: Color = _theme.get("ambient", Color.WHITE)
+	var base := Color(0.03, 0.018, 0.01, 0.24)
+	var tint := Color(ambient.r * 0.10, ambient.g * 0.09, ambient.b * 0.08, 0.24)
+	return base.lerp(tint, 0.12)
+
+func _battlefield_depth_lane_color(lane: int) -> Color:
+	var ambient: Color = _theme.get("ambient", Color.WHITE)
+	var lane_base := [
+		Color(0.22, 0.17, 0.10, 0.18),
+		Color(0.25, 0.19, 0.12, 0.20),
+		Color(0.18, 0.13, 0.10, 0.18),
+	]
+	var base: Color = lane_base[clampi(lane, 0, lane_base.size() - 1)]
+	var tint := Color(ambient.r * 0.10, ambient.g * 0.08, ambient.b * 0.06, base.a)
+	return base.lerp(tint, 0.16)
 
 func _make_tile_contact_shadow(center: Vector2) -> Polygon2D:
 	var shadow := Polygon2D.new()
