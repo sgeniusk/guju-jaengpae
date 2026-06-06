@@ -22,15 +22,16 @@ const _FormationTactics := preload("res://scripts/run/formation_tactics.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
 
-const VIEW_ORIGIN := Vector2(520.0, 310.0)
+const VIEW_ORIGIN := Vector2(520.0, 410.0)
 const VIEW_SCALE_X := 1.28
-const VIEW_SCALE_Y := 0.86
-const ISO_HALF_W := 48.0
-const ISO_HALF_H := 24.0
+const VIEW_SCALE_Y := 0.68
+const ISO_HALF_W := 96.0
+const ISO_HALF_H := 48.0
 const TILE_TEXTURE_SCALE := 0.75
 const FIELD_LAYER_Z := 0
 const FIELD_GROUND_SHADOW_Z := -46
 const FIELD_GROUND_PLATE_Z := -44
+const FIELD_TILE_SHADOW_Z := -36
 const FIELD_TILE_Z := -32
 const FIELD_LABEL_Z := -22
 const BUILDING_LAYER_Z := 420
@@ -525,6 +526,8 @@ func _build_iso_base() -> void:
 		for row in RunManager.get_board_rows():
 			var block_key := _tile_key(col, row)
 			var center := field_to_screen_position(BattleSim.position_for_tile(col, row))
+			var tile_shadow := _make_tile_contact_shadow(center)
+			_iso_base_layer.add_child(tile_shadow)
 			var tile_sprite := Sprite2D.new()
 			tile_sprite.texture = tile_texture
 			tile_sprite.centered = true
@@ -560,7 +563,7 @@ func _build_iso_base() -> void:
 			shape.polygon = _diamond_points()
 			area.add_child(shape)
 			_iso_base_layer.add_child(area)
-			_tile_buttons[block_key] = { "area": area, "sprite": tile_sprite, "poly": fallback_poly, "label": label }
+			_tile_buttons[block_key] = { "area": area, "shadow": tile_shadow, "sprite": tile_sprite, "poly": fallback_poly, "label": label }
 
 func _board_tile_centers() -> Array:
 	var centers: Array = []
@@ -606,8 +609,18 @@ func _add_battlefield_ground_plate(centers: Array) -> void:
 
 func _battlefield_ground_plate_color() -> Color:
 	var ambient: Color = _theme.get("ambient", Color.WHITE)
-	var base := Color(0.16, 0.11, 0.065, 0.52)
-	return base.lerp(Color(ambient.r, ambient.g, ambient.b, 0.52), 0.10)
+	var base := Color(0.14, 0.085, 0.045, 0.68)
+	return base.lerp(Color(ambient.r, ambient.g, ambient.b, 0.68), 0.10)
+
+func _make_tile_contact_shadow(center: Vector2) -> Polygon2D:
+	var shadow := Polygon2D.new()
+	shadow.name = "TileContactShadow"
+	shadow.set_meta(&"battlefield_tile_contact", true)
+	shadow.polygon = _diamond_points()
+	shadow.position = center + Vector2(0.0, 10.0)
+	shadow.color = Color(0.02, 0.01, 0.0, 0.22)
+	shadow.z_index = FIELD_TILE_SHADOW_Z
+	return shadow
 
 func _diamond_points() -> PackedVector2Array:
 	return PackedVector2Array([Vector2(0.0, -ISO_HALF_H), Vector2(ISO_HALF_W, 0.0), Vector2(0.0, ISO_HALF_H), Vector2(-ISO_HALF_W, 0.0)])
@@ -2311,12 +2324,8 @@ func _fade_iso_tiles_out() -> void:
 			area.input_pickable = false
 	if _iso_base_layer == null:
 		return
-	var tween := create_tween()
-	tween.tween_property(_iso_base_layer, "modulate:a", 0.0, 0.22)
-	tween.tween_callback(func() -> void:
-		_iso_base_layer.visible = false
-		_iso_base_layer.modulate.a = 1.0
-	)
+	_iso_base_layer.modulate.a = 0.0
+	_iso_base_layer.visible = false
 
 func _update_wave_label() -> void:
 	if _wave_label == null:

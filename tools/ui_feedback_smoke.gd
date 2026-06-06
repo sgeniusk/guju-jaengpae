@@ -201,6 +201,7 @@ func _battle_deploy_case() -> int:
 	errors += _assert_button_tooltip(battle, "계략 발동", "계략 발동 버튼", "계략 손패 tooltip")
 	errors += _assert_button_tooltip(battle, "12명 분대", "빈 타일", "병종 손패 tooltip")
 	errors += _assert_default_speed_fast(battle)
+	errors += _assert_battlefield_ground_plane(battle)
 	if battle.has_method("_select_hand"):
 		battle._select_hand(0)
 		await _frames(2)
@@ -548,6 +549,8 @@ func _assert_battlefield_depth_order(battle: Node) -> int:
 	var errors := 0
 	if battle._iso_base_layer == null or battle._units_layer == null:
 		return _fail("전장 depth 검증용 레이어 누락")
+	if battle._iso_base_layer.visible or battle._iso_base_layer.modulate.a > 0.01:
+		errors += _fail("교전 시작 후 배치 필드 숨김 실패: visible=%s alpha=%.2f" % [str(battle._iso_base_layer.visible), battle._iso_base_layer.modulate.a])
 	if battle._iso_base_layer.z_index >= battle._units_layer.z_index:
 		errors += _fail("전장 depth 순서 오류: field=%d units=%d" % [battle._iso_base_layer.z_index, battle._units_layer.z_index])
 	var plate_count := _count_bool_meta(battle._iso_base_layer, &"battlefield_ground_plate")
@@ -560,7 +563,39 @@ func _assert_battlefield_depth_order(battle: Node) -> int:
 		var unit_total_z: int = int(battle._units_layer.z_index) + unit_root.z_index
 		var field_total_z: int = int(battle._iso_base_layer.z_index) + _max_field_visual_z(battle)
 		if unit_total_z <= field_total_z:
-			errors += _fail("전장 depth 총 z 오류: unit=%d field=%d" % [unit_total_z, field_total_z])
+				errors += _fail("전장 depth 총 z 오류: unit=%d field=%d" % [unit_total_z, field_total_z])
+	return errors
+
+func _assert_battlefield_ground_plane(battle: Node) -> int:
+	var errors := 0
+	if battle._iso_base_layer == null:
+		return _fail("전장 지면 검증용 필드 레이어 누락")
+	if battle._tile_buttons.is_empty():
+		return _fail("전장 지면 검증용 타일 누락")
+	var min_y := INF
+	var max_y := -INF
+	var y_values: Array = []
+	for key in battle._tile_buttons.keys():
+		var parts := String(key).split(":")
+		if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
+			continue
+		var center: Vector2 = battle.field_to_screen_position(BattleSim.position_for_tile(int(parts[0]), int(parts[1])))
+		min_y = minf(min_y, center.y)
+		max_y = maxf(max_y, center.y)
+		if not y_values.has(center.y):
+			y_values.append(center.y)
+	var contact_count := _count_bool_meta(battle._iso_base_layer, &"battlefield_tile_contact")
+	if contact_count < battle._tile_buttons.size():
+		errors += _fail("전장 타일 접지 shadow 부족: %d/%d" % [contact_count, battle._tile_buttons.size()])
+	if min_y < 500.0:
+		errors += _fail("전장 보드가 지면 밴드보다 위에 있음: min_y=%.1f" % min_y)
+	if max_y > 820.0:
+		errors += _fail("전장 보드가 하단 HUD와 겹칠 위험: max_y=%.1f" % max_y)
+	y_values.sort()
+	for i in range(1, y_values.size()):
+		var gap := float(y_values[i]) - float(y_values[i - 1])
+		if gap > 108.0:
+			errors += _fail("전장 타일 세로 간격 과다: gap=%.1f" % gap)
 	return errors
 
 func _first_visual_root(battle: Node) -> Node2D:

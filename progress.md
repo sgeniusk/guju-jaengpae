@@ -4,10 +4,11 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-06
-**활성 피처** — feat-074 초반 군세 밀도 계약 강화 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 첫 플레이가 빈약한 1대1처럼 보이지 않도록 병종/장수 시작 군세와 초반 metric 계약을 강화하는 작업이다.
+**활성 피처** — feat-075 전장 보드 지면화와 교전 가시성 보정 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 배치 보드가 공중 9칸처럼 보이고 교전 유닛이 필드 뒤에 나타나는 시각 결함을 줄이는 작업이다.
 
 ## 완료
+- [x] **feat-075 전장 보드 지면화와 교전 가시성 보정** — `docs/specs/feat-075-battlefield-ground-plane-readability.md`를 추가했다. `battle.gd` 전투 투영을 지면 밴드로 내리고 tile diamond 클릭/시각 크기를 맞췄으며, 타일 접지 shadow와 더 진한 ground plate를 추가했다. 교전 phase 진입 후 `IsoBaseLayer`를 즉시 숨겨 유닛이 필드 뒤에서 나타나는 장면을 줄인다. UI smoke가 지면 밴드, 타일 접지 shadow, 교전 중 격자 숨김을 검증한다.
 - [x] **feat-074 초반 군세 밀도 계약 강화** — `docs/specs/feat-074-early-force-density-contract.md`를 추가했다. `SquadProfile`이 병종 Lv.1 기본 분대를 12명 이상, 장수 Lv.1 호위를 7명으로 올리고, `PlaytestMetrics.first_five_ok()`가 매 교전 아군 12명/전체 30명/피크 아군 30명과 22초 max/19초 avg 예산을 검증한다. playtest loop smoke stage 1/2/5가 아군 12/20/32명으로 통과한다. `./init.sh` 카드 22개 / 3012 단언 green.
 - [x] **feat-073 전투 진군 접지/충돌선 polish** — `docs/specs/feat-073-battle-advance-grounding-polish.md`를 추가했다. `BattleFeel`이 진군 먼지/지면 충돌 마커를 순수 계산하고, battle start VFX가 양 진영 3레인 먼지 18개와 중앙 충돌선 3개를 렌더한다. UI smoke가 `advance_dust`/`ground_clash` meta를 검증한다. `./init.sh` 카드 22개 / 3010 단언 green.
 - [x] **feat-072 스크린샷 하네스 실행 안정화** — `docs/specs/feat-072-screenshot-harness-stability.md`를 추가했다. screenshot bundle 셸 스크립트가 모든 shoot scene을 `--scene`으로 실행하고, `VisualQaConfig.capture_viewport_png()`가 GUI에서는 `frame_post_draw`를 기다리되 headless에서는 `SHOT FAIL ... headless_display`로 즉시 종료한다. 전투/첫 보드/범용 scene quick headless 하네스가 멈추지 않고 종료하며, `./init.sh`는 카드 22개 / 단위 테스트 2994/2994 green.
@@ -33,7 +34,7 @@
 
 ## 진행 중
 - [ ] 수동 플레이 감각 확인 — 첫 손패 장수+병종, 성 위치 선택, 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령, stage 4 상점, 전리품 추천 문구를 사용자 플레이로 확인한다.
-- [ ] 완성판 안전 개선 계속 — 다음 후보는 수동 플레이 시각 검증 갱신, GUI screenshot bundle 실촬영, 전투 템포/중후반 보스 시간 추가 개선이다.
+- [ ] 완성판 안전 개선 계속 — 다음 후보는 GUI screenshot bundle 실촬영, 수동 플레이 시각 검증 갱신, 전투 템포/중후반 보스 시간 추가 개선이다.
 - [ ] Codex goal은 완성판까지 계속 활성이다. MVP 이후 핵심 루프 재미와 안정성을 단계적으로 개선한다.
 
 ## 다음
@@ -49,10 +50,9 @@
 - [ ] Godot headless dummy renderer는 PNG 추출을 지원하지 않아 screenshot 하네스가 `SHOT FAIL ... headless_display`로 종료한다. 실제 PNG 품질 검증은 GUI 표시 드라이버에서 `--scene` bundle로 실행한다.
 
 ## 이번 세션 수정 파일
-- `docs/specs/feat-074-early-force-density-contract.md`
-- `scripts/battle/squad_profile.gd`
-- `scripts/run/playtest_metrics.gd`
-- `test/test_squad_profile.gd`, `test/test_board_army.gd`, `test/test_fun_contract.gd`
+- `docs/specs/feat-075-battlefield-ground-plane-readability.md`
+- `scripts/battle/battle.gd`
+- `test/test_unit_walk_visuals.gd`
 - `tools/ui_feedback_smoke.gd`
 - `feature_list.json`
 - `progress.md`
@@ -83,6 +83,9 @@
 - `CHANGELOG.md`
 
 ## 검증 증거
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-075-unit.log --script res://test/runner.gd` (2026-06-06, feat-075) — 단위 테스트 3018/3018 green.
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-075-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-075) — 전장 보드 지면 밴드, tile contact shadow, 교전 중 `IsoBaseLayer` 숨김 포함 UI smoke green.
+- [x] `./init.sh` (2026-06-06, feat-075) — 카드 22개 검증 OK, UI smoke와 장기런 스모크 포함, 단위 테스트 3018/3018 green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-074-unit.log --script res://test/runner.gd` (2026-06-06, feat-074) — 단위 테스트 3012/3012 green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-074-playtest.log --script res://tools/playtest_loop_smoke.gd` (2026-06-06, feat-074) — stage 1/2/5 아군 12/20/32명, 전체 37/36/42명, 시간 21.1/18.3/14.6초로 강화 metric 통과.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-074-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-074) — 전투 손패 `12명 분대` tooltip과 첫 교전 `아군 12` 요약 포함 UI smoke green.
@@ -106,4 +109,4 @@
 - [x] feat-068~feat-062의 자세한 검증 로그는 `CHANGELOG.md`와 각 `docs/specs/`에 보관했다.
 
 ## 다음 세션 메모
-feat-074 done. 다음 안전 피처는 GUI screenshot bundle 실촬영, 수동 플레이 시각 검증 갱신, 전투 템포/중후반 보스 시간 추가 개선이 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+feat-075 done. 다음 안전 피처는 GUI screenshot bundle 실촬영, 수동 플레이 시각 검증 갱신, 전투 템포/중후반 보스 시간 추가 개선이 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.

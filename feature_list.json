@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~074로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널→다음 배치 손패 미리보기→자동저장 슬롯 삭제 UX→상점 손패 정리 안내→전투 결과 복귀 안내→런맵 진행 리듬 안내→상점 구매 피드백→장기런 결과 요약→전투 전황 요약 HUD→유닛 접지감 보강→첫 전투 보드 가독성→첫 보드 스크린샷 QA→screenshot validator 속도 최적화→결과 화면 시각 polish→전장 필드 접지/깊이 보정→스크린샷 하네스 실행 안정화→전투 진군 접지/충돌선 polish→초반 군세 밀도 계약 강화까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 3012 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~075로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널→다음 배치 손패 미리보기→자동저장 슬롯 삭제 UX→상점 손패 정리 안내→전투 결과 복귀 안내→런맵 진행 리듬 안내→상점 구매 피드백→장기런 결과 요약→전투 전황 요약 HUD→유닛 접지감 보강→첫 전투 보드 가독성→첫 보드 스크린샷 QA→screenshot validator 속도 최적화→결과 화면 시각 polish→전장 필드 접지/깊이 보정→스크린샷 하네스 실행 안정화→전투 진군 접지/충돌선 polish→초반 군세 밀도 계약 강화→전장 보드 지면화/교전 가시성 보정까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 3018 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -694,6 +694,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-074-early-force-density-contract.md 추가. SquadProfile이 병종 Lv.1 기본 분대를 12명 이상, 장수 Lv.1 호위를 7명으로 시작하게 하고 PlaytestMetrics가 첫 5스테이지 매 교전 아군 12명/전체 30명/피크 30명 및 22초 max/19초 avg 예산을 검증한다. playtest loop smoke stage1/2/5가 12/20/32명으로 통과, ./init.sh 카드 22개 / 단위 테스트 3012/3012 green."
+    },
+    {
+      "id": "feat-075",
+      "name": "전장 보드 지면화와 교전 가시성 보정",
+      "description": "배치 보드가 하늘에 뜬 9칸처럼 보이지 않도록 지면 밴드에 내리고, 교전 시작 후 격자가 유닛과 겹쳐 보이지 않게 한다.",
+      "dependencies": ["feat-071", "feat-073"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-075-battlefield-ground-plane-readability.md 추가. battle.gd가 전투 투영 y origin/scale과 tile diamond 크기를 지면 밴드에 맞추고 타일 접지 shadow를 추가했으며, 교전 phase 진입 후 IsoBaseLayer를 즉시 숨긴다. UI smoke가 보드 지면 밴드, 타일 접지 shadow, 교전 중 격자 숨김을 검증하고 ./init.sh 카드 22개 / 단위 테스트 3018/3018 green."
     }
   ]
 }
