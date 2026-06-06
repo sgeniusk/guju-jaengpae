@@ -141,20 +141,23 @@ func test_deploy_click_maps_visible_tile_to_board_key() -> void:
 	view.free()
 
 func test_battlefield_projection_keeps_board_on_ground_plane() -> void:
+	RunManager.ensure_started(&"lord_liubei")
 	var view := BattleView.new()
 	var ys: Array = []
 	var min_y := INF
 	var max_y := -INF
 	for col in BattleSim.COL_COUNT:
-		var center := view.field_to_screen_position(BattleSim.position_for_tile(col, 0))
-		min_y = minf(min_y, center.y)
-		max_y = maxf(max_y, center.y)
-		ys.append(center.y)
-	truthy(min_y >= 500.0, "보드 상단은 배경 지면 밴드에 위치")
+		for row in RunManager.get_board_rows():
+			var center := view.field_to_screen_position(BattleSim.position_for_tile(col, row))
+			min_y = minf(min_y, center.y)
+			max_y = maxf(max_y, center.y)
+			if not ys.has(center.y):
+				ys.append(center.y)
+	truthy(min_y >= 560.0, "보드 상단은 산/하늘이 아니라 전경 지면에 위치")
 	truthy(max_y <= 820.0, "보드 하단은 HUD와 겹치지 않음")
 	ys.sort()
 	for i in range(1, ys.size()):
-		truthy(float(ys[i]) - float(ys[i - 1]) <= 108.0, "타일 세로 간격은 시각 타일 높이에 맞음")
+		truthy(float(ys[i]) - float(ys[i - 1]) <= 104.0, "타일 세로 간격은 시각 타일 높이에 맞음")
 	var center := view.field_to_screen_position(BattleSim.position_for_tile(1, 0))
 	truthy(view._is_screen_position_on_tile(center + Vector2(0.0, 58.0), center), "확장된 타일 클릭 영역은 시각 다이아몬드 하단을 포함")
 	falsy(view._is_screen_position_on_tile(center + Vector2(0.0, 70.0), center), "타일 밖 클릭은 여전히 거부")

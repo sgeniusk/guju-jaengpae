@@ -721,6 +721,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-077-battle-composition-depth.md 추가. battle.gd가 배경 레이어에 battlefield_floor_band와 3개 battlefield_depth_lane을 남겨 보드/성/유닛의 지면 축을 연결한다. UI smoke가 배경 지면 밴드, 3레인, 교전 중 유닛 y 범위를 검증하고 ./init.sh 카드 22개 / 단위 테스트 3043/3043 green."
+    },
+    {
+      "id": "feat-078",
+      "name": "배치 필드 접지감 재수정",
+      "description": "배치 보드 9칸이 공중 플랫폼처럼 보이지 않도록 지면 plate/floor band를 옅게 만들고 전장 투영을 더 낮춘다.",
+      "dependencies": ["feat-075", "feat-077"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-078-battlefield-contact-plane.md 추가. battle.gd가 전장 투영 y를 더 낮추고 floor band/ground plate/tile contact shadow alpha를 줄여 공중 플랫폼 착시를 완화했다. UI smoke가 보드 y 560~820, floor alpha <=0.06, plate alpha <=0.08을 검증한다. GUI 캡처 /private/tmp/guju-feat078-after 및 /private/tmp/guju-feat078-after-battle 확인, ./init.sh 카드 22개 / 단위 테스트 3043/3043 green."
     }
   ]
 }

@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-078 배치 필드 접지감 재수정
+배치 보드 뒤의 큰 어두운 plate가 공중 플랫폼처럼 보이고, 유닛이 필드 뒤에서 나타나는 듯한 착시를 더 줄였다.
+- **전장 투영 하향** — `battle.gd`의 view origin/scale을 다시 조정해 첫 보드 중심이 전경 지면 영역에 더 낮게 놓이게 했다.
+- **plate/floor 약화** — `battlefield_floor_band`와 `battlefield_ground_plate`의 범위와 alpha를 크게 낮춰 큰 직선 판이 아니라 지면 톤 보정과 접지 얼룩으로만 읽히게 했다.
+- **타일 접지 재조정** — `battlefield_tile_contact` shadow의 offset/alpha를 낮추고 빈 타일 modulate를 줄여 초록 타일이 드롭섀도 달린 공중판처럼 보이지 않게 했다.
+- **검증** — `test_unit_walk_visuals.gd`가 보드 y 범위(560~820)와 세로 간격을 검증하고, `tools/ui_feedback_smoke.gd`가 floor alpha <=0.06, plate alpha <=0.08을 확인한다. GUI 캡처(`/private/tmp/guju-feat078-after`, `/private/tmp/guju-feat078-after-battle`)로 첫 보드와 유닛 다수 배치 화면을 확인했다. `./init.sh` 카드 22개, 단위 테스트 3043/3043 green.
+
 ## 2026-06-06 — feat-077 전투 첫 화면 지면/깊이 재보정
 배치 보드 9칸이 배경 위에 떠 있는 UI처럼 보이고, 교전 유닛이 별도 깊이에서 나타나는 느낌을 더 줄이도록 전장 바닥 맥락을 보강했다.
 - **배경 지면 밴드** — `battle.gd`가 배경 레이어에 `battlefield_floor_band` 메타가 있는 넓은 바닥 폴리곤을 렌더해 배치 보드 뒤를 받친다.

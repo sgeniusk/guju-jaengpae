@@ -591,17 +591,23 @@ func _assert_battlefield_ground_plane(battle: Node) -> int:
 	var floor_band_count := _count_bool_meta(battle._background_layer, &"battlefield_floor_band")
 	if floor_band_count < 1:
 		errors += _fail("전장 배경 지면 밴드 누락")
+	var max_floor_alpha := _max_polygon_meta_alpha(battle._background_layer, &"battlefield_floor_band")
+	if max_floor_alpha > 0.06:
+		errors += _fail("전장 지면 밴드가 너무 진해 공중 plate처럼 보임: alpha=%.2f" % max_floor_alpha)
+	var max_plate_alpha := _max_polygon_meta_alpha(battle._iso_base_layer, &"battlefield_ground_plate")
+	if max_plate_alpha > 0.08:
+		errors += _fail("전장 지면 plate가 너무 진해 필드판처럼 보임: alpha=%.2f" % max_plate_alpha)
 	var depth_lane_count := _count_bool_meta(battle._background_layer, &"battlefield_depth_lane")
 	if depth_lane_count < BattleSim.COL_COUNT:
 		errors += _fail("전장 진군 레인 부족: %d/%d" % [depth_lane_count, BattleSim.COL_COUNT])
-	if min_y < 500.0:
+	if min_y < 560.0:
 		errors += _fail("전장 보드가 지면 밴드보다 위에 있음: min_y=%.1f" % min_y)
 	if max_y > 820.0:
 		errors += _fail("전장 보드가 하단 HUD와 겹칠 위험: max_y=%.1f" % max_y)
 	y_values.sort()
 	for i in range(1, y_values.size()):
 		var gap := float(y_values[i]) - float(y_values[i - 1])
-		if gap > 108.0:
+		if gap > 104.0:
 			errors += _fail("전장 타일 세로 간격 과다: gap=%.1f" % gap)
 	return errors
 
@@ -753,6 +759,16 @@ func _count_bool_meta(node: Node, key: StringName) -> int:
 	for child in node.get_children():
 		count += _count_bool_meta(child, key)
 	return count
+
+func _max_polygon_meta_alpha(node: Node, key: StringName) -> float:
+	if node == null:
+		return 0.0
+	var max_alpha := 0.0
+	if bool(node.get_meta(key, false)) and node is Polygon2D:
+		max_alpha = maxf(max_alpha, (node as Polygon2D).color.a)
+	for child in node.get_children():
+		max_alpha = maxf(max_alpha, _max_polygon_meta_alpha(child, key))
+	return max_alpha
 
 func _controls(node: Node) -> Array[Control]:
 	var out: Array[Control] = []

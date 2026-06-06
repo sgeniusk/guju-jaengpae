@@ -22,9 +22,9 @@ const _FormationTactics := preload("res://scripts/run/formation_tactics.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
 
-const VIEW_ORIGIN := Vector2(520.0, 410.0)
+const VIEW_ORIGIN := Vector2(520.0, 486.0)
 const VIEW_SCALE_X := 1.28
-const VIEW_SCALE_Y := 0.68
+const VIEW_SCALE_Y := 0.62
 const ISO_HALF_W := 96.0
 const ISO_HALF_H := 48.0
 const TILE_TEXTURE_SCALE := 0.75
@@ -585,16 +585,16 @@ func _add_battlefield_floor_context(centers: Array) -> void:
 	var max_x := float(bounds.get("max_x", 0.0))
 	var min_y := float(bounds.get("min_y", 0.0))
 	var max_y := float(bounds.get("max_y", 0.0))
-	var left := maxf(80.0, min_x - 560.0)
-	var right := minf(1880.0, max_x + 560.0)
+	var left := maxf(360.0, min_x - 300.0)
+	var right := minf(1500.0, max_x + 420.0)
 	var floor_band := Polygon2D.new()
 	floor_band.name = "BattlefieldFloorBand"
 	floor_band.set_meta(&"battlefield_floor_band", true)
 	floor_band.polygon = PackedVector2Array([
-		Vector2(left, min_y - 78.0),
-		Vector2(right, min_y - 124.0),
-		Vector2(right + 110.0, max_y + 236.0),
-		Vector2(left - 80.0, max_y + 272.0),
+		Vector2(left + 24.0, min_y - 34.0),
+		Vector2(right - 46.0, min_y - 76.0),
+		Vector2(right + 86.0, max_y + 174.0),
+		Vector2(left - 64.0, max_y + 208.0),
 	])
 	floor_band.color = _battlefield_floor_band_color()
 	floor_band.z_index = BACKGROUND_FLOOR_BAND_Z
@@ -603,10 +603,10 @@ func _add_battlefield_floor_context(centers: Array) -> void:
 	combat_floor.name = "BattlefieldCombatFloor"
 	combat_floor.set_meta(&"battlefield_floor_band", true)
 	combat_floor.polygon = PackedVector2Array([
-		Vector2(left + 40.0, min_y + 36.0),
-		Vector2(right + 40.0, min_y + 4.0),
-		Vector2(right + 70.0, max_y + 126.0),
-		Vector2(left + 10.0, max_y + 154.0),
+		Vector2(left + 70.0, min_y + 62.0),
+		Vector2(right + 4.0, min_y + 28.0),
+		Vector2(right + 44.0, max_y + 104.0),
+		Vector2(left + 30.0, max_y + 132.0),
 	])
 	combat_floor.color = _battlefield_combat_floor_color()
 	combat_floor.z_index = BACKGROUND_FLOOR_BAND_Z + 1
@@ -664,17 +664,21 @@ func _add_battlefield_ground_plate(centers: Array) -> void:
 	var min_y := float(bounds.get("min_y", 0.0))
 	var max_y := float(bounds.get("max_y", 0.0))
 	var polygon := PackedVector2Array([
-		Vector2(min_x - ISO_HALF_W * 1.65, min_y + ISO_HALF_H * 0.15),
-		Vector2(max_x + ISO_HALF_W * 1.75, min_y + ISO_HALF_H * 1.10),
-		Vector2(max_x + ISO_HALF_W * 0.95, max_y + ISO_HALF_H * 2.20),
-		Vector2(min_x - ISO_HALF_W * 1.75, max_y + ISO_HALF_H * 1.40),
+		Vector2(min_x - ISO_HALF_W * 1.28, min_y + ISO_HALF_H * 0.62),
+		Vector2(min_x + ISO_HALF_W * 0.42, min_y + ISO_HALF_H * 0.18),
+		Vector2(max_x + ISO_HALF_W * 1.22, min_y + ISO_HALF_H * 0.62),
+		Vector2(max_x + ISO_HALF_W * 1.56, max_y + ISO_HALF_H * 0.82),
+		Vector2(max_x + ISO_HALF_W * 0.88, max_y + ISO_HALF_H * 1.46),
+		Vector2(min_x + ISO_HALF_W * 0.12, max_y + ISO_HALF_H * 1.78),
+		Vector2(min_x - ISO_HALF_W * 1.42, max_y + ISO_HALF_H * 1.12),
+		Vector2(min_x - ISO_HALF_W * 1.58, min_y + ISO_HALF_H * 1.02),
 	])
 	var shadow := Polygon2D.new()
 	shadow.name = "BattlefieldGroundShadow"
 	shadow.set_meta(&"battlefield_ground_plate", true)
 	shadow.polygon = polygon
-	shadow.position = Vector2(0.0, 20.0)
-	shadow.color = Color(0.02, 0.01, 0.0, 0.34)
+	shadow.position = Vector2(0.0, 14.0)
+	shadow.color = Color(0.02, 0.01, 0.0, 0.055)
 	shadow.z_index = FIELD_GROUND_SHADOW_Z
 	_iso_base_layer.add_child(shadow)
 	var plate := Polygon2D.new()
@@ -687,19 +691,19 @@ func _add_battlefield_ground_plate(centers: Array) -> void:
 
 func _battlefield_ground_plate_color() -> Color:
 	var ambient: Color = _theme.get("ambient", Color.WHITE)
-	var base := Color(0.14, 0.085, 0.045, 0.68)
-	return base.lerp(Color(ambient.r, ambient.g, ambient.b, 0.68), 0.10)
+	var base := Color(0.20, 0.15, 0.09, 0.055)
+	return base.lerp(Color(ambient.r, ambient.g, ambient.b, 0.055), 0.12)
 
 func _battlefield_floor_band_color() -> Color:
 	var ambient: Color = _theme.get("ambient", Color.WHITE)
-	var base := Color(0.12, 0.07, 0.035, 0.42)
-	var tint := Color(ambient.r * 0.18, ambient.g * 0.16, ambient.b * 0.12, 0.42)
+	var base := Color(0.16, 0.12, 0.075, 0.035)
+	var tint := Color(ambient.r * 0.18, ambient.g * 0.16, ambient.b * 0.12, 0.035)
 	return base.lerp(tint, 0.22)
 
 func _battlefield_combat_floor_color() -> Color:
 	var ambient: Color = _theme.get("ambient", Color.WHITE)
-	var base := Color(0.03, 0.018, 0.01, 0.24)
-	var tint := Color(ambient.r * 0.10, ambient.g * 0.09, ambient.b * 0.08, 0.24)
+	var base := Color(0.10, 0.075, 0.048, 0.025)
+	var tint := Color(ambient.r * 0.10, ambient.g * 0.09, ambient.b * 0.08, 0.025)
 	return base.lerp(tint, 0.12)
 
 func _battlefield_depth_lane_color(lane: int) -> Color:
@@ -718,8 +722,8 @@ func _make_tile_contact_shadow(center: Vector2) -> Polygon2D:
 	shadow.name = "TileContactShadow"
 	shadow.set_meta(&"battlefield_tile_contact", true)
 	shadow.polygon = _diamond_points()
-	shadow.position = center + Vector2(0.0, 10.0)
-	shadow.color = Color(0.02, 0.01, 0.0, 0.22)
+	shadow.position = center + Vector2(0.0, 6.0)
+	shadow.color = Color(0.02, 0.01, 0.0, 0.11)
 	shadow.z_index = FIELD_TILE_SHADOW_Z
 	return shadow
 
@@ -1090,14 +1094,14 @@ func _empty_tile_state(_block_key: String, preview: Dictionary) -> Dictionary:
 
 func _empty_tile_sprite_modulate(preview: Dictionary) -> Color:
 	if not RunManager.has_castle():
-		return Color(1.24, 0.92, 0.54, 0.92)
+		return Color(1.04, 0.86, 0.56, 0.72)
 	if _selected_hand_index < 0:
-		return Color(0.86, 1.0, 0.90, 0.58)
+		return Color(0.72, 0.88, 0.72, 0.42)
 	if not preview.is_empty():
-		return Color(0.82, 1.24, 0.62, 1.0)
+		return Color(0.78, 1.04, 0.60, 0.74)
 	if not RunManager.can_place_hand_card(_selected_hand_index):
-		return Color(0.78, 0.76, 0.68, 0.52)
-	return Color(0.78, 1.18, 0.70, 0.86)
+		return Color(0.74, 0.72, 0.66, 0.38)
+	return Color(0.70, 0.92, 0.60, 0.58)
 
 func _find_army_unit_at_block(army: Array, block_key: String) -> BattleUnit:
 	var parts := block_key.split(":")
