@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-061 전투 결과 복귀 안내
+전투 결과 화면에서 현재 런을 계속하는 경로와 현재 런을 끝내고 새 런으로 돌아가는 경로를 더 분명히 구분했다.
+- **BattleOutcomeGuide helper** — `scripts/battle/battle_outcome_guide.gd`가 패배, 최종 승리, 일반 승리의 `런 종료`/`런 계속` 문구와 새 런/다음 스테이지 tooltip을 순수 계산한다.
+- **결과 오버레이 안내** — `battle.gd`가 결과 패널에 `런 종료 — 성이 함락되었습니다`, `런 종료 — 구주 정복 완료`, `런 계속 — 전리품을 고르고 런맵으로 복귀` 안내를 표시한다.
+- **버튼 경로 명시** — `다음 스테이지로` tooltip은 현재 런을 유지한다고 말하고, `군주 선택으로 새 런` tooltip은 완료 기록 보존 또는 현재 런 포기를 명시한다.
+- **검증** — `test_battle_outcome_guide.gd`, `tools/battle_result_smoke.gd`, `tools/ui_feedback_smoke.gd`가 결과 안내와 tooltip을 검증한다. `./init.sh` 카드 22개, 단위 테스트 2890/2890 green.
+
 ## 2026-06-06 — feat-060 상점 손패 정리 안내
 상점에서 카드를 산 뒤 현재 손패가 늘어나도 다음 전투는 다시 3장 후보 중 1장을 쓰는 구조가 보이도록 상점 안내를 보강했다.
 - **ShopHandSummary helper** — `scripts/run/shop_hand_summary.gd`가 현재 상점 손패 수, 다음 전투 후보 수, refresh pending 여부를 받아 `다음 전투 손패 — 후보 3장 중 1장`과 `상점 손패 4장 → 전투 후보 3장` 같은 문구를 순수 계산한다.

@@ -11,8 +11,8 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var errors := 0
-	errors += await _result_case(3, BattleSim.Result.PLAYER_LOSE, "defeat", ["런 실패", "군주 선택으로 새 런"], ["전리품", "다음 스테이지로", "런 승리"])
-	errors += await _result_case(15, BattleSim.Result.PLAYER_WIN, "victory", ["구주 정복!", "런 승리 — 구주 정복", "군주 선택으로 새 런"], ["전리품", "다음 스테이지로"])
+	errors += await _result_case(3, BattleSim.Result.PLAYER_LOSE, "defeat", ["런 종료 — 성이 함락되었습니다", "런 실패", "군주 선택으로 새 런"], ["전리품", "다음 스테이지로", "런 승리"])
+	errors += await _result_case(15, BattleSim.Result.PLAYER_WIN, "victory", ["런 종료 — 구주 정복 완료", "구주 정복!", "런 승리 — 구주 정복", "군주 선택으로 새 런"], ["전리품", "다음 스테이지로"])
 	if errors == 0:
 		print("✅ 전투 결과 화면 스모크 통과")
 		quit(0)
@@ -52,12 +52,15 @@ func _result_case(stage: int, sim_result: int, run_result: String, expected: Arr
 	if not bool(outcome.get("run_complete", false)):
 		errors += _fail("stage %d 결과가 run_complete로 닫히지 않음" % stage)
 	var texts := _collect_texts(battle)
+	var tooltips := _collect_tooltips(battle)
 	for text in expected:
 		if not _has_text_containing(texts, String(text)):
 			errors += _fail("stage %d 결과 화면 누락: %s" % [stage, String(text)])
 	for text in forbidden:
 		if _has_text_containing(texts, String(text)):
 			errors += _fail("stage %d 결과 화면 금지 문구 노출: %s" % [stage, String(text)])
+	if not _has_text_containing(tooltips, "프로필에 남습니다"):
+		errors += _fail("stage %d 새 런 버튼 tooltip 누락" % stage)
 	battle.queue_free()
 	await _frames(2)
 	if errors == 0:
@@ -82,6 +85,16 @@ func _collect_texts(node: Node) -> Array[String]:
 		out.append((node as Button).text)
 	for child in node.get_children():
 		out.append_array(_collect_texts(child))
+	return out
+
+func _collect_tooltips(node: Node) -> Array[String]:
+	var out: Array[String] = []
+	if node is Control:
+		var tooltip := (node as Control).tooltip_text
+		if not tooltip.is_empty():
+			out.append(tooltip)
+	for child in node.get_children():
+		out.append_array(_collect_tooltips(child))
 	return out
 
 func _has_text_containing(texts: Array[String], needle: String) -> bool:

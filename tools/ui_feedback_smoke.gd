@@ -331,6 +331,7 @@ func _battle_reward_case() -> int:
 	battle._end_battle()
 	await _frames(8)
 	var errors := 0
+	errors += _assert_any_text(battle, "런 계속 — 전리품을 고르고 런맵으로 복귀", "보상 화면 런 계속 안내")
 	errors += _assert_any_text(battle, "전리품 — 한 장을 고르세요", "보상 선택 제목")
 	errors += _assert_any_text(battle, "카드 버튼을 누르면", "보상 선택 행동 안내")
 	errors += _assert_button_text(battle, "선택 —", "보상 선택 버튼")
@@ -345,8 +346,10 @@ func _battle_reward_case() -> int:
 	errors += _assert_any_text(battle, "손패 3장 중 1장", "보상 후 다음 전투 준비 문구")
 	errors += _assert_any_text(battle, "다음 배치 손패", "보상 후 다음 배치 손패 안내")
 	errors += _assert_button_text(battle, "다음 스테이지로 — 스테이지 2 — 전투", "보상 후 다음 스테이지 버튼")
+	errors += _assert_any_tooltip(battle, "현재 런을 유지한 채", "보상 후 다음 스테이지 유지 tooltip")
 	errors += _assert_any_tooltip(battle, "런맵에서 전투 시작", "보상 후 다음 스테이지 tooltip")
 	errors += _assert_any_tooltip(battle, "드로우 더미", "보상 후 다음 배치 손패 tooltip")
+	errors += _assert_any_tooltip(battle, "현재 런을 포기", "보상 후 새 런 tooltip")
 	battle.queue_free()
 	await _frames(2)
 	if errors == 0:

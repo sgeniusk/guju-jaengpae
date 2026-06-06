@@ -16,6 +16,7 @@ const _FormationRenderer := preload("res://scripts/battle/formation_renderer.gd"
 const _BattleFeel := preload("res://scripts/battle/battle_feel.gd")
 const _BattleCommandFeedback := preload("res://scripts/battle/battle_command_feedback.gd")
 const _BattleHitFeedback := preload("res://scripts/battle/battle_hit_feedback.gd")
+const _BattleOutcomeGuide := preload("res://scripts/battle/battle_outcome_guide.gd")
 const _FormationTactics := preload("res://scripts/run/formation_tactics.gd")
 const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const LORD_SELECT_SCENE := "res://scenes/screens/lord_select.tscn"
@@ -2151,13 +2152,14 @@ func _end_battle() -> void:
 func _build_outcome_ui(win: bool) -> void:
 	var box := _new_overlay_box()
 	_add_profile_result_summary(box, _battle_outcome)
+	_add_outcome_guide(box)
 	if not win:
 		var fail := Label.new()
 		fail.text = "런 실패"
 		fail.add_theme_font_size_override("font_size", 24)
 		fail.add_theme_color_override("font_color", Color(1.0, 0.62, 0.62))
 		box.add_child(fail)
-		box.add_child(_make_button("군주 선택으로 새 런", _restart_run))
+		box.add_child(_make_restart_button())
 		return
 	if bool(_battle_outcome.get("run_victory", false)):
 		var clear := Label.new()
@@ -2165,7 +2167,7 @@ func _build_outcome_ui(win: bool) -> void:
 		clear.add_theme_font_size_override("font_size", 24)
 		clear.add_theme_color_override("font_color", Color(0.72, 1.0, 0.78))
 		box.add_child(clear)
-		box.add_child(_make_button("군주 선택으로 새 런", _restart_run))
+		box.add_child(_make_restart_button())
 		return
 	var candidates := RunManager.reward_candidates(RunManager.reward_choice_count(3))
 	_add_expand_reward_notice(box)
@@ -2249,17 +2251,39 @@ func _pick_reward(id: StringName) -> void:
 func _add_next_stage_button(box: VBoxContainer) -> void:
 	_add_next_stage_preview(box)
 	var next_stage := RunManager.stage_index()
+	var next_stage_label := _StageCadence.stage_label(next_stage)
 	var next_button := _make_button("다음 스테이지로 — %s (보드 %d장 / 손패 %d장)" % [
-		_StageCadence.stage_label(next_stage),
+		next_stage_label,
 		RunManager.get_deck().size(),
 		RunManager.get_hand().size(),
 	], _go_to_run_map)
-	next_button.tooltip_text = "%s\n%s" % [
-		_StageCadence.stage_prep_label(next_stage),
-		_StageCadence.stage_prep_tooltip(next_stage) + "\n" + _next_deploy_hand_tooltip(),
+	next_button.tooltip_text = "%s\n%s\n%s" % [
+		_BattleOutcomeGuide.next_stage_tooltip(next_stage_label),
+		_StageCadence.stage_prep_tooltip(next_stage),
+		_next_deploy_hand_tooltip(),
 	]
 	box.add_child(next_button)
-	box.add_child(_make_button("군주 선택으로 새 런", _restart_run))
+	box.add_child(_make_restart_button())
+
+func _add_outcome_guide(box: VBoxContainer) -> void:
+	var summary := Label.new()
+	summary.text = _BattleOutcomeGuide.summary_line(_battle_outcome)
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary.add_theme_font_size_override("font_size", 20)
+	summary.add_theme_color_override("font_color", Color(0.96, 0.90, 0.74))
+	box.add_child(summary)
+
+	var action := Label.new()
+	action.text = _BattleOutcomeGuide.action_line(_battle_outcome)
+	action.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	action.add_theme_font_size_override("font_size", 18)
+	action.add_theme_color_override("font_color", Color(0.86, 0.90, 1.0))
+	box.add_child(action)
+
+func _make_restart_button() -> Button:
+	var button := _make_button("군주 선택으로 새 런", _restart_run)
+	button.tooltip_text = _BattleOutcomeGuide.restart_tooltip(_battle_outcome)
+	return button
 
 func _add_next_stage_preview(box: VBoxContainer) -> void:
 	var next_stage := RunManager.stage_index()
