@@ -4,10 +4,11 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-06
-**활성 피처** — feat-066 전투 유닛 접지감 보강 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 분대/호위/장수 visual이 지면에 서 있는 느낌을 강화하는 작업이다.
+**활성 피처** — feat-067 첫 전투 보드 가독성 polish 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 첫 배치 보드가 성 후보, 손패 선택, 계략 버튼, 배치 가능 상태를 직접 말하게 하는 안전 UX 작업이다.
 
 ## 완료
+- [x] **feat-067 첫 전투 보드 가독성 polish** — `docs/specs/feat-067-first-board-readability.md`를 추가했다. 첫 배치 보드 빈 타일이 성 선택 전 `성 후보`, 성 선택 후 `손패 선택`, 계략 선택 시 `계략 버튼`, 유닛/건물 선택 시 `배치 가능` label과 tooltip을 표시한다. UI smoke가 4상태를 검증한다. `./init.sh` 카드 22개 / 2982 단언 green.
 - [x] **feat-066 전투 유닛 접지감 보강** — `docs/specs/feat-066-unit-grounding.md`를 추가했다. battle visual이 root shadow에 `ground_shadow` meta를 붙이고, 분대/호위 병사와 장수 본체 발밑에 작은 shadow를 생성한다. 장수 본체 오프셋은 -18px에서 -10px로 낮춰 공중에 뜬 느낌을 줄였다. UI smoke가 첫 수동 전투의 ground shadow meta 생성을 검증한다. `./init.sh` 카드 22개 / 2982 단언 green.
 - [x] **feat-065 전투 화면 정보 밀도 정리** — `docs/specs/feat-065-battle-status-ribbon.md`와 `BattleHudState.combat_summary`를 추가했다. battle top-center HUD가 `전황 — 배치 준비/교전`, stage, 파도, 아군/적 visible soldiers, 속도/정지/auto 상태와 병력 기준 tooltip을 표시한다. `tools/ui_feedback_smoke.gd`가 배치와 첫 교전 전황 요약을 검증한다. `./init.sh` 카드 22개 / 2982 단언 green.
 - [x] **feat-064 장기런 결과 요약 UX** — `docs/specs/feat-064-run-result-summary.md`와 `RunResultSummary`를 추가했다. battle 결과 오버레이가 run_complete일 때 `런 결산 — 승리/패배`, 스테이지, 점수, 군세, 최고 Lv, 골드, 칙령/보패/손패/드로우 요약을 표시한다. `tools/battle_result_smoke.gd`가 패배/최종승리 결과 화면의 결산 문구와 tooltip을 검증한다. `./init.sh` 카드 22개 / 2972 단언 green.
@@ -25,7 +26,7 @@
 
 ## 진행 중
 - [ ] 수동 플레이 감각 확인 — 첫 손패 장수+병종, 성 위치 선택, 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령, stage 4 상점, 전리품 추천 문구를 사용자 플레이로 확인한다.
-- [ ] 완성판 안전 개선 계속 — 다음 후보는 수동 플레이 시각 검증 갱신, 결과 화면 시각 polish, 첫 전투 보드 가독성 polish다.
+- [ ] 완성판 안전 개선 계속 — 다음 후보는 수동 플레이 시각 검증 갱신, 결과 화면 시각 polish, 보드/전투 화면 스크린샷 QA 자동화 갱신이다.
 - [ ] Codex goal은 완성판까지 계속 활성이다. MVP 이후 핵심 루프 재미와 안정성을 단계적으로 개선한다.
 
 ## 다음
@@ -40,7 +41,7 @@
 - [ ] Godot 4.6.3 macOS headless 종료 시 resource leak 경고가 남지만 종료 코드는 0이고 테스트 실패는 아니다.
 
 ## 이번 세션 수정 파일
-- `docs/specs/feat-066-unit-grounding.md`
+- `docs/specs/feat-067-first-board-readability.md`
 - `scripts/battle/battle.gd`
 - `tools/ui_feedback_smoke.gd`
 - `feature_list.json`
@@ -49,6 +50,15 @@
 - `CHANGELOG.md`
 
 ## 직전 피처 수정 파일
+- `docs/specs/feat-066-unit-grounding.md`
+- `scripts/battle/battle.gd`
+- `tools/ui_feedback_smoke.gd`
+- `feature_list.json`
+- `progress.md`
+- `session-handoff.md`
+- `CHANGELOG.md`
+
+## 이전 피처 수정 파일
 - `docs/specs/feat-065-battle-status-ribbon.md`
 - `scripts/battle/battle.gd`
 - `scripts/battle/hud_state.gd`
@@ -60,6 +70,9 @@
 - `CHANGELOG.md`
 
 ## 검증 증거
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-067-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-067) — 첫 보드 `성 후보`, `손패 선택`, `계략 버튼`, `배치 가능` label/tooltip 포함 UI smoke green.
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-067-unit.log --script res://test/runner.gd` (2026-06-06, feat-067) — 단위 테스트 2982/2982 green.
+- [x] `./init.sh` (2026-06-06, feat-067) — 카드 22개 검증 OK, 첫 보드 가독성 UI smoke 포함, 단위 테스트 2982/2982 green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-066-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-066) — 첫 수동 전투 ground shadow meta 노드 생성 포함 UI smoke green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-066-unit.log --script res://test/runner.gd` (2026-06-06, feat-066) — 단위 테스트 2982/2982 green.
 - [x] `./init.sh` (2026-06-06, feat-066) — 카드 22개 검증 OK, ground shadow UI smoke 포함, 단위 테스트 2982/2982 green.
@@ -77,4 +90,4 @@
 - [x] `./init.sh` (2026-06-06, feat-062) — 카드 22개 검증 OK, run_map/lord_select/battle/보스/결과/UI/저장/플레이테스트/장기런 스모크 포함, 단위 테스트 2920/2920 green.
 
 ## 다음 세션 메모
-feat-066 done. 다음 안전 피처는 수동 플레이 시각 검증 갱신, 결과 화면 시각 polish, 첫 전투 보드 가독성 polish가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+feat-067 done. 다음 안전 피처는 수동 플레이 시각 검증 갱신, 결과 화면 시각 polish, 보드/전투 화면 스크린샷 QA 자동화 갱신이 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.

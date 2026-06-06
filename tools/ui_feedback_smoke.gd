@@ -194,6 +194,7 @@ func _battle_deploy_case() -> int:
 	errors += _assert_button_tooltip(battle, "계략 발동", "손패에서 계략", "계략 버튼 기본 tooltip")
 	errors += _assert_any_text(battle, "전황 — 배치 준비", "전투 배치 전황 요약")
 	errors += _assert_any_tooltip(battle, "병력 수 기준", "전투 배치 전황 tooltip")
+	errors += _assert_tile_label_and_tooltip(battle, "1:1", "성 후보", "성 위치가 됩니다", "첫 전투 성 후보 타일")
 	errors += _assert_button_tooltip(battle, "우물", "+10골드", "우물 버튼 tooltip")
 	errors += _assert_button_tooltip(battle, "교전 시작", "성 위치", "교전 시작 비활성 tooltip")
 	errors += _assert_button_tooltip(battle, "계략 발동", "계략 발동 버튼", "계략 손패 tooltip")
@@ -242,8 +243,10 @@ func _battle_manual_first_play_case() -> int:
 		errors += _fail("수동 첫 플레이 성 선택 실패: %s" % run_manager.get_castle_key())
 	if battle._hint_label.text.find("성 위치") < 0:
 		errors += _fail("수동 첫 플레이 성 선택 힌트 누락: %s" % battle._hint_label.text)
+	errors += _assert_tile_label_and_tooltip(battle, "0:0", "손패 선택", "손패 3장", "성 선택 후 손패 선택 타일")
 	battle._select_hand(0)
 	await _frames(2)
+	errors += _assert_tile_label_and_tooltip(battle, "0:0", "계략 버튼", "계략은 타일", "계략 선택 후 타일 안내")
 	battle._on_tile_pressed("0:0")
 	await _frames(2)
 	if run_manager.state.board.size() != 0:
@@ -254,6 +257,7 @@ func _battle_manual_first_play_case() -> int:
 		errors += _fail("계략 타일 거부 힌트 누락: %s" % battle._hint_label.text)
 	battle._select_hand(1)
 	await _frames(2)
+	errors += _assert_tile_label_and_tooltip(battle, "0:0", "배치 가능", "보병 배치", "병종 선택 후 배치 가능 타일")
 	battle._on_tile_pressed("0:0")
 	await _frames(8)
 	errors += _assert_manual_first_play_started(battle, run_manager)

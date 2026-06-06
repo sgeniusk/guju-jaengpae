@@ -821,25 +821,25 @@ func _refresh_board_tiles() -> void:
 				area.input_pickable = false
 		else:
 			var preview := _placement_preview_for_block(key)
+			var empty_state := _empty_tile_state(key, preview)
 			if label != null:
-				label.text = String(preview.get("label", ""))
-				if _phase != Phase.DEPLOY:
-					label.tooltip_text = ""
-				elif not RunManager.has_castle():
-					label.tooltip_text = "이 빈 타일을 성 위치로 선택합니다."
-				elif not preview.is_empty():
-					label.tooltip_text = String(preview.get("tooltip", ""))
-				else:
-					label.tooltip_text = "선택한 손패 1장을 이 빈 타일에 배치합니다."
+				label.text = String(empty_state.get("label", ""))
+				label.tooltip_text = String(empty_state.get("tooltip", ""))
 			if poly != null:
 				if _phase != Phase.DEPLOY:
 					poly.color = Color(0.17, 0.27, 0.17, 0.0)
 				elif not preview.is_empty():
 					poly.color = Color(0.40, 0.54, 0.20, 0.98)
+				elif not RunManager.has_castle():
+					poly.color = Color(0.54, 0.36, 0.18, 0.98)
+				elif _selected_hand_index < 0:
+					poly.color = Color(0.23, 0.34, 0.30, 0.90)
+				elif not RunManager.can_place_hand_card(_selected_hand_index):
+					poly.color = Color(0.32, 0.30, 0.25, 0.76)
 				else:
 					poly.color = Color(0.25, 0.42, 0.28, 0.92)
 			if sprite != null:
-				sprite.modulate = Color(1.0, 1.0, 1.0, 0.5) if _phase == Phase.DEPLOY else Color(1.0, 1.0, 1.0, 0.0)
+				sprite.modulate = _empty_tile_sprite_modulate(preview) if _phase == Phase.DEPLOY else Color(1.0, 1.0, 1.0, 0.0)
 			if area != null:
 				area.input_pickable = _phase == Phase.DEPLOY
 
@@ -871,6 +871,59 @@ func _placement_preview_for_block(block_key: String) -> Dictionary:
 	var army := CardLibrary.catalog.build_board_army(board, _lord, RunManager.get_board_rows(), RunManager.get_edicts(), RunManager.get_castle_key(), RunManager.get_terrain_perk_id(), levels)
 	var unit := _find_army_unit_at_block(army, block_key)
 	return _FormationTactics.preview_for_unit(unit, army, card.display_name)
+
+func _empty_tile_state(_block_key: String, preview: Dictionary) -> Dictionary:
+	if _phase != Phase.DEPLOY:
+		return {"label": "", "tooltip": ""}
+	if not RunManager.has_castle():
+		return {
+			"label": "성 후보",
+			"tooltip": "성 후보 — 이 빈 타일을 클릭하면 성 위치가 됩니다.\n성 위치를 고른 뒤 손패 3장 중 1장을 배치합니다.",
+		}
+	if not RunManager.can_place_deploy_card():
+		return {"label": "", "tooltip": ""}
+	if _selected_hand_index < 0:
+		return {
+			"label": "손패 선택",
+			"tooltip": "손패 선택 — 왼쪽 손패 3장 중 한 장을 고른 뒤 이 빈 타일에 배치합니다.",
+		}
+	if RunManager.can_cast_scheme_from_hand(_selected_hand_index):
+		return {
+			"label": "계략 버튼",
+			"tooltip": "계략 버튼 — 계략은 타일에 놓지 않고 왼쪽 `계략 발동` 버튼으로 사용합니다.",
+		}
+	if RunManager.can_upgrade_from_hand(_selected_hand_index):
+		return {
+			"label": "증원 카드",
+			"tooltip": "증원 카드 — 이 카드는 기존 부대를 강화합니다. 빈 타일이 아니라 기존 부대 레벨이 오릅니다.",
+		}
+	if not RunManager.can_place_hand_card(_selected_hand_index):
+		return {
+			"label": "배치 불가",
+			"tooltip": "배치 불가 — 선택한 카드는 이 타일에 놓을 수 없습니다.",
+		}
+	if not preview.is_empty():
+		return {
+			"label": String(preview.get("label", "")),
+			"tooltip": String(preview.get("tooltip", "")),
+		}
+	var card := _selected_hand_card()
+	var card_name := card.display_name if card != null else "선택 카드"
+	return {
+		"label": "배치 가능",
+		"tooltip": "%s 배치 — 이 빈 타일에 놓으면 바로 교전합니다." % card_name,
+	}
+
+func _empty_tile_sprite_modulate(preview: Dictionary) -> Color:
+	if not RunManager.has_castle():
+		return Color(1.24, 0.92, 0.54, 0.92)
+	if _selected_hand_index < 0:
+		return Color(0.86, 1.0, 0.90, 0.58)
+	if not preview.is_empty():
+		return Color(0.82, 1.24, 0.62, 1.0)
+	if not RunManager.can_place_hand_card(_selected_hand_index):
+		return Color(0.78, 0.76, 0.68, 0.52)
+	return Color(0.78, 1.18, 0.70, 0.86)
 
 func _find_army_unit_at_block(army: Array, block_key: String) -> BattleUnit:
 	var parts := block_key.split(":")
