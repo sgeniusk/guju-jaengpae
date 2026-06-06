@@ -16,6 +16,7 @@ func _run() -> void:
 	errors += await _lord_select_case()
 	errors += await _run_map_first_combat_case()
 	errors += await _run_map_shop_case()
+	errors += await _run_map_shop_low_gold_case()
 	errors += await _run_map_edict_case()
 	errors += await _run_map_event_case()
 	errors += await _battle_deploy_case()
@@ -93,6 +94,8 @@ func _run_map_shop_case() -> int:
 	errors += _assert_any_text(screen, "다음 흐름: 5 보스 -> 6 칙령 -> 7 정예", "상점 다음 흐름")
 	errors += _assert_any_tooltip(screen, "상점 떠나기", "상점 진행 리듬 tooltip")
 	errors += _assert_button_tooltip(screen, "상점 떠나기", "다음 스테이지", "상점 떠나기 tooltip")
+	errors += _assert_any_text(screen, "구매 가능", "상점 구매 가능 문구")
+	errors += _assert_any_tooltip(screen, "구매하면 남은 자금", "상점 구매 후 자금 tooltip")
 	errors += _assert_any_text(screen, "다음 전투 손패", "상점 다음 전투 손패 요약")
 	errors += _assert_any_tooltip(screen, "드로우 더미", "상점 손패 정리 tooltip")
 	errors += _assert_any_tooltip(screen, "손패 구매", "상점 카드 구매 경로 tooltip")
@@ -103,6 +106,8 @@ func _run_map_shop_case() -> int:
 	if screen.has_method("_on_shop_card_pressed"):
 		screen._on_shop_card_pressed(&"troop_infantry")
 		await _frames(4)
+		errors += _assert_any_text(screen, "구매 완료", "상점 구매 완료 문구")
+		errors += _assert_any_text(screen, "남은 자금", "상점 구매 후 남은 자금 문구")
 		errors += _assert_any_text(screen, "상점 손패 4장 → 전투 후보 3장", "구매 후 상점 손패 정리 문구")
 		errors += _assert_any_tooltip(screen, "현재 손패 4장", "구매 후 상점 손패 tooltip")
 	else:
@@ -111,6 +116,27 @@ func _run_map_shop_case() -> int:
 	await _frames(2)
 	if errors == 0:
 		print("  런맵 상점 tooltip OK")
+	return errors
+
+func _run_map_shop_low_gold_case() -> int:
+	var run_manager = _prepare_run_map_stage(4)
+	if run_manager == null:
+		return _fail("RunManager autoload 조회 실패")
+	run_manager.state.gold = 0
+	var screen = _instantiate_scene(RUN_MAP_SCENE_PATH)
+	if screen == null:
+		return _fail("run_map.tscn 저자금 상점 인스턴스 생성 실패")
+	root.add_child(screen)
+	await _frames(8)
+	var errors := 0
+	errors += _assert_any_text(screen, "자금 부족", "상점 자금 부족 문구")
+	errors += _assert_any_text(screen, "현재 0금", "상점 현재 자금 문구")
+	errors += _assert_any_tooltip(screen, "현재 자금 0금", "상점 자금 부족 tooltip")
+	errors += _assert_any_tooltip(screen, "더 필요", "상점 부족 금액 tooltip")
+	screen.queue_free()
+	await _frames(2)
+	if errors == 0:
+		print("  런맵 저자금 상점 안내 OK")
 	return errors
 
 func _run_map_edict_case() -> int:

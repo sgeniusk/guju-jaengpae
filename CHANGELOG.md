@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-063 상점 구매 피드백
+상점에서 구매 가능한 카드와 자금 부족 카드를 더 분명하게 구분하고, 구매 뒤 남은 자금과 다음 전투 손패 정리를 visible text로 남겼다.
+- **ShopPurchaseFeedback helper** — `scripts/run/shop_purchase_feedback.gd`가 구매 가능/자금 부족 상태, 구매 성공, 구매 실패 문구와 tooltip을 순수 계산한다.
+- **상점 카드 상태 줄** — `run_map.gd` 상점 카드가 `구매 가능 — N금, 구매 후 M금` 또는 `자금 부족 — N금 필요, 현재 M금`을 표시한다. tooltip도 현재 자금, 비용, 부족 금액 또는 남은 자금을 설명한다.
+- **구매 후 피드백** — 구매 성공 메시지는 `구매 완료`, 사용한 금액, 남은 자금, 다음 전투 후보 3장 정리를 함께 말한다.
+- **검증** — `test_shop_purchase_feedback.gd`가 helper 문구를 검증하고, `tools/ui_feedback_smoke.gd`가 고자금 상점, 저자금 상점, 구매 완료 문구를 확인한다. `./init.sh` 카드 22개, 단위 테스트 2946/2946 green.
+
 ## 2026-06-06 — feat-062 런맵 진행 리듬 안내
 런맵에서 현재 스테이지가 어떤 행동을 요구하고, 앞으로 어떤 노드가 이어지는지 바로 읽히도록 진행 리듬 안내를 추가했다.
 - **RunFlowSummary helper** — `scripts/run/run_flow_summary.gd`가 현재 stage의 준비 행동과 앞으로 3스테이지의 전투/칙령/상점/보스 리듬을 순수 계산한다.

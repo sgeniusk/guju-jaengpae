@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~062로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널→다음 배치 손패 미리보기→자동저장 슬롯 삭제 UX→상점 손패 정리 안내→전투 결과 복귀 안내→런맵 진행 리듬 안내까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2920 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~063으로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널→다음 배치 손패 미리보기→자동저장 슬롯 삭제 UX→상점 손패 정리 안내→전투 결과 복귀 안내→런맵 진행 리듬 안내→상점 구매 피드백까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2946 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -586,6 +586,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-062-run-flow-rhythm-guide.md 추가. RunFlowSummary가 현재 stage action과 다음 3스테이지 리듬을 순수 계산하고 run_map이 전투/칙령/상점/사건 화면에 `진행 리듬` 안내를 표시한다. UI smoke가 첫 전투와 상점 다음 흐름을 검증한다. ./init.sh 카드 22개 / 2920 단언 green."
+    },
+    {
+      "id": "feat-063",
+      "name": "상점 구매 피드백",
+      "description": "상점 카드마다 구매 가능/자금 부족 상태와 구매 후 남은 자금을 visible text와 tooltip으로 안내한다.",
+      "dependencies": ["feat-060", "feat-050"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-063-shop-purchase-feedback.md 추가. ShopPurchaseFeedback이 구매 가능, 자금 부족, 구매 성공/실패 문구를 순수 계산하고 run_map 상점 카드가 `구매 가능`/`자금 부족`, 구매 후 남은 자금과 다음 전투 후보 정리 안내를 표시한다. UI smoke가 고자금/저자금 상점과 구매 완료 문구를 검증한다. ./init.sh 카드 22개 / 2946 단언 green."
     }
   ]
 }

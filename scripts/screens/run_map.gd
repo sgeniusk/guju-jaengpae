@@ -11,6 +11,7 @@ const _ExportSmoke := preload("res://scripts/run/export_smoke.gd")
 const _RunPrepSummary := preload("res://scripts/run/run_prep_summary.gd")
 const _ShopHandSummary := preload("res://scripts/run/shop_hand_summary.gd")
 const _RunFlowSummary := preload("res://scripts/run/run_flow_summary.gd")
+const _ShopPurchaseFeedback := preload("res://scripts/run/shop_purchase_feedback.gd")
 
 var _root: VBoxContainer
 var _shop_status_message := ""
@@ -290,6 +291,15 @@ func _build_shop_panel() -> void:
 		cost_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cost_row.add_child(cost_label)
 
+		var purchase_status := Label.new()
+		purchase_status.text = _ShopPurchaseFeedback.availability_line(card, gold)
+		purchase_status.add_theme_font_size_override("font_size", 14)
+		purchase_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		purchase_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		purchase_status.modulate = Color(0.70, 1.0, 0.70) if can_afford else Color(1.0, 0.62, 0.48)
+		purchase_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		info_box.add_child(purchase_status)
+
 		# 설명 텍스트 — 아래쪽에 작게.
 		var desc_label := Label.new()
 		desc_label.text = card.description
@@ -450,6 +460,7 @@ func _add_run_flow_summary() -> void:
 func _shop_card_tooltip(card: CardData, can_afford: bool, choice_context: Dictionary) -> String:
 	var text := _CardUiText.tooltip(card)
 	text += "\n%s" % _CardChoiceAdvisor.tooltip_for_card(card, choice_context, _CardChoiceAdvisor.MODE_SHOP)
+	text += "\n%s" % _ShopPurchaseFeedback.availability_tooltip(card, RunManager.get_gold())
 	if not can_afford:
 		text += "\n골드가 부족합니다."
 	else:
@@ -476,12 +487,12 @@ func _run_export_first_battle_smoke() -> void:
 
 func _on_shop_card_pressed(id: StringName) -> void:
 	var card := CardLibrary.get_card(id)
-	var card_name := card.display_name if card != null else String(id)
+	var before_gold := RunManager.get_gold()
 	if RunManager.shop_purchase(id):
-		_shop_status_message = _CardUiText.acquisition_hint(card, card_name)
+		_shop_status_message = _ShopPurchaseFeedback.success_line(card, before_gold, RunManager.get_gold())
 		AudioManager.play_sfx(&"gold")
 	else:
-		_shop_status_message = "구매 실패 — %s" % card_name
+		_shop_status_message = _ShopPurchaseFeedback.failure_line(card, RunManager.get_gold())
 		AudioManager.play_sfx(&"defeat")
 	_render()
 
