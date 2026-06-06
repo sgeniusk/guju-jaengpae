@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-069 스크린샷 validator 속도 최적화
+PIL 없이 동작하는 screenshot bundle validator의 기본 경로를 빠른 PNG 검사로 바꿨다.
+- **fast PNG mode** — 기본 검증은 PNG signature/chunk/IHDR/IDAT, 최소 해상도, 압축 스트림 샘플 다양성을 확인한다.
+- **deep PNG mode 유지** — 기존 행 unfilter 기반 픽셀 복원 검사는 `--png-mode deep`으로 남겨 필요할 때 더 강한 검사를 실행할 수 있다.
+- **검증 속도 표시** — 성공 메시지가 사용한 PNG mode를 함께 출력해 fast/deep 결과를 구분한다.
+- **검증** — `/tmp/guju-feat-068-ui` 11장 기준 fast 0.18초, deep 32.67초 모두 통과. `./init.sh` 카드 22개, 단위 테스트 2983/2983 green.
+
 ## 2026-06-06 — feat-068 첫 보드 스크린샷 QA 갱신
 첫 전투 배치 보드의 핵심 4상태가 durable screenshot bundle에도 남도록 QA 하네스를 보강했다.
 - **첫 보드 전용 촬영** — `tools/shoot_first_board_states.gd`가 성 선택 전 `성 후보`, 성 선택 후 `손패 선택`, 계략 선택 후 `계략 버튼`, 병종 선택 후 `배치 가능` 상태를 차례로 PNG로 저장한다.

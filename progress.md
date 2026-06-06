@@ -4,10 +4,11 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-06
-**활성 피처** — feat-068 첫 보드 스크린샷 QA 갱신 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 첫 보드 상태가 UI smoke뿐 아니라 durable screenshot bundle에도 남도록 QA 자동화를 보강하는 작업이다.
+**활성 피처** — feat-069 스크린샷 validator 속도 최적화 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 screenshot bundle validator의 기본 경로를 빠르게 만들어 QA 반복 비용을 줄이는 작업이다.
 
 ## 완료
+- [x] **feat-069 스크린샷 validator 속도 최적화** — `docs/specs/feat-069-screenshot-validator-speed.md`를 추가했다. `tools/validate_screenshot_bundle.py` 기본 경로가 fast PNG mode로 바뀌어 PNG 구조, 해상도, 압축 스트림 샘플 다양성을 빠르게 검사한다. 기존 행 unfilter 픽셀 복원은 `--png-mode deep`으로 유지했다. `/tmp/guju-feat-068-ui` 11장 기준 fast 0.18초, deep 32.67초 통과. `./init.sh` 카드 22개 / 2983 단언 green.
 - [x] **feat-068 첫 보드 스크린샷 QA 갱신** — `docs/specs/feat-068-first-board-screenshot-qa.md`를 추가했다. `tools/shoot_first_board_states.gd`가 `성 후보`, `손패 선택`, `계략 버튼`, `배치 가능` 4상태 PNG를 생성하고, `shoot_ui_bundle.sh`와 `validate_screenshot_bundle.py`가 이를 요구한다. validator는 PIL 의존성을 제거하고 표준 라이브러리 PNG 검사로 바뀌었다. `/tmp/guju-feat-068-ui` 최소 bundle 11장 검증과 `./init.sh` 카드 22개 / 2983 단언 green.
 - [x] **feat-067 첫 전투 보드 가독성 polish** — `docs/specs/feat-067-first-board-readability.md`를 추가했다. 첫 배치 보드 빈 타일이 성 선택 전 `성 후보`, 성 선택 후 `손패 선택`, 계략 선택 시 `계략 버튼`, 유닛/건물 선택 시 `배치 가능` label과 tooltip을 표시한다. UI smoke가 4상태를 검증한다. `./init.sh` 카드 22개 / 2982 단언 green.
 - [x] **feat-066 전투 유닛 접지감 보강** — `docs/specs/feat-066-unit-grounding.md`를 추가했다. battle visual이 root shadow에 `ground_shadow` meta를 붙이고, 분대/호위 병사와 장수 본체 발밑에 작은 shadow를 생성한다. 장수 본체 오프셋은 -18px에서 -10px로 낮춰 공중에 뜬 느낌을 줄였다. UI smoke가 첫 수동 전투의 ground shadow meta 생성을 검증한다. `./init.sh` 카드 22개 / 2982 단언 green.
@@ -27,7 +28,7 @@
 
 ## 진행 중
 - [ ] 수동 플레이 감각 확인 — 첫 손패 장수+병종, 성 위치 선택, 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령, stage 4 상점, 전리품 추천 문구를 사용자 플레이로 확인한다.
-- [ ] 완성판 안전 개선 계속 — 다음 후보는 수동 플레이 시각 검증 갱신, 결과 화면 시각 polish, screenshot bundle full-run 시간 최적화다.
+- [ ] 완성판 안전 개선 계속 — 다음 후보는 결과 화면 시각 polish, 수동 플레이 시각 검증 갱신, 전투 화면 체감 polish다.
 - [ ] Codex goal은 완성판까지 계속 활성이다. MVP 이후 핵심 루프 재미와 안정성을 단계적으로 개선한다.
 
 ## 다음
@@ -42,6 +43,14 @@
 - [ ] Godot 4.6.3 macOS headless 종료 시 resource leak 경고가 남지만 종료 코드는 0이고 테스트 실패는 아니다.
 
 ## 이번 세션 수정 파일
+- `docs/specs/feat-069-screenshot-validator-speed.md`
+- `tools/validate_screenshot_bundle.py`
+- `feature_list.json`
+- `progress.md`
+- `session-handoff.md`
+- `CHANGELOG.md`
+
+## 직전 피처 수정 파일
 - `docs/specs/feat-068-first-board-screenshot-qa.md`
 - `tools/shoot_first_board_states.gd`
 - `tools/shoot_first_board_states.tscn`
@@ -53,7 +62,7 @@
 - `session-handoff.md`
 - `CHANGELOG.md`
 
-## 직전 피처 수정 파일
+## 이전 피처 수정 파일
 - `docs/specs/feat-067-first-board-readability.md`
 - `scripts/battle/battle.gd`
 - `tools/ui_feedback_smoke.gd`
@@ -62,7 +71,7 @@
 - `session-handoff.md`
 - `CHANGELOG.md`
 
-## 이전 피처 수정 파일
+## 더 이전 피처 수정 파일
 - `docs/specs/feat-066-unit-grounding.md`
 - `scripts/battle/battle.gd`
 - `tools/ui_feedback_smoke.gd`
@@ -71,18 +80,11 @@
 - `session-handoff.md`
 - `CHANGELOG.md`
 
-## 더 이전 피처 수정 파일
-- `docs/specs/feat-065-battle-status-ribbon.md`
-- `scripts/battle/battle.gd`
-- `scripts/battle/hud_state.gd`
-- `test/test_hud_state.gd`
-- `tools/ui_feedback_smoke.gd`
-- `feature_list.json`
-- `progress.md`
-- `session-handoff.md`
-- `CHANGELOG.md`
-
 ## 검증 증거
+- [x] `PYTHONPYCACHEPREFIX=/tmp/guju-pycache python3 -m py_compile tools/validate_screenshot_bundle.py` (2026-06-06, feat-069) — Python 문법 검사 통과.
+- [x] `/usr/bin/time -p python3 tools/validate_screenshot_bundle.py /tmp/guju-feat-068-ui --lords lord_liubei --flow-stages 1 --battle-stage 1 --shop-stage 4 --result-lord lord_liubei --result-loss-stage 3 --result-win-stage 15 --first-board-lord lord_liubei --first-board-stage 1` (2026-06-06, feat-069) — fast PNG mode 11장 검증 통과, real 0.18s.
+- [x] `/usr/bin/time -p python3 tools/validate_screenshot_bundle.py /tmp/guju-feat-068-ui --lords lord_liubei --flow-stages 1 --battle-stage 1 --shop-stage 4 --result-lord lord_liubei --result-loss-stage 3 --result-win-stage 15 --first-board-lord lord_liubei --first-board-stage 1 --png-mode deep` (2026-06-06, feat-069) — deep PNG mode 11장 검증 통과, real 32.67s.
+- [x] `./init.sh` (2026-06-06, feat-069) — 카드 22개 검증 OK, 단위 테스트 2983/2983 green.
 - [x] `HOME=$PWD/.godot/home SHOT_DIR=/tmp/guju-feat-068-first-board LORD=lord_liubei SHOOT_STAGE=1 godot --path . res://tools/shoot_first_board_states.tscn` (2026-06-06, feat-068) — 첫 보드 `성 후보`/`손패 선택`/`계략 버튼`/`배치 가능` 4 PNG 생성.
 - [x] `python3 tools/validate_screenshot_bundle.py /tmp/guju-feat-068-ui --lords lord_liubei --flow-stages 1 --battle-stage 1 --shop-stage 4 --result-lord lord_liubei --result-loss-stage 3 --result-win-stage 15 --first-board-lord lord_liubei --first-board-stage 1` (2026-06-06, feat-068) — 최소 bundle 11장 stdlib PNG 검증 통과.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-068-unit.log --script res://test/runner.gd` (2026-06-06, feat-068) — 단위 테스트 2983/2983 green.
@@ -107,4 +109,4 @@
 - [x] `./init.sh` (2026-06-06, feat-062) — 카드 22개 검증 OK, run_map/lord_select/battle/보스/결과/UI/저장/플레이테스트/장기런 스모크 포함, 단위 테스트 2920/2920 green.
 
 ## 다음 세션 메모
-feat-068 done. 다음 안전 피처는 수동 플레이 시각 검증 갱신, 결과 화면 시각 polish, screenshot bundle full-run 시간 최적화가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+feat-069 done. 다음 안전 피처는 결과 화면 시각 polish, 수동 플레이 시각 검증 갱신, 전투 화면 체감 polish가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.

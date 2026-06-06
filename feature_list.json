@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~068으로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널→다음 배치 손패 미리보기→자동저장 슬롯 삭제 UX→상점 손패 정리 안내→전투 결과 복귀 안내→런맵 진행 리듬 안내→상점 구매 피드백→장기런 결과 요약→전투 전황 요약 HUD→유닛 접지감 보강→첫 전투 보드 가독성→첫 보드 스크린샷 QA까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2983 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~069으로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호→보상 선택 비교 UX→보상 후 다음 스테이지 준비 안내→런맵 전투 준비 패널→다음 배치 손패 미리보기→자동저장 슬롯 삭제 UX→상점 손패 정리 안내→전투 결과 복귀 안내→런맵 진행 리듬 안내→상점 구매 피드백→장기런 결과 요약→전투 전황 요약 HUD→유닛 접지감 보강→첫 전투 보드 가독성→첫 보드 스크린샷 QA→screenshot validator 속도 최적화까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2983 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -640,6 +640,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-068-first-board-screenshot-qa.md 추가. tools/shoot_first_board_states.gd가 첫 보드 4상태 PNG를 생성하고 shoot_ui_bundle.sh/validate_screenshot_bundle.py가 이를 요구한다. validator는 PIL 의존성을 제거하고 stdlib PNG 검사를 사용한다. /tmp/guju-feat-068-ui 최소 bundle 11장 검증 통과, ./init.sh 카드 22개 / 2983 단언 green."
+    },
+    {
+      "id": "feat-069",
+      "name": "스크린샷 validator 속도 최적화",
+      "description": "screenshot bundle validator의 기본 PNG 검증을 빠른 압축 스트림 샘플 검사로 바꾸고 deep 픽셀 복원 검사를 옵션으로 유지한다.",
+      "dependencies": ["feat-068"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-069-screenshot-validator-speed.md 추가. validate_screenshot_bundle.py 기본 fast PNG mode가 /tmp/guju-feat-068-ui 11장을 0.18초에 검증하고, --png-mode deep도 32.67초로 통과한다. ./init.sh 카드 22개 / 2983 단언 green."
     }
   ]
 }
