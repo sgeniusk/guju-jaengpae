@@ -44,6 +44,22 @@ func load_run(path: String = _PersistenceStore.RUN_SAVE_PATH) -> bool:
 	_repair_run_contract()
 	return true
 
+func run_save_status(path: String = _PersistenceStore.RUN_SAVE_PATH) -> Dictionary:
+	if not _PersistenceStore.run_save_exists(path):
+		return _run_save_status(false, false, "missing", OK, RunState.new())
+	var result := _PersistenceStore.load_run_payload(path)
+	if not bool(result.get("ok", false)):
+		return _run_save_status(true, false, "load_error", int(result.get("error", ERR_INVALID_DATA)), RunState.new())
+	var loaded := RunState.new()
+	if not loaded.from_dict(result.get("payload", {})):
+		return _run_save_status(true, false, "invalid_payload", ERR_INVALID_DATA, RunState.new())
+	if not loaded.started:
+		return _run_save_status(true, false, "not_started", ERR_INVALID_DATA, loaded)
+	return _run_save_status(true, true, "ok", OK, loaded)
+
+func has_resumeable_run_save(path: String = _PersistenceStore.RUN_SAVE_PATH) -> bool:
+	return bool(run_save_status(path).get("can_continue", false))
+
 func has_run_save(path: String = _PersistenceStore.RUN_SAVE_PATH) -> bool:
 	return _PersistenceStore.run_save_exists(path)
 
@@ -514,6 +530,18 @@ func _autosave_run() -> void:
 func _autosave_profile() -> void:
 	if profile != null:
 		save_profile()
+
+func _run_save_status(exists: bool, can_continue: bool, reason: String, error: int, loaded: RunState) -> Dictionary:
+	return {
+		"exists": exists,
+		"can_continue": can_continue,
+		"reason": reason,
+		"error": error,
+		"stage": loaded.stage_index if loaded != null else 0,
+		"lord_id": loaded.lord_id if loaded != null else &"",
+		"board_size": loaded.board.size() if loaded != null else 0,
+		"hand_size": loaded.hand.size() if loaded != null else 0,
+	}
 
 func _repair_run_contract() -> void:
 	if state == null or not state.started:

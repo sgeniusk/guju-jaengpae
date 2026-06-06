@@ -13,7 +13,7 @@ var _root: VBoxContainer
 var _shop_status_message := ""
 
 func _ready() -> void:
-	if not RunManager.is_run_started() and RunManager.has_run_save():
+	if not RunManager.is_run_started() and RunManager.has_resumeable_run_save():
 		RunManager.load_run()
 	RunManager.ensure_started(LORD_ID)
 	AudioManager.play_music(&"battle")

@@ -4,10 +4,11 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-06
-**활성 피처** — feat-053 충돌 중 타격감 VFX 반복 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 전투 중 데미지 이벤트가 실제 타격처럼 반복해서 보이도록 피격 VFX를 추가한 작업이다.
+**활성 피처** — feat-054 손상 저장 이어하기 보호 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 저장 파일이 존재해도 실제로 로드 가능한 런만 이어하기로 노출되게 한 작업이다.
 
 ## 완료
+- [x] **feat-054 손상 저장 이어하기 보호** — `docs/specs/feat-054-corrupt-save-resume-guard.md`를 추가했다. `RunManager.run_save_status()`와 `has_resumeable_run_save()`가 파일 존재뿐 아니라 ConfigFile payload와 RunState 호환성까지 확인한다. `lord_select.gd`는 로드 가능한 저장만 이어하기 버튼을 띄우고, 손상/호환 불가 저장은 비활성 안내와 새 군주 선택 복구 tooltip을 표시한다. `run_map.gd`도 재개 가능한 저장만 자동 로드한다. `./init.sh` 카드 22개 / 2790 단언 green.
 - [x] **feat-053 충돌 중 타격감 VFX 반복** — `docs/specs/feat-053-hit-impact-feedback.md`와 `scripts/battle/battle_hit_feedback.gd`를 추가했다. 데미지 이벤트가 positive amount일 때 spark를 만들고, 치명타는 crit ring, 스킬/계략은 burst를 추가한다. `battle.gd`는 `hit_impact_vfx` meta가 있는 Polygon2D를 VFX layer에 띄우며, UI smoke가 첫 수동 전투에서 spark/crit/burst 생성을 검증한다. `./init.sh` 카드 22개 / 2769 단언 green.
 - [x] **feat-052 병력 밀도/함성 체감 패스** — `docs/specs/feat-052-force-density-and-rally.md`를 추가했다. 병종 분대 렌더/visible cap을 18명, 장수 호위 cap을 10명으로 올리고, `rally` SFX cue를 기존 전투 시작 wav에 연결했다. battle.gd가 시작 순간 rally banner, charge line, clash pulse를 meta 태그로 표시하고 UI smoke가 첫 수동 플레이에서 검증한다. `./init.sh` 카드 22개 / 2746 단언 green.
 - [x] **feat-051 저장/이어하기 UX 스모크** — `docs/specs/feat-051-resume-ux-smoke.md`와 `tools/resume_ux_smoke.gd`를 추가했다. 저장 파일이 없으면 군주 선택 화면에 이어하기 버튼이 없고, autosave 런이 있으면 `저장된 런 이어하기` 버튼/tooltip이 보인다. 버튼 실행 후 run_map route와 stage, 성 위치, 보드, 손패, 골드 복원을 검증한다. `./init.sh` 카드 22개 / 2740 단언 green.
@@ -24,7 +25,7 @@
 
 ## 진행 중
 - [ ] 수동 플레이 감각 확인 — 첫 손패 장수+병종, 성 위치 선택, 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령, stage 4 상점, 전리품 추천 문구를 사용자 플레이로 확인한다.
-- [ ] 완성판 안전 개선 계속 — 다음 피처 후보는 저장/재시작 실패/손상 파일 UX 보강, 보상 화면 선택 비교 UX, 전투 결과/보상 화면의 플레이어 선택 설명 강화다.
+- [ ] 완성판 안전 개선 계속 — 다음 피처 후보는 보상 화면 선택 비교 UX, 전투 결과/보상 화면의 플레이어 선택 설명 강화, 저장 슬롯/삭제 UX다.
 - [ ] Codex goal은 완성판까지 계속 활성이다. MVP 이후 핵심 루프 재미와 안정성을 단계적으로 개선한다.
 
 ## 다음
@@ -39,17 +40,22 @@
 - [ ] Godot 4.6.3 macOS headless 종료 시 resource leak 경고가 남지만 종료 코드는 0이고 테스트 실패는 아니다.
 
 ## 이번 세션 수정 파일
-- `docs/specs/feat-053-hit-impact-feedback.md`
-- `scripts/battle/battle_hit_feedback.gd`
-- `scripts/battle/battle.gd`
-- `tools/ui_feedback_smoke.gd`
-- `test/test_battle_hit_feedback.gd`
+- `docs/specs/feat-054-corrupt-save-resume-guard.md`
+- `scripts/autoloads/run_manager.gd`
+- `scripts/screens/lord_select.gd`
+- `scripts/screens/run_map.gd`
+- `tools/resume_ux_smoke.gd`
+- `test/test_run_resume.gd`
+- `test/test_lord_select.gd`
 - `feature_list.json`
 - `progress.md`
 - `session-handoff.md`
 - `CHANGELOG.md`
 
 ## 검증 증거
+- [x] `godot --headless --path . --script res://test/runner.gd` (2026-06-06, feat-054) — `test_run_resume.gd` run_save_status와 `test_lord_select.gd` 손상 저장 안내 포함 단위 테스트 2790/2790 green.
+- [x] `godot --headless --path . --script res://tools/resume_ux_smoke.gd` (2026-06-06, feat-054) — no-save, corrupt-save 안내, valid-save 이어하기 세 케이스 통과.
+- [x] `./init.sh` (2026-06-06, feat-054) — 카드 22개 검증 OK, 손상 저장 이어하기 보호 smoke 포함, 단위 테스트 2790/2790 green.
 - [x] `godot --headless --path . --script res://test/runner.gd` (2026-06-06, feat-053) — `test_battle_hit_feedback.gd` 포함 단위 테스트 2769/2769 green.
 - [x] `godot --headless --path . --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-053) — 첫 수동 플레이에서 시작 함성 VFX와 hit impact spark/crit/burst VFX 생성 확인.
 - [x] `./init.sh` (2026-06-06, feat-053) — 카드 22개 검증 OK, 저장/이어하기 UX 스모크와 병력 밀도/함성/피격 VFX UI smoke 포함, 단위 테스트 2769/2769 green.
@@ -70,4 +76,4 @@
 - [x] `./init.sh` (2026-06-06, feat-045) — 카드 22개 검증 OK, 전투 집중표적 피드백 OK, 단위 테스트 2701/2701 green.
 
 ## 다음 세션 메모
-`./init.sh` 2769 단언 green. feat-053 done. 다음 안전 피처는 저장/재시작 실패/손상 파일 UX 보강, 보상 화면 선택 비교 UX, 전투 결과/보상 화면의 선택 설명 강화가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+`./init.sh` 2790 단언 green. feat-054 done. 다음 안전 피처는 보상 화면 선택 비교 UX, 전투 결과/보상 화면의 선택 설명 강화, 저장 슬롯/삭제 UX가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.

@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-054 손상 저장 이어하기 보호
+저장 파일이 존재해도 실제로 이어갈 수 있는 런인지 확인한 뒤 UX에 노출하도록 저장 재시작 경계를 보강했다.
+- **Resumeable save status** — `RunManager.run_save_status()`와 `has_resumeable_run_save()`가 ConfigFile 로드, run section, RunState payload 호환성, started 여부를 확인한다. 조회는 현재 런 상태를 변경하지 않는다.
+- **군주 선택 복구 안내** — `lord_select.gd`는 로드 가능한 저장일 때만 `저장된 런 이어하기`를 표시한다. 손상/호환 불가 저장이 있으면 비활성 `저장된 런을 불러올 수 없음` 안내와 새 군주 선택 복구 tooltip을 보여준다.
+- **자동 로드 guard** — `run_map.gd`는 재개 가능한 저장만 자동 로드한다. 손상 저장은 새 기본 런 시작으로 복구된다.
+- **검증** — `tools/resume_ux_smoke.gd`가 no-save, corrupt-save, valid-save 세 케이스를 검증한다. `./init.sh` 카드 22개, 단위 테스트 2790/2790 green.
+
 ## 2026-06-06 — feat-053 충돌 중 타격감 VFX 반복
 전투 중 데미지 이벤트가 숫자만 뜨는 느낌을 줄이고, 실제 충돌이 반복해서 보이도록 피격 VFX를 추가했다.
 - **BattleHitFeedback helper** — `scripts/battle/battle_hit_feedback.gd`가 데미지 이벤트를 VFX 프로필로 바꾼다. 일반 피해는 spark, 치명타는 crit ring, 스킬/계략은 burst를 추가한다.

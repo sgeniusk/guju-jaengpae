@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~053으로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2769 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~054로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 타격감 VFX→손상 저장 이어하기 보호까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 2790 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -505,6 +505,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-053-hit-impact-feedback.md 추가. BattleHitFeedback helper가 데미지 이벤트를 spark/crit/burst 프로필로 바꾸고 battle.gd가 hit_impact_vfx meta Polygon2D를 VFX layer에 표시한다. UI smoke가 첫 수동 전투에서 spark/crit/burst 생성을 검증한다. ./init.sh 카드 22개 / 2769 단언 green."
+    },
+    {
+      "id": "feat-054",
+      "name": "손상 저장 이어하기 보호",
+      "description": "저장 파일이 존재해도 실제로 로드 가능한 런일 때만 이어하기를 노출하고, 손상/호환 불가 저장은 새 런 복구 안내로 처리한다.",
+      "dependencies": ["feat-033", "feat-051"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-054-corrupt-save-resume-guard.md 추가. RunManager.run_save_status/has_resumeable_run_save가 payload 검증까지 수행하고 lord_select/run_map은 재개 가능한 저장만 로드한다. Resume UX smoke가 no-save/corrupt-save/valid-save 세 케이스를 검증한다. ./init.sh 카드 22개 / 2790 단언 green."
     }
   ]
 }

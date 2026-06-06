@@ -59,6 +59,37 @@ func test_autosave_default_run_can_resume_after_state_recreation() -> void:
 	RunManager.reset_run()
 	falsy(RunManager.has_run_save(), "새 런 리셋은 기본 저장 삭제")
 
+func test_run_save_status_requires_payload_that_can_actually_resume() -> void:
+	RunManager.clear_run_save(TEST_PATH)
+	var missing := RunManager.run_save_status(TEST_PATH)
+	falsy(bool(missing.get("exists", true)), "없는 저장 exists=false")
+	falsy(bool(missing.get("can_continue", true)), "없는 저장 can_continue=false")
+	eq(String(missing.get("reason", "")), "missing", "없는 저장 reason")
+
+	RunManager.ensure_started(&"lord_liubei")
+	RunManager.add_gold(7)
+	truthy(RunManager.save_run(TEST_PATH), "status용 정상 저장")
+	var valid := RunManager.run_save_status(TEST_PATH)
+	truthy(bool(valid.get("exists", false)), "정상 저장 exists=true")
+	truthy(bool(valid.get("can_continue", false)), "정상 저장 can_continue=true")
+	eq(int(valid.get("stage", 0)), RunManager.stage_index(), "정상 저장 stage 노출")
+
+	eq(_PersistenceStore.save_run_payload({
+		"save_version": "2.0.0",
+		"started": true,
+		"lord_id": "lord_caocao",
+		"gold": 99,
+	}, TEST_PATH), OK, "미래 major payload 저장")
+	var original_lord := RunManager.state.lord_id
+	var original_gold := RunManager.get_gold()
+	var invalid := RunManager.run_save_status(TEST_PATH)
+	truthy(bool(invalid.get("exists", false)), "불가 저장 exists=true")
+	falsy(bool(invalid.get("can_continue", true)), "불가 저장 can_continue=false")
+	eq(String(invalid.get("reason", "")), "invalid_payload", "불가 저장 reason")
+	falsy(RunManager.has_resumeable_run_save(TEST_PATH), "불가 저장은 resumeable 아님")
+	eq(RunManager.state.lord_id, original_lord, "status 조회는 현재 군주 불변")
+	eq(RunManager.get_gold(), original_gold, "status 조회는 현재 골드 불변")
+
 func test_load_run_accepts_missing_and_unknown_fields_with_defaults() -> void:
 	eq(_PersistenceStore.save_run_payload({
 		"save_version": RunState.SAVE_VERSION,

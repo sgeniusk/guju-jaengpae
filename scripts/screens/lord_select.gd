@@ -52,14 +52,17 @@ func _build_root() -> void:
 	_root.add_child(subtitle)
 
 func _build_lord_panels() -> void:
-	if RunManager.has_run_save():
+	var save_status: Dictionary = RunManager.run_save_status()
+	if bool(save_status.get("can_continue", false)):
 		var continue_btn := Button.new()
 		continue_btn.text = "저장된 런 이어하기"
-		continue_btn.tooltip_text = "저장된 런을 불러와 현재 스테이지에서 이어갑니다."
+		continue_btn.tooltip_text = _continue_tooltip(save_status)
 		continue_btn.custom_minimum_size = Vector2(420.0, 64.0)
 		continue_btn.add_theme_font_size_override("font_size", 28)
 		continue_btn.pressed.connect(_on_continue_pressed)
 		_root.add_child(continue_btn)
+	elif bool(save_status.get("exists", false)):
+		_root.add_child(_build_resume_unavailable_notice(save_status))
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 24)
@@ -67,6 +70,29 @@ func _build_lord_panels() -> void:
 
 	for lord in _catalog_lords():
 		row.add_child(_build_lord_button(lord))
+
+func _build_resume_unavailable_notice(save_status: Dictionary) -> Button:
+	var notice := Button.new()
+	notice.text = "저장된 런을 불러올 수 없음"
+	notice.tooltip_text = "%s\n새 군주를 선택하면 새 런으로 다시 시작합니다." % _resume_error_text(save_status)
+	notice.custom_minimum_size = Vector2(520.0, 58.0)
+	notice.add_theme_font_size_override("font_size", 24)
+	notice.disabled = true
+	return notice
+
+func _continue_tooltip(save_status: Dictionary) -> String:
+	var stage := int(save_status.get("stage", 1))
+	return "저장된 런을 불러와 현재 스테이지 %d년에서 이어갑니다." % stage
+
+func _resume_error_text(save_status: Dictionary) -> String:
+	var reason := String(save_status.get("reason", ""))
+	if reason == "load_error":
+		return "저장 파일을 읽을 수 없습니다."
+	if reason == "invalid_payload":
+		return "저장 파일 버전이 맞지 않거나 내용이 손상되었습니다."
+	if reason == "not_started":
+		return "저장된 런이 시작 상태가 아닙니다."
+	return "저장 파일을 이어하기에 사용할 수 없습니다."
 
 func _catalog_lords() -> Array[LordData]:
 	return CardLibrary.lord_list()

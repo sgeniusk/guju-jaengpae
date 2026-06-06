@@ -5,6 +5,7 @@ extends SceneTree
 const LORD_ID := &"lord_liubei"
 const LORD_SELECT_SCENE_PATH := "res://scenes/screens/lord_select.tscn"
 const RUN_MAP_SCENE_PATH := "res://scenes/screens/run_map.tscn"
+const _PersistenceStore := preload("res://scripts/run/persistence_store.gd")
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -12,6 +13,7 @@ func _initialize() -> void:
 func _run() -> void:
 	var errors := 0
 	errors += await _no_save_case()
+	errors += await _corrupt_save_case()
 	errors += await _saved_run_continue_case()
 	_cleanup_default_save()
 	if errors == 0:
@@ -38,6 +40,45 @@ func _no_save_case() -> int:
 	await _frames(2)
 	if errors == 0:
 		print("  저장 없음 상태 OK")
+	return errors
+
+func _corrupt_save_case() -> int:
+	var run_manager := root.get_node_or_null("/root/RunManager")
+	if run_manager == null:
+		return _fail("RunManager autoload 조회 실패")
+	run_manager.reset_run()
+	var err := _PersistenceStore.save_run_payload({
+		"save_version": "2.0.0",
+		"started": true,
+		"lord_id": "lord_caocao",
+	}, _PersistenceStore.RUN_SAVE_PATH)
+	if err != OK:
+		return _fail("테스트용 손상 저장 생성 실패: %d" % err)
+
+	var screen = _instantiate_scene(LORD_SELECT_SCENE_PATH)
+	if screen == null:
+		return _fail("lord_select.tscn corrupt-save 인스턴스 생성 실패")
+	root.add_child(screen)
+	await _frames(8)
+
+	var errors := 0
+	if run_manager.has_resumeable_run_save():
+		errors += _fail("손상 저장이 resumeable로 판정됨")
+	if _find_button(screen, "저장된 런 이어하기") != null:
+		errors += _fail("손상 저장인데 이어하기 버튼이 노출됨")
+	var notice := _find_button(screen, "저장된 런을 불러올 수 없음")
+	if notice == null:
+		errors += _fail("손상 저장 안내 누락")
+	else:
+		if not notice.disabled:
+			errors += _fail("손상 저장 안내가 비활성 상태가 아님")
+		if notice.tooltip_text.find("새 군주") < 0:
+			errors += _fail("손상 저장 안내 tooltip 누락: %s" % notice.tooltip_text)
+	screen.queue_free()
+	await _frames(2)
+	run_manager.clear_run_save()
+	if errors == 0:
+		print("  손상 저장 안내 OK")
 	return errors
 
 func _saved_run_continue_case() -> int:
