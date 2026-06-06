@@ -3,6 +3,7 @@ extends SceneTree
 
 const _EdictCatalog := preload("res://scripts/run/edict_catalog.gd")
 const _BoardEconomy := preload("res://scripts/run/board_economy.gd")
+const _LongRunTempoContract := preload("res://scripts/run/long_run_tempo_contract.gd")
 const _PlaytestMetrics := preload("res://scripts/run/playtest_metrics.gd")
 const _SchemeCatalog := preload("res://scripts/run/scheme_catalog.gd")
 const _StageCadence := preload("res://scripts/run/stage_cadence.gd")
@@ -91,6 +92,7 @@ func _run_lord(cat: CardCatalog, lord_id: StringName) -> String:
 		_fail("%s 성 위치 선택 실패" % lord_id)
 		return ""
 	var combat_wins := 0
+	var combat_times: Array[float] = []
 	print("  %s 장기런 시작" % _lord_label(lord))
 	while run.stage_index <= FINAL_STAGE:
 		var stage := run.stage_index
@@ -117,6 +119,7 @@ func _run_lord(cat: CardCatalog, lord_id: StringName) -> String:
 				sim.run_to_completion(0.1, 120.0)
 				metrics["result"] = sim.result
 				metrics["elapsed"] = sim.elapsed
+				combat_times.append(sim.elapsed)
 				print("    %s play=%s board=[%s]" % [
 					_PlaytestMetrics.compact_line(metrics),
 					_play_label(play, cat),
@@ -125,13 +128,31 @@ func _run_lord(cat: CardCatalog, lord_id: StringName) -> String:
 				if sim.result != BattleSim.Result.PLAYER_WIN:
 					_fail("%s stage %d %s 승리 실패 — %s" % [_lord_label(lord), stage, kind, _sim_summary(sim)])
 					return ""
+				if not _LongRunTempoContract.combat_time_ok(stage, sim.elapsed):
+					_fail("%s stage %d %s %.1fs가 예산 %.1fs를 초과 — %s" % [
+						_lord_label(lord),
+						stage,
+						kind,
+						sim.elapsed,
+						_LongRunTempoContract.limit_for_stage(stage),
+						_sim_summary(sim),
+					])
+					return ""
 				combat_wins += 1
 				if _StageCadence.is_expand(stage):
 					run.expand_board()
 				if _StageCadence.is_final_boss(stage):
-					return "%s wins=%d board=%d rows=%d hand=%d draw=%d" % [
+					if not _LongRunTempoContract.average_time_ok(combat_times):
+						_fail("%s 평균 전투 시간 %.1fs가 예산 %.1fs를 초과" % [
+							_lord_label(lord),
+							_LongRunTempoContract.average_time(combat_times),
+							_LongRunTempoContract.MAX_AVERAGE_COMBAT_SECONDS,
+						])
+						return ""
+					return "%s wins=%d avg=%.1fs board=%d rows=%d hand=%d draw=%d" % [
 						_lord_label(lord),
 						combat_wins,
+						_LongRunTempoContract.average_time(combat_times),
 						run.board.size(),
 						run.board_rows,
 						run.hand.size(),

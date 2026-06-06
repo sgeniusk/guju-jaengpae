@@ -205,19 +205,19 @@ static func _boss_encounter(act: int) -> Array[BattleUnit]:
 	var spawn_x := BattleSim.FIELD_W
 	if _template_act(act) == 1:
 		return [
-			_enemy_unit(1, spawn_x, "마왕 동탁", 360, 20, 1.08, "melee", 30.0, "infantry", "highest_hp", _SkillSystem.BOSS_TYRANT_ROAR),
-			_enemy_unit(0, spawn_x, "마군 호위", 85, 14, 1.16, "melee", 36.0, "infantry"),
+			_enemy_unit(1, spawn_x, "마왕 동탁", 285, 20, 1.08, "melee", 30.0, "infantry", "highest_hp", _SkillSystem.BOSS_TYRANT_ROAR),
+			_enemy_unit(0, spawn_x, "마군 호위", 65, 14, 1.16, "melee", 36.0, "infantry"),
 		]
 	if _template_act(act) == 2:
 		return [
-			_enemy_unit(1, spawn_x, "천공 장각", 720, 32, 1.08, "ranged", 25.0, "archer", "backline", _SkillSystem.BOSS_SKY_THUNDER),
-			_enemy_unit(0, spawn_x, "황건 부적병", 165, 24, 1.05, "melee", 34.0, "infantry", "highest_hp"),
-			_enemy_unit(2, spawn_x, "요사 술사", 125, 32, 1.0, "ranged", 28.0, "archer", "backline"),
+			_enemy_unit(1, spawn_x, "천공 장각", 680, 32, 1.08, "ranged", 25.0, "archer", "backline", _SkillSystem.BOSS_SKY_THUNDER),
+			_enemy_unit(0, spawn_x, "황건 부적병", 150, 24, 1.05, "melee", 34.0, "infantry", "highest_hp"),
+			_enemy_unit(2, spawn_x, "요사 술사", 115, 32, 1.0, "ranged", 28.0, "archer", "backline"),
 		]
 	return [
-		_enemy_unit(1, spawn_x, "귀신 여포", 860, 48, 0.86, "melee", 54.0, "cavalry", "lowest_hp", _SkillSystem.BOSS_WAR_GOD_CLEAVE),
-		_enemy_unit(0, spawn_x, "흑기 방패대", 190, 28, 1.0, "melee", 34.0, "infantry", "highest_hp"),
-		_enemy_unit(2, spawn_x, "흑기 기병", 170, 36, 0.92, "melee", 48.0, "cavalry", "lowest_hp"),
+		_enemy_unit(1, spawn_x, "귀신 여포", 640, 48, 0.86, "melee", 54.0, "cavalry", "lowest_hp", _SkillSystem.BOSS_WAR_GOD_CLEAVE),
+		_enemy_unit(0, spawn_x, "흑기 방패대", 155, 28, 1.0, "melee", 34.0, "infantry", "highest_hp"),
+		_enemy_unit(2, spawn_x, "흑기 기병", 140, 36, 0.92, "melee", 48.0, "cavalry", "lowest_hp"),
 	]
 
 static func _template_act(act: int) -> int:
