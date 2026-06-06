@@ -87,6 +87,13 @@ func test_stage_label_marks_battle_and_boss() -> void:
 	truthy(_StageCadence.stage_label(7).contains("정예"), "7스테이지는 정예 라벨")
 	truthy(_StageCadence.stage_label(11).contains("사건"), "11스테이지는 사건 라벨")
 
+func test_stage_prep_text_explains_next_action() -> void:
+	truthy(_StageCadence.stage_prep_label(2).contains("손패 3장 중 1장"), "전투 준비 문구")
+	truthy(_StageCadence.stage_prep_label(3).contains("왕의 칙령"), "칙령 준비 문구")
+	truthy(_StageCadence.stage_prep_label(4).contains("군자금"), "상점 준비 문구")
+	truthy(_StageCadence.stage_prep_label(5).contains("보스전"), "보스 준비 문구")
+	truthy(_StageCadence.stage_prep_tooltip(4).contains("상점"), "상점 준비 tooltip")
+
 func test_final_boss_is_stage_fifteen_only() -> void:
 	falsy(_StageCadence.is_final_boss(10), "stage 10은 후속 보스지만 최종 보스 아님")
 	truthy(_StageCadence.is_final_boss(15), "stage 15는 최종 보스")

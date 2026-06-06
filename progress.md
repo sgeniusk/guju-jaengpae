@@ -4,10 +4,11 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-06
-**활성 피처** — feat-055 보상 선택 비교 UX 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 전리품 선택이 현재 보드/손패와 비교해 무엇을 바꾸는지 바로 읽히게 한 작업이다.
+**활성 피처** — feat-056 보상 후 다음 스테이지 준비 안내 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 전리품 선택 뒤 다음 스테이지의 종류와 준비 행동을 결과 오버레이에서 바로 읽히게 한 작업이다.
 
 ## 완료
+- [x] **feat-056 보상 후 다음 스테이지 준비 안내** — `docs/specs/feat-056-next-stage-prep.md`를 추가했다. `StageCadence.stage_prep_label/tooltip`이 stage kind별 준비 행동을 제공하고, battle 결과 오버레이는 보상 선택 후 `다음 준비 — 스테이지 2 — 전투`과 다음 행동 문구를 표시한다. 다음 스테이지 버튼에도 stage label과 tooltip을 붙였다. `./init.sh` 카드 22개 / 2802 단언 green.
 - [x] **feat-055 보상 선택 비교 UX** — `docs/specs/feat-055-reward-choice-comparison.md`를 추가했다. `CardChoiceAdvisor`가 유닛 증원, 새 장수/병종, 건물, 계략, 보패의 선택 전후 변화를 `비교 — ...` 문구와 tooltip으로 계산한다. `battle.gd` 전리품 버튼은 기존 추천 문구 아래 비교 문구를 함께 표시하고, 줄 수에 따라 버튼 최소 높이를 보정한다. `./init.sh` 카드 22개 / 2797 단언 green.
 - [x] **feat-054 손상 저장 이어하기 보호** — `docs/specs/feat-054-corrupt-save-resume-guard.md`를 추가했다. `RunManager.run_save_status()`와 `has_resumeable_run_save()`가 파일 존재뿐 아니라 ConfigFile payload와 RunState 호환성까지 확인한다. `lord_select.gd`는 로드 가능한 저장만 이어하기 버튼을 띄우고, 손상/호환 불가 저장은 비활성 안내와 새 군주 선택 복구 tooltip을 표시한다. `run_map.gd`도 재개 가능한 저장만 자동 로드한다. `./init.sh` 카드 22개 / 2790 단언 green.
 - [x] **feat-053 충돌 중 타격감 VFX 반복** — `docs/specs/feat-053-hit-impact-feedback.md`와 `scripts/battle/battle_hit_feedback.gd`를 추가했다. 데미지 이벤트가 positive amount일 때 spark를 만들고, 치명타는 crit ring, 스킬/계략은 burst를 추가한다. `battle.gd`는 `hit_impact_vfx` meta가 있는 Polygon2D를 VFX layer에 띄우며, UI smoke가 첫 수동 전투에서 spark/crit/burst 생성을 검증한다. `./init.sh` 카드 22개 / 2769 단언 green.
@@ -41,17 +42,20 @@
 - [ ] Godot 4.6.3 macOS headless 종료 시 resource leak 경고가 남지만 종료 코드는 0이고 테스트 실패는 아니다.
 
 ## 이번 세션 수정 파일
-- `docs/specs/feat-055-reward-choice-comparison.md`
-- `scripts/run/card_choice_advisor.gd`
+- `docs/specs/feat-056-next-stage-prep.md`
+- `scripts/run/stage_cadence.gd`
 - `scripts/battle/battle.gd`
 - `tools/ui_feedback_smoke.gd`
-- `test/test_card_choice_advisor.gd`
+- `test/test_stage_cadence.gd`
 - `feature_list.json`
 - `progress.md`
 - `session-handoff.md`
 - `CHANGELOG.md`
 
 ## 검증 증거
+- [x] `godot --headless --path . --script res://test/runner.gd` (2026-06-06, feat-056) — StageCadence 준비 문구 helper 포함 단위 테스트 2802/2802 green.
+- [x] `godot --headless --path . --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-056) — 보상 선택 후 다음 준비 안내와 다음 스테이지 버튼 렌더 확인.
+- [x] `./init.sh` (2026-06-06, feat-056) — 카드 22개 검증 OK, 보상 후 다음 스테이지 준비 안내 smoke 포함, 단위 테스트 2802/2802 green.
 - [x] `godot --headless --path . --script res://test/runner.gd` (2026-06-06, feat-055) — CardChoiceAdvisor 비교 helper 분기 포함 단위 테스트 2797/2797 green.
 - [x] `godot --headless --path . --script res://tools/ui_feedback_smoke.gd` (2026-06-06, feat-055) — 전투 보상 화면에서 `비교 —` visible text와 tooltip 렌더 확인.
 - [x] `./init.sh` (2026-06-06, feat-055) — 카드 22개 검증 OK, 보상 선택 비교 UX smoke 포함, 단위 테스트 2797/2797 green.
@@ -78,4 +82,4 @@
 - [x] `./init.sh` (2026-06-06, feat-045) — 카드 22개 검증 OK, 전투 집중표적 피드백 OK, 단위 테스트 2701/2701 green.
 
 ## 다음 세션 메모
-`./init.sh` 2797 단언 green. feat-055 done. 다음 안전 피처는 전투 결과/보상 화면 선택 설명 강화, 저장 슬롯/삭제 UX, 보상 선택 후 다음 스테이지 준비 안내 강화가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+`./init.sh` 2802 단언 green. feat-056 done. 다음 안전 피처는 저장 슬롯/삭제 UX, run_map의 다음 전투 준비 패널 강화, 보상 선택 후 손패 초과 정리 안내 강화가 좋다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.

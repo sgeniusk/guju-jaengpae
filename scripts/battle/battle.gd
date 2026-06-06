@@ -2247,8 +2247,32 @@ func _pick_reward(id: StringName) -> void:
 	_add_next_stage_button(box)
 
 func _add_next_stage_button(box: VBoxContainer) -> void:
-	box.add_child(_make_button("다음 스테이지로 (보드 %d장 / 손패 %d장)" % [RunManager.get_deck().size(), RunManager.get_hand().size()], _go_to_run_map))
+	_add_next_stage_preview(box)
+	var next_stage := RunManager.stage_index()
+	var next_button := _make_button("다음 스테이지로 — %s (보드 %d장 / 손패 %d장)" % [
+		_StageCadence.stage_label(next_stage),
+		RunManager.get_deck().size(),
+		RunManager.get_hand().size(),
+	], _go_to_run_map)
+	next_button.tooltip_text = "%s\n%s" % [
+		_StageCadence.stage_prep_label(next_stage),
+		_StageCadence.stage_prep_tooltip(next_stage),
+	]
+	box.add_child(next_button)
 	box.add_child(_make_button("군주 선택으로 새 런", _restart_run))
+
+func _add_next_stage_preview(box: VBoxContainer) -> void:
+	var next_stage := RunManager.stage_index()
+	var preview := Label.new()
+	preview.text = "다음 준비 — %s\n%s" % [
+		_StageCadence.stage_label(next_stage),
+		_StageCadence.stage_prep_label(next_stage),
+	]
+	preview.tooltip_text = _StageCadence.stage_prep_tooltip(next_stage)
+	preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	preview.add_theme_font_size_override("font_size", 18)
+	preview.add_theme_color_override("font_color", Color(0.86, 0.90, 1.0))
+	box.add_child(preview)
 
 func _advance_stage_once() -> void:
 	if _stage_advanced:

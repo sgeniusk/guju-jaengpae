@@ -326,6 +326,12 @@ func _battle_reward_case() -> int:
 	errors += _assert_any_tooltip(battle, "이 전리품을 선택합니다", "보상 선택 tooltip")
 	errors += _assert_any_tooltip(battle, "추천 —", "보상 전략 추천 tooltip")
 	errors += _assert_any_tooltip(battle, "비교 —", "보상 비교 tooltip")
+	errors += _press_first_button(battle, "선택 —", "보상 선택 실행")
+	await _frames(4)
+	errors += _assert_any_text(battle, "다음 준비 — 스테이지 2 — 전투", "보상 후 다음 준비 제목")
+	errors += _assert_any_text(battle, "손패 3장 중 1장", "보상 후 다음 전투 준비 문구")
+	errors += _assert_button_text(battle, "다음 스테이지로 — 스테이지 2 — 전투", "보상 후 다음 스테이지 버튼")
+	errors += _assert_any_tooltip(battle, "런맵에서 전투 시작", "보상 후 다음 스테이지 tooltip")
 	battle.queue_free()
 	await _frames(2)
 	if errors == 0:
@@ -369,6 +375,13 @@ func _assert_any_text(node: Node, text_needle: String, msg: String) -> int:
 func _assert_button_text(node: Node, text_needle: String, msg: String) -> int:
 	for button in _buttons(node):
 		if button.text.find(text_needle) >= 0:
+			return 0
+	return _fail("%s 누락: button text~=%s" % [msg, text_needle])
+
+func _press_first_button(node: Node, text_needle: String, msg: String) -> int:
+	for button in _buttons(node):
+		if button.text.find(text_needle) >= 0:
+			button.emit_signal("pressed")
 			return 0
 	return _fail("%s 누락: button text~=%s" % [msg, text_needle])
 
