@@ -30,3 +30,11 @@ func test_existing_unit_in_hand_is_upgrade_candidate() -> void:
 	truthy(String(summary.get("detail", "")).contains("증원 후보 1장"), "상세 증원 후보")
 	truthy(String(summary.get("detail", "")).contains("배치 후보 1장"), "상세 배치 후보")
 	truthy(String(summary.get("tooltip", "")).contains("3열 3행"), "성 좌표 사람이 읽는 표기")
+
+func test_summary_mentions_hand_cleanup_when_preview_differs() -> void:
+	var hand := [&"scheme_raid", &"troop_infantry", &"building_dunjeon"]
+	var summary := _RunPrepSummary.for_run({}, {}, hand, "", 9, CardLibrary.catalog, 5)
+	eq(int(summary.get("source_hand_size", 0)), 5, "원래 손패 수 기록")
+	eq(int(summary.get("hand_size", 0)), 3, "preview 손패 수 기록")
+	truthy(String(summary.get("detail", "")).contains("다음 손패 5→3"), "상세 손패 정리 문구")
+	truthy(String(summary.get("tooltip", "")).contains("드로우 더미"), "tooltip 손패 정리 안내")

@@ -131,6 +131,17 @@ func prepare_deploy_hand() -> bool:
 	deploy_stage_index = stage_index
 	return true
 
+func deploy_hand_preview() -> Array[StringName]:
+	if deploy_stage_index == stage_index:
+		return _string_name_array(hand)
+	var pile: Array[StringName] = _string_name_array(draw_pile)
+	for card_id in hand:
+		pile.append(card_id)
+	var out: Array[StringName] = []
+	while out.size() < HAND_DRAW_COUNT and not pile.is_empty():
+		out.append(pile.pop_front())
+	return out
+
 func draw_to_hand(target_size: int = HAND_DRAW_COUNT) -> int:
 	var before := hand.size()
 	var clamped_target := maxi(0, target_size)

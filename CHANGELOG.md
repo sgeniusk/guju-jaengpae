@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-06 — feat-058 다음 배치 손패 미리보기
+상점이나 전리품 뒤 손패 수가 늘어도 다음 전투는 다시 3장 후보 중 1장 선택이라는 규칙이 흐려지지 않도록 preview와 안내 문구를 추가했다.
+- **Deploy hand preview** — `RunState.deploy_hand_preview()`가 다음 `prepare_deploy_hand()` 결과를 비파괴적으로 계산한다. `RunManager.get_deploy_hand_preview()`와 `deploy_hand_refresh_pending()`이 UI에서 이 상태를 읽게 한다.
+- **런맵 준비 요약 보정** — `run_map.gd`의 전투 준비 패널이 현재 손패가 아니라 다음 배치 preview 손패를 기준으로 증원/배치/계략 후보를 계산한다. 현재 손패 수와 preview 수가 다르면 `다음 손패 X→3` 정리 문구를 보여준다.
+- **결과 오버레이 안내** — `battle.gd`의 다음 준비 안내와 다음 스테이지 버튼 tooltip에 `다음 배치 손패 — 후보 3장 중 1장`, `드로우 더미로 돌아가고` 문구를 추가했다.
+- **검증** — `test_deploy_hand_preview.gd`가 preview가 상태를 변형하지 않고 실제 prepare 결과와 일치하는지 검증한다. `test_run_prep_summary.gd`는 손패 정리 문구를, `tools/ui_feedback_smoke.gd`는 보상 후 다음 배치 손패 안내를 확인한다. `./init.sh` 카드 22개, 단위 테스트 2839/2839 green.
+
 ## 2026-06-06 — feat-057 런맵 전투 준비 패널 강화
 전투 시작 전 런맵에서 이번 교전의 선택 구조를 읽을 수 있도록 준비 요약을 추가했다.
 - **Run prep helper** — `RunPrepSummary.for_run()`이 현재 보드, 보드 레벨, 손패, 성 위치, 보드 용량, 카드 catalog를 받아 성 선택 여부, 군세 수, 손패 크기, 증원/배치/계략 후보 수를 순수 계산한다.

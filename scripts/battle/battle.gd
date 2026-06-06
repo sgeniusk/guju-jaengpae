@@ -2256,7 +2256,7 @@ func _add_next_stage_button(box: VBoxContainer) -> void:
 	], _go_to_run_map)
 	next_button.tooltip_text = "%s\n%s" % [
 		_StageCadence.stage_prep_label(next_stage),
-		_StageCadence.stage_prep_tooltip(next_stage),
+		_StageCadence.stage_prep_tooltip(next_stage) + "\n" + _next_deploy_hand_tooltip(),
 	]
 	box.add_child(next_button)
 	box.add_child(_make_button("군주 선택으로 새 런", _restart_run))
@@ -2264,15 +2264,32 @@ func _add_next_stage_button(box: VBoxContainer) -> void:
 func _add_next_stage_preview(box: VBoxContainer) -> void:
 	var next_stage := RunManager.stage_index()
 	var preview := Label.new()
-	preview.text = "다음 준비 — %s\n%s" % [
+	preview.text = "다음 준비 — %s\n%s\n%s" % [
 		_StageCadence.stage_label(next_stage),
 		_StageCadence.stage_prep_label(next_stage),
+		_next_deploy_hand_line(),
 	]
-	preview.tooltip_text = _StageCadence.stage_prep_tooltip(next_stage)
+	preview.tooltip_text = "%s\n%s" % [
+		_StageCadence.stage_prep_tooltip(next_stage),
+		_next_deploy_hand_tooltip(),
+	]
 	preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	preview.add_theme_font_size_override("font_size", 18)
 	preview.add_theme_color_override("font_color", Color(0.86, 0.90, 1.0))
 	box.add_child(preview)
+
+func _next_deploy_hand_line() -> String:
+	var preview_size := RunManager.get_deploy_hand_preview().size()
+	var current_size := RunManager.get_hand().size()
+	if RunManager.deploy_hand_refresh_pending() and current_size != preview_size:
+		return "다음 배치 손패 — 현재 %d장 → 후보 %d장 중 1장" % [current_size, preview_size]
+	return "다음 배치 손패 — 후보 %d장 중 1장" % preview_size
+
+func _next_deploy_hand_tooltip() -> String:
+	var preview_size := RunManager.get_deploy_hand_preview().size()
+	if RunManager.deploy_hand_refresh_pending():
+		return "전투 진입 시 현재 손패는 드로우 더미로 돌아가고 다음 배치 후보 %d장이 제시됩니다." % preview_size
+	return "다음 전투는 준비된 손패 %d장 중 한 장만 사용합니다." % preview_size
 
 func _advance_stage_once() -> void:
 	if _stage_advanced:

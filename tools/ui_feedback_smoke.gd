@@ -334,8 +334,10 @@ func _battle_reward_case() -> int:
 	await _frames(4)
 	errors += _assert_any_text(battle, "다음 준비 — 스테이지 2 — 전투", "보상 후 다음 준비 제목")
 	errors += _assert_any_text(battle, "손패 3장 중 1장", "보상 후 다음 전투 준비 문구")
+	errors += _assert_any_text(battle, "다음 배치 손패", "보상 후 다음 배치 손패 안내")
 	errors += _assert_button_text(battle, "다음 스테이지로 — 스테이지 2 — 전투", "보상 후 다음 스테이지 버튼")
 	errors += _assert_any_tooltip(battle, "런맵에서 전투 시작", "보상 후 다음 스테이지 tooltip")
+	errors += _assert_any_tooltip(battle, "드로우 더미", "보상 후 다음 배치 손패 tooltip")
 	battle.queue_free()
 	await _frames(2)
 	if errors == 0:

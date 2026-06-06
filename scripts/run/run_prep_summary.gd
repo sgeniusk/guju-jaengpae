@@ -2,7 +2,7 @@
 class_name RunPrepSummary
 extends RefCounted
 
-static func for_run(board: Dictionary, board_levels: Dictionary, hand: Array, castle_key: String, capacity: int, catalog: CardCatalog) -> Dictionary:
+static func for_run(board: Dictionary, board_levels: Dictionary, hand: Array, castle_key: String, capacity: int, catalog: CardCatalog, source_hand_size: int = -1) -> Dictionary:
 	var max_level_by_card := _max_level_by_card(board, board_levels)
 	var upgrade_candidates := 0
 	var place_candidates := 0
@@ -34,6 +34,7 @@ static func for_run(board: Dictionary, board_levels: Dictionary, hand: Array, ca
 			unknown_candidates += 1
 
 	var castle_selected := not castle_key.is_empty()
+	var current_hand_size := hand.size() if source_hand_size < 0 else source_hand_size
 	var title := "전투 준비 — 손패 %d장 중 1장" % hand.size()
 	var detail := "성 위치: %s · 군세 %d/%d · 증원 후보 %d장 · 배치 후보 %d장 · 계략 %d장" % [
 		_block_label(castle_key) if castle_selected else "미선택",
@@ -43,6 +44,8 @@ static func for_run(board: Dictionary, board_levels: Dictionary, hand: Array, ca
 		place_candidates,
 		scheme_candidates,
 	]
+	if current_hand_size != hand.size():
+		detail += " · 다음 손패 %d→%d" % [current_hand_size, hand.size()]
 	var tooltip := "전투 화면에서 성 위치를 고른 뒤 손패 %d장 중 한 장만 배치, 증원, 계략, 우물 중 하나로 사용합니다.\n%s\n증원 후보 %d장, 새 배치 후보 %d장, 계략 %d장입니다." % [
 		hand.size(),
 		"성 위치는 %s입니다." % _block_label(castle_key) if castle_selected else "성 위치는 아직 정하지 않았습니다.",
@@ -50,6 +53,8 @@ static func for_run(board: Dictionary, board_levels: Dictionary, hand: Array, ca
 		place_candidates,
 		scheme_candidates,
 	]
+	if current_hand_size != hand.size():
+		tooltip += "\n현재 손패 %d장은 전투 진입 때 드로우 더미로 돌아가고 다음 배치 후보 %d장이 열립니다." % [current_hand_size, hand.size()]
 	if unknown_candidates > 0:
 		tooltip += "\n정보를 불러오지 못한 손패 %d장이 있습니다." % unknown_candidates
 
@@ -60,6 +65,7 @@ static func for_run(board: Dictionary, board_levels: Dictionary, hand: Array, ca
 		"board_count": board.size(),
 		"capacity": capacity,
 		"hand_size": hand.size(),
+		"source_hand_size": current_hand_size,
 		"castle_selected": castle_selected,
 		"upgrade_candidates": upgrade_candidates,
 		"place_candidates": place_candidates,

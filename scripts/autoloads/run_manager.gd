@@ -145,6 +145,12 @@ func get_draw_pile() -> Array[StringName]:
 		out.append(id)
 	return out
 
+func get_deploy_hand_preview() -> Array[StringName]:
+	return state.deploy_hand_preview()
+
+func deploy_hand_refresh_pending() -> bool:
+	return state.deploy_stage_index != state.stage_index
+
 func prepare_deploy_hand() -> bool:
 	var changed := state.prepare_deploy_hand()
 	if changed:

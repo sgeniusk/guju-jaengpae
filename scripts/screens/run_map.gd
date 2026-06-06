@@ -367,10 +367,11 @@ func _add_battle_prep_summary() -> void:
 	var summary := _RunPrepSummary.for_run(
 		RunManager.get_board(),
 		RunManager.get_board_levels(),
-		RunManager.get_hand(),
+		RunManager.get_deploy_hand_preview(),
 		RunManager.get_castle_key(),
 		RunManager.get_board_capacity(),
-		CardLibrary.catalog
+		CardLibrary.catalog,
+		RunManager.get_hand().size()
 	)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 4)
