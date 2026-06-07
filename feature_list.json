@@ -1,6 +1,6 @@
 {
   "_comment": "활성/준비/계획 피처를 추적한다. 활성 피처는 5개 이하로 유지한다. status: not-started | ready | in-progress | done | blocked. evidence는 한 줄 요약 + 링크. v0.1 = 오토배틀러 한 판 루프.",
-  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~085로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 VFX→보상/상점/결과 UX→전투 HUD→유닛/필드 접지감→스크린샷 QA→초반 군세 밀도→전장 보드 지면화→장기런 전투 템포 계약→전장 depth/footline→실제 교전 screenshot QA→교전 충돌 polish→보드 stencil/depth 재정리까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 3126 단언 green. push는 사용자 확인 대기.",
+  "milestone": "v0.6 DONE — 현세 3국 플레이, 위·오 trait/장수 스킬, 땅 확장, 왕의 칙령, 유닛 walk 애니메이션 시스템 완료. Phase 1~7 릴리스 준비 완료. feat-038~086으로 성 선점→3장 손패→1장 플레이→분대 성장→군세 체감→진형 전술→수동 QA→전투 템포→카드 추천순→저장/이어하기 UX→병력 밀도/함성 VFX→피격 VFX→보상/상점/결과 UX→전투 HUD→유닛/필드 접지감→스크린샷 QA→초반 군세 밀도→전장 보드 지면화→장기런 전투 템포 계약→전장 depth/footline→실제 교전 screenshot QA→교전 충돌 polish→보드 stencil/depth 재정리→배치 ghost와 분대 개별 동세까지 MVP 이후 체감 루프와 검증을 보강했다. ./init.sh 카드 22개 / 3147 단언 green. push는 사용자 확인 대기.",
   "features": [
     {
       "id": "feat-001",
@@ -793,6 +793,15 @@
       "status": "done",
       "owner": "Codex",
       "evidence": "docs/specs/feat-085-battlefield-board-stencil-depth.md 추가. battle.gd가 FIELD_FOOT_OFFSET_Y를 68로 전진시키고, 기본/성/점유/빈 타일 fill·outline alpha를 더 낮췄으며 성·점유 field label은 숨기고 state/tooltip만 유지한다. test_unit_walk_visuals와 UI smoke가 fill<=0.08, outline<=0.10, footline>=tile+66, 점유 label hidden, 전술 preview 유지 계약을 검증한다. ./init.sh 카드 22개 / 3126 단언 green."
+    },
+    {
+      "id": "feat-086",
+      "name": "배치 ghost와 분대 개별 동세",
+      "description": "배치 단계에서 선택한 유닛이 타일 위에 미리 보이고, 전투 중 분대 구성원이 한 덩어리가 아니라 개별 병사처럼 흔들리도록 시각 레이어를 보강한다.",
+      "dependencies": ["feat-074", "feat-085"],
+      "status": "done",
+      "owner": "Codex",
+      "evidence": "docs/specs/feat-086-deploy-ghost-and-squad-motion.md 추가. battle.gd가 DeployPreviewLayer와 hover ghost를 추가하고, formation member별 home/phase 메타로 보폭·긴장 흔들림·공격 lunge를 시각 레이어에만 적용한다. test_unit_walk_visuals와 UI smoke가 ghost 생성/접지/제거, 분대 구성원 개별 motion을 검증한다. ./init.sh 카드 22개 / 3147 단언 green."
     }
   ]
 }

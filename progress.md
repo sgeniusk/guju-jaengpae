@@ -4,10 +4,11 @@
 
 ## 현재 상태
 **마지막 갱신** — 2026-06-07
-**활성 피처** — feat-085 전장 보드 stencil/depth 재정리 완료
-**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 배치 필드 9칸이 공중판처럼 보이고 유닛이 필드 뒤에서 나타나는 착시를 줄이도록 보이는 보드 표식과 점유 라벨을 낮춘 작업이다.
+**활성 피처** — feat-086 배치 ghost와 분대 개별 동세 완료
+**현재 목표** — 완성판까지 Codex goal을 유지한다. 이번 단위는 배치할 때 유닛이 보이지 않고 전투 중 분대가 한 덩어리처럼 움직여 긴장감이 낮은 문제를 시각 레이어에서 보강한 작업이다.
 
 ## 완료
+- [x] **feat-086 배치 ghost와 분대 개별 동세** — `battle.gd`에 `DeployPreviewLayer`를 추가해 손패 유닛 선택 후 빈 타일 hover 시 실제 formation body를 반투명 ghost로 보여준다. ghost는 `CardCatalog.build_board_army()`와 `_create_unit_body()` 경로를 재사용하지만 RunState/BattleSim에는 넣지 않는다. formation member마다 `formation_home`/`formation_phase`/`formation_index` 메타를 저장하고 전투 중 보폭, 긴장 흔들림, 공격 lunge를 서로 다르게 적용해 한 덩어리 이동감을 줄였다. `test_unit_walk_visuals.gd`와 UI smoke가 ghost 생성/접지/제거, 분대 구성원 개별 motion을 검증한다. `./init.sh` 카드 22개 / 3147 단언 green.
 - [x] **feat-085 전장 보드 stencil/depth 재정리** — `battle.gd`가 `FIELD_FOOT_OFFSET_Y`를 68로 전진시키고 기본/성/점유/빈 타일 fill·outline alpha를 더 낮췄다. 성과 점유 카드 field label은 숨기고 state/tooltip만 유지해 유닛/성 앞에 보드 텍스트가 남지 않게 했다. `엄호 +15%` 같은 전술 preview 라벨은 계속 표시된다. `test_unit_walk_visuals.gd`와 UI smoke가 fill<=0.08, outline<=0.10, footline>=tile+66, 점유 label hidden을 검증한다. `./init.sh` 카드 22개 / 3126 단언 green.
 - [x] **feat-084 교전 phase 군세 충돌 polish** — `BattleFeel.clash_profile()`이 아군/적 visible soldier 수, 총 병력, 레인 수, intensity, pressure marker 수를 계산한다. `battle.gd`는 이 profile로 `전군 돌격! 아군 12 · 적 25` 같은 시작 hint, `군세 12 : 25` 보조 rally tag, pressure VFX, charge line 폭, camera shake 강도를 조절한다. `test_battle_feel.gd`와 UI smoke가 군세 숫자, force_roar, pressure VFX를 검증한다. `./init.sh` 카드 22개 / 3117 단언 green.
 - [x] **feat-083 실제 교전 screenshot QA 정정** — `tools/shoot_battle.gd`의 QA용 보드 준비를 `_prepare_demo_board()`로 분리하고, 직접 배치 시 계략은 보드에 심지 않으며 유닛/건물만 시연 배치하게 했다. 직접 배치 후 `deploy_cards_played = 1`, `deploy_stage_index = target_stage`를 명시해 본편의 “교전당 한 수 사용 후 전투 시작” 조건과 맞췄다. 유닛이 없을 때 촬영용 보병을 보충하는 안전장치와 `SHOT_STRICT=1` phase 검증도 추가했다. `test_shoot_battle_harness.gd`가 이 계약을 검증한다. `./init.sh` 카드 22개 / 3072 단언 green.
@@ -19,7 +20,7 @@
 
 ## 진행 중
 - [ ] 수동 플레이 감각 확인 — 첫 손패 장수+병종, 성 위치 선택, 1장 배치/증원, 전군 돌격 피드백, stage 3 칙령, stage 4 상점, 전리품 추천 문구를 사용자 플레이로 확인한다.
-- [ ] 완성판 안전 개선 계속 — 다음 후보는 배치 카드 UI 정리, GUI 표시 드라이버 screenshot bundle 재확인, 실제 플레이에서 전장 접지감 재확인이다.
+- [ ] 완성판 안전 개선 계속 — 다음 후보는 배치 카드 UI 정리, GUI 표시 드라이버 screenshot bundle 재확인, 실제 플레이에서 ghost와 분대 동세 재확인이다.
 - [ ] Codex goal은 완성판까지 계속 활성이다. 현재 피처 완료가 전체 goal 완료는 아니다.
 
 ## 다음
@@ -36,6 +37,7 @@
 - [ ] 이번 세션에서도 GUI 표시 드라이버 PNG 품질 검증은 새로 남기지 못했다. 대신 `SHOT_STRICT=1` headless 실행으로 `battle_fight` 진입 상태가 `battle_phase=1`, `deploy_cards_played=1`, `board_units=3`임을 확인했다.
 
 ## 이번 세션 수정 파일
+- `docs/specs/feat-086-deploy-ghost-and-squad-motion.md`
 - `docs/specs/feat-085-battlefield-board-stencil-depth.md`
 - `scripts/battle/battle.gd`
 - `test/test_unit_walk_visuals.gd`
@@ -46,6 +48,9 @@
 - `CHANGELOG.md`
 
 ## 검증 증거
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-086-unit.log --script res://test/runner.gd` (2026-06-07, feat-086) — 단위 테스트 3147/3147 green.
+- [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-086-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-07, feat-086) — 배치 hover ghost와 분대 개별 motion 포함 UI smoke green.
+- [x] `./init.sh` (2026-06-07, feat-086) — 카드 22개 검증 OK, UI smoke, 저장/이어하기 smoke, playtest loop, 장기런 tempo gate, 단위 테스트 3147/3147 포함 전체 green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-085-unit.log --script res://test/runner.gd` (2026-06-07, feat-085) — 단위 테스트 3126/3126 green.
 - [x] `HOME=$PWD/.godot/home godot --headless --path . --log-file .godot/feat-085-ui.log --script res://tools/ui_feedback_smoke.gd` (2026-06-07, feat-085) — 배치 필드 alpha, footline, 점유 label hidden, 전술 preview 유지 포함 UI smoke green.
 - [x] `./init.sh` (2026-06-07, feat-085) — 카드 22개 검증 OK, UI smoke, 저장/이어하기 smoke, playtest loop, 장기런 tempo gate, 단위 테스트 3126/3126 포함 전체 green.
@@ -62,4 +67,4 @@
 - [x] `./init.sh` (2026-06-06, feat-082) — 카드 22개 검증 OK, UI smoke, 저장/이어하기 smoke, playtest loop, 장기런 tempo gate, 단위 테스트 3067/3067 포함 전체 green.
 
 ## 다음 세션 메모
-feat-085 done. 다음 안전 피처는 배치 카드 UI surface 정리 또는 GUI 표시 드라이버 screenshot bundle 재확인이 좋다. 실제 사용자가 보는 GUI에서 전장 접지감은 다시 플레이 확인이 필요하다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.
+feat-086 done. 다음 안전 피처는 배치 카드 UI surface 정리 또는 GUI 표시 드라이버 screenshot bundle 재확인이 좋다. 실제 사용자가 보는 GUI에서 배치 ghost와 분대 개별 동세는 다시 플레이 확인이 필요하다. 천계·마계 확장은 정본 승인 전 시작하지 않는다. push와 tag는 사용자 확인 후에만 실행한다.

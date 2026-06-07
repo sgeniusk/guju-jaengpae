@@ -40,6 +40,7 @@ const FIELD_TILE_OUTLINE_Z := -27
 const FIELD_LABEL_Z := -20
 const BUILDING_LAYER_Z := 420
 const UNIT_LAYER_Z := 520
+const DEPLOY_PREVIEW_LAYER_Z := 500
 const UNIT_W := 140.0
 const UNIT_H := 130.0
 const UNIT_MEMBER_W := 48.0
@@ -91,12 +92,15 @@ var _battle_gold_accum := 0.0
 var _pending_scheme_battle_effects: Array[Dictionary] = []
 var _battle_outcome: Dictionary = {}
 var _impact_camera_cooldown := 0.0
+var _hovered_tile_key := ""
+var _visual_time := 0.0
 
 var _world_root: Node2D
 var _camera: Camera2D
 var _background_layer: Node2D
 var _iso_base_layer: Node2D
 var _buildings_layer: Node2D
+var _deploy_preview_layer: Node2D
 var _units_layer: Node2D
 var _vfx_layer: Node2D
 var _hud: CanvasLayer
@@ -151,6 +155,7 @@ func _ready() -> void:
 		call_deferred("_run_export_first_battle_smoke")
 
 func _process(delta: float) -> void:
+	_visual_time += delta
 	if _impact_camera_cooldown > 0.0:
 		_impact_camera_cooldown = maxf(0.0, _impact_camera_cooldown - delta)
 	if _phase != Phase.BATTLE:
@@ -213,6 +218,9 @@ func _bind_scene_nodes() -> void:
 	_buildings_layer = _ensure_node2d(_world_root, "BuildingsLayer")
 	_buildings_layer.z_index = BUILDING_LAYER_Z
 	_buildings_layer.y_sort_enabled = true
+	_deploy_preview_layer = _ensure_node2d(_world_root, "DeployPreviewLayer")
+	_deploy_preview_layer.z_index = DEPLOY_PREVIEW_LAYER_Z
+	_deploy_preview_layer.y_sort_enabled = true
 	_units_layer = _ensure_node2d(_world_root, "UnitsLayer")
 	_units_layer.z_index = UNIT_LAYER_Z
 	_units_layer.y_sort_enabled = true
@@ -261,6 +269,7 @@ func _build_field() -> void:
 	_clear_children(_background_layer)
 	_clear_children(_iso_base_layer)
 	_clear_children(_buildings_layer)
+	_clear_children(_deploy_preview_layer)
 	_clear_children(_units_layer)
 	_clear_children(_vfx_layer)
 	_tile_buttons.clear()
@@ -1058,6 +1067,7 @@ func _refresh_board_tiles() -> void:
 			if area != null:
 				area.input_pickable = _phase == Phase.DEPLOY
 		_tile_buttons[key] = tile
+	_refresh_deploy_preview_ghost()
 
 func _clear_children(node: Node) -> void:
 	for child in node.get_children():
@@ -1101,6 +1111,74 @@ func _placement_preview_for_block(block_key: String) -> Dictionary:
 	var army := CardLibrary.catalog.build_board_army(board, _lord, RunManager.get_board_rows(), RunManager.get_edicts(), RunManager.get_castle_key(), RunManager.get_terrain_perk_id(), levels)
 	var unit := _find_army_unit_at_block(army, block_key)
 	return _FormationTactics.preview_for_unit(unit, army, card.display_name)
+
+func _refresh_deploy_preview_ghost() -> void:
+	if _deploy_preview_layer == null:
+		return
+	_clear_children(_deploy_preview_layer)
+	var block_key := _deploy_preview_key()
+	if block_key == "":
+		return
+	_spawn_deploy_preview_ghost(block_key)
+
+func _deploy_preview_key() -> String:
+	if _phase != Phase.DEPLOY or _hovered_tile_key == "":
+		return ""
+	if not RunManager.has_castle() or not RunManager.can_place_deploy_card():
+		return ""
+	if _selected_hand_index < 0:
+		return ""
+	var hand := RunManager.get_hand()
+	if _selected_hand_index >= hand.size():
+		return ""
+	if RunManager.can_cast_scheme_from_hand(_selected_hand_index) or RunManager.can_upgrade_from_hand(_selected_hand_index):
+		return ""
+	if not RunManager.can_place_hand_card(_selected_hand_index):
+		return ""
+	var board := RunManager.get_board()
+	if board.has(_hovered_tile_key) or _hovered_tile_key == RunManager.get_castle_key():
+		return ""
+	var card := CardLibrary.get_card(hand[_selected_hand_index])
+	if card == null or not (card is UnitCardData):
+		return ""
+	if not RunState.block_keys_for(RunManager.get_board_rows()).has(_hovered_tile_key):
+		return ""
+	return _hovered_tile_key
+
+func _spawn_deploy_preview_ghost(block_key: String) -> void:
+	var hand := RunManager.get_hand()
+	if _selected_hand_index < 0 or _selected_hand_index >= hand.size():
+		return
+	var card_id: StringName = hand[_selected_hand_index]
+	var single := {}
+	single[block_key] = card_id
+	var levels := {}
+	levels[block_key] = 1
+	var army := CardLibrary.catalog.build_board_army(single, _lord, RunManager.get_board_rows(), RunManager.get_edicts(), RunManager.get_castle_key(), RunManager.get_terrain_perk_id(), levels)
+	var unit := _find_army_unit_at_block(army, block_key)
+	if unit == null:
+		return
+	var root := Node2D.new()
+	root.name = "DeployPreviewGhost"
+	root.set_meta(&"deploy_preview_ghost", true)
+	root.position = _field_foot_screen(unit.px, unit.py)
+	root.z_index = int(root.position.y)
+	root.modulate = Color(0.78, 1.0, 0.62, 0.46)
+	var size := _unit_size(unit)
+	var shadow := _make_ground_shadow(size, Vector2.ZERO, 0.13, 0.30, 0.070)
+	root.add_child(shadow)
+	var body := _create_unit_body(unit, _unit_texture(unit), size)
+	root.add_child(body)
+	_deploy_preview_layer.add_child(root)
+
+func _deploy_preview_ghost_count() -> int:
+	if _deploy_preview_layer == null:
+		return 0
+	var count := 0
+	for child in _deploy_preview_layer.get_children():
+		if bool(child.get_meta(&"deploy_preview_ghost", false)):
+			count += 1
+	return count
 
 func _empty_tile_state(_block_key: String, preview: Dictionary) -> Dictionary:
 	if _phase != Phase.DEPLOY:
@@ -1236,6 +1314,8 @@ func _on_tile_area_input(_viewport: Node, event: InputEvent, _shape_idx: int, bl
 func _on_tile_area_hovered(block_key: String) -> void:
 	if _phase != Phase.DEPLOY or _hint_label == null:
 		return
+	_hovered_tile_key = block_key
+	_refresh_deploy_preview_ghost()
 	var tile: Dictionary = _tile_buttons.get(block_key, {})
 	var tooltip := String(tile.get("tooltip", "")).strip_edges()
 	if tooltip.is_empty():
@@ -1243,9 +1323,12 @@ func _on_tile_area_hovered(block_key: String) -> void:
 	var lines := tooltip.split("\n", false)
 	_hint_label.text = String(lines[0]) if not lines.is_empty() else tooltip
 
-func _on_tile_area_unhovered(_block_key: String) -> void:
+func _on_tile_area_unhovered(block_key: String) -> void:
 	if _phase != Phase.DEPLOY or _hint_label == null:
 		return
+	if _hovered_tile_key == block_key:
+		_hovered_tile_key = ""
+		_refresh_deploy_preview_ghost()
 	_hint_label.text = _deploy_hint_for_current_selection()
 
 func _deploy_hint_for_current_selection() -> String:
@@ -1573,6 +1656,7 @@ func _sync_visuals() -> void:
 		if _vis.has(u):
 			_sync_unit_walk_animation(u)
 			_position_visual(u)
+			_sync_formation_member_motion(u)
 			var hp: ColorRect = _vis[u].get("hp", null)
 			if hp != null:
 				hp.size.x = float(_vis[u].get("hp_width", UNIT_W)) * u.hp_ratio()
@@ -1721,15 +1805,46 @@ func _sync_unit_walk_animation(u: BattleUnit) -> void:
 	var last_px := float(visual.get("last_px", u.px))
 	var last_py := float(visual.get("last_py", u.py))
 	var delta := Vector2(u.px - last_px, u.py - last_py)
+	var is_moving := delta.length_squared() > WALK_MOVE_EPSILON
 	for body in bodies:
-		if delta.length_squared() > WALK_MOVE_EPSILON:
+		if is_moving:
 			if not body.is_playing():
 				body.play("walk")
 		else:
 			body.stop()
 			body.frame = 0
+	visual["is_moving"] = is_moving
 	visual["last_px"] = u.px
 	visual["last_py"] = u.py
+
+func _sync_formation_member_motion(u: BattleUnit) -> void:
+	if u == null or not _vis.has(u):
+		return
+	var visual: Dictionary = _vis[u]
+	var body := visual.get("body", null) as Node
+	var members := _formation_member_nodes(body)
+	if members.is_empty():
+		return
+	var moving := bool(visual.get("is_moving", false))
+	var attack_ratio := clampf(u.cooldown / maxf(0.10, u.attack_interval), 0.0, 1.0)
+	var lunge_t := clampf((attack_ratio - 0.66) / 0.34, 0.0, 1.0)
+	var lunge := sin(lunge_t * PI) * (6.0 if u.attack > 0 else 0.0)
+	var direction := 1.0 if u.team == BattleUnit.Team.PLAYER else -1.0
+	for member in members:
+		var home: Vector2 = member.get_meta(&"formation_home", member.position)
+		var phase := float(member.get_meta(&"formation_phase", 0.0))
+		var index := int(member.get_meta(&"formation_index", 0))
+		var leader := bool(member.get_meta(&"formation_leader", false))
+		var pace := 8.2 if moving else 3.6
+		var stride := sin(_visual_time * pace + phase)
+		var sway := cos(_visual_time * (pace * 0.55) + phase * 0.7)
+		var bob_amp := 2.5 if moving else 0.75
+		var sway_amp := 1.8 if moving else 0.55
+		if leader:
+			bob_amp *= 0.48
+			sway_amp *= 0.42
+		var local_lunge := direction * lunge * (0.48 + float((index % 4) + 1) * 0.08)
+		member.position = home + Vector2(sway * sway_amp + local_lunge, -absf(stride) * bob_amp)
 
 func _animated_bodies(root: Node) -> Array[AnimatedSprite2D]:
 	var out: Array[AnimatedSprite2D] = []
@@ -1739,6 +1854,16 @@ func _animated_bodies(root: Node) -> Array[AnimatedSprite2D]:
 		out.append(root as AnimatedSprite2D)
 	for child in root.get_children():
 		out.append_array(_animated_bodies(child))
+	return out
+
+func _formation_member_nodes(root: Node) -> Array[Node2D]:
+	var out: Array[Node2D] = []
+	if root == null:
+		return out
+	if root is Node2D and bool(root.get_meta(&"formation_member", false)):
+		out.append(root as Node2D)
+	for child in root.get_children():
+		out.append_array(_formation_member_nodes(child))
 	return out
 
 func _flash_skill_casts() -> void:
@@ -2360,6 +2485,7 @@ func _create_formation_body(u: BattleUnit) -> Node2D:
 		main_shadow.z_index = -5
 		group.add_child(main_shadow)
 		main.position += main_offset
+		_register_formation_member(main, main.position, 900, true)
 		main.z_index = 20
 		group.add_child(main)
 	else:
@@ -2369,12 +2495,14 @@ func _create_formation_body(u: BattleUnit) -> Node2D:
 		var walk_path := _walk_sheet_path_for_texture(texture_path)
 		var offsets := _FormationRenderer.troop_offsets(count)
 		for i in count:
+			var depth := _FormationRenderer.sort_key(offsets[i], i)
 			var member_shadow := _make_ground_shadow(Vector2(UNIT_MEMBER_W, UNIT_MEMBER_H), offsets[i], 0.22, 0.30, 0.055)
-			member_shadow.z_index = i - 20
+			member_shadow.z_index = depth - 20
 			group.add_child(member_shadow)
 			var member := _create_single_unit_body(u, texture, Vector2(UNIT_MEMBER_W, UNIT_MEMBER_H), walk_path)
 			member.position += offsets[i]
-			member.z_index = i
+			_register_formation_member(member, member.position, i, false)
+			member.z_index = depth
 			group.add_child(member)
 	return group
 
@@ -2387,13 +2515,24 @@ func _add_retinue_members(group: Node2D, u: BattleUnit) -> void:
 	var walk_path := _walk_sheet_path_for_texture(texture_path)
 	var offsets := _FormationRenderer.retinue_offsets(retinue)
 	for i in retinue:
+		var depth := _FormationRenderer.sort_key(offsets[i], i)
 		var member_shadow := _make_ground_shadow(Vector2(42.0, 48.0), offsets[i], 0.22, 0.30, 0.055)
-		member_shadow.z_index = i - 20
+		member_shadow.z_index = depth - 20
 		group.add_child(member_shadow)
 		var member := _create_single_unit_body(u, texture, Vector2(42.0, 48.0), walk_path)
 		member.position += offsets[i]
-		member.z_index = i
+		_register_formation_member(member, member.position, i, false)
+		member.z_index = depth
 		group.add_child(member)
+
+func _register_formation_member(member: Node2D, home: Vector2, index: int, leader: bool) -> void:
+	if member == null:
+		return
+	member.set_meta(&"formation_member", true)
+	member.set_meta(&"formation_home", home)
+	member.set_meta(&"formation_index", index)
+	member.set_meta(&"formation_leader", leader)
+	member.set_meta(&"formation_phase", float((index * 37) % 19) * 0.37)
 
 func _make_ground_shadow(target_size: Vector2, foot_offset: Vector2 = Vector2.ZERO, alpha: float = 0.30, width_scale: float = 0.28, height_scale: float = 0.065) -> Polygon2D:
 	var shadow := Polygon2D.new()

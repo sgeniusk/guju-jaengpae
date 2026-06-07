@@ -2,6 +2,13 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-07 — feat-086 배치 ghost와 분대 개별 동세
+배치 중 유닛이 보이지 않고 전투 중 분대가 한 덩어리처럼 움직여 긴장감이 약한 문제를 시각 레이어에서 먼저 보강했다.
+- **배치 hover ghost** — `battle.gd`에 `DeployPreviewLayer`를 추가했다. 손패에서 유닛 카드를 선택하고 빈 타일에 hover하면 실제 배치와 같은 formation body가 반투명으로 표시된다.
+- **상태 불변 preview** — ghost는 `CardCatalog.build_board_army()`와 `_create_unit_body()` 경로를 재사용하지만 RunState와 BattleSim에는 넣지 않아 실제 배치/전투 수치는 바꾸지 않는다.
+- **분대 개별 동세** — formation member마다 `formation_home`, `formation_phase`, `formation_index`를 저장하고 전투 중 보폭, 긴장 흔들림, 공격 직후 lunge를 서로 다르게 적용한다. 전투 계산은 여전히 한 카드 = 한 BattleUnit 집계 모델이다.
+- **검증** — `test_unit_walk_visuals.gd`와 `tools/ui_feedback_smoke.gd`가 hover ghost 생성/접지/제거, 분대 구성원 개별 motion을 검증한다. `./init.sh` 카드 22개, 단위 테스트 3147/3147 green.
+
 ## 2026-06-07 — feat-085 전장 보드 stencil/depth 재정리
 사용자가 다시 지적한 “필드 9칸이 하늘에 떠 있고, 유닛이 필드 뒤에 나타나는 느낌”을 보이는 보드 표식과 점유 라벨 차원에서 줄였다.
 - **footline 추가 전진** — `FIELD_FOOT_OFFSET_Y`를 68로 키워 유닛, 성, 건물 발이 타일 중심/하단보다 더 앞쪽 지면에 서게 했다.

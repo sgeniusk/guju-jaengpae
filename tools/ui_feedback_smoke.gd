@@ -262,6 +262,7 @@ func _battle_manual_first_play_case() -> int:
 	await _frames(2)
 	errors += _assert_tile_state_hidden_and_tooltip(battle, "0:0", "배치 가능", "보병 배치", "병종 선택 후 배치 가능 타일")
 	errors += _assert_tile_hover_hint(battle, "0:0", "보병 배치", "병종 선택 후 배치 hover hint")
+	errors += _assert_deploy_preview_ghost_on_hover(battle, "0:0", "병종 배치 hover ghost")
 	battle._on_tile_pressed("0:0")
 	await _frames(8)
 	errors += _assert_manual_first_play_started(battle, run_manager)
@@ -300,6 +301,7 @@ func _battle_formation_preview_case() -> int:
 		await _frames(2)
 		errors += _assert_occupied_tile_label_hidden(battle, "1:0", "보병", "기존 보병 field label 숨김")
 		errors += _assert_tile_label_and_tooltip(battle, "1:1", "엄호 +15%", "궁병 배치", "궁병 엄호 미리보기")
+		errors += _assert_deploy_preview_ghost_on_hover(battle, "1:1", "전술 preview hover ghost")
 		errors += _assert_deploy_unit_visuals_above_field(battle)
 	else:
 		errors += _fail("battle._select_hand 없음")
@@ -547,6 +549,33 @@ func _assert_deploy_unit_visuals_above_field(battle: Node) -> int:
 		return _fail("배치 유닛 depth 검증 대상 없음")
 	return _assert_deploy_unit_foot_forward_of_tile(battle)
 
+func _assert_deploy_preview_ghost_on_hover(battle: Node, block_key: String, msg: String) -> int:
+	if not battle.has_method("_on_tile_area_hovered") or not battle.has_method("_on_tile_area_unhovered"):
+		return _fail("%s 누락: hover handler 없음" % msg)
+	if battle._deploy_preview_layer == null:
+		return _fail("%s 누락: DeployPreviewLayer 없음" % msg)
+	battle._on_tile_area_hovered(block_key)
+	var errors := 0
+	if battle._deploy_preview_ghost_count() != 1:
+		errors += _fail("%s 실패: hover ghost count=%d" % [msg, battle._deploy_preview_ghost_count()])
+	else:
+		var ghost := _first_deploy_preview_ghost(battle)
+		if ghost == null:
+			errors += _fail("%s 실패: ghost root 없음" % msg)
+		else:
+			var tile_parts := block_key.split(":")
+			if tile_parts.size() == 2 and tile_parts[0].is_valid_int() and tile_parts[1].is_valid_int():
+				var tile_pos := BattleSim.position_for_tile(int(tile_parts[0]), int(tile_parts[1]))
+				var tile_center: Vector2 = battle.field_to_screen_position(tile_pos)
+				if ghost.position.y < tile_center.y + 66.0:
+					errors += _fail("%s 실패: ghost footline이 타일 뒤에 있음" % msg)
+			if battle._formation_member_nodes(ghost).size() < 4:
+				errors += _fail("%s 실패: ghost가 분대 실루엣을 만들지 않음" % msg)
+	battle._on_tile_area_unhovered(block_key)
+	if battle._deploy_preview_ghost_count() != 0:
+		errors += _fail("%s 실패: hover 해제 뒤 ghost 잔존" % msg)
+	return errors
+
 func _assert_deploy_unit_foot_forward_of_tile(battle: Node) -> int:
 	var bounds := _battlefield_tile_y_bounds(battle)
 	var checked := false
@@ -592,6 +621,12 @@ func _assert_command_feedback(battle: Node, target: BattleUnit) -> int:
 	if label == null or not label.visible or label.text.find("집중") < 0:
 		errors += _fail("집중표적 label 표시 실패")
 	return errors
+
+func _first_deploy_preview_ghost(battle: Node) -> Node2D:
+	for child in battle._deploy_preview_layer.get_children():
+		if bool(child.get_meta(&"deploy_preview_ghost", false)):
+			return child as Node2D
+	return null
 
 func _assert_manual_first_play_started(battle: Node, run_manager) -> int:
 	var errors := 0

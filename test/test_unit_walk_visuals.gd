@@ -230,6 +230,74 @@ func test_occupied_tiles_hide_field_labels_but_keep_state_tooltips() -> void:
 	truthy(String(castle_tile.get("state_label", "")).find("성") >= 0, "성 타일 state label은 유지")
 	view.free()
 
+func test_deploy_hover_shows_selected_unit_ghost_without_mutating_board() -> void:
+	RunManager.reset_run()
+	RunManager.ensure_started(&"lord_liubei")
+	RunManager.state.stage_index = 1
+	RunManager.state.castle_key = "1:1"
+	RunManager.state.board.clear()
+	RunManager.state.board_levels.clear()
+	RunManager.state.hand.clear()
+	RunManager.state.hand.append(&"troop_infantry")
+	RunManager.state.deploy_cards_played = 0
+	RunManager.state.deploy_stage_index = 1
+	var view := BattleView.new()
+	view._lord = CardLibrary.get_lord(&"lord_liubei")
+	view._hint_label = Label.new()
+	view._bind_scene_nodes()
+	view._build_field()
+	view._selected_hand_index = 0
+	view._refresh_board_tiles()
+
+	eq(view._deploy_preview_ghost_count(), 0, "hover 전에는 ghost 없음")
+	view._on_tile_area_hovered("0:0")
+
+	eq(view._deploy_preview_ghost_count(), 1, "선택 유닛 hover ghost 생성")
+	eq(RunManager.get_board().size(), 0, "ghost는 실제 보드를 변경하지 않음")
+	var ghost := _first_deploy_ghost(view)
+	not_null(ghost, "ghost root 존재")
+	if ghost != null:
+		var tile_pos := BattleSim.position_for_tile(0, 0)
+		var tile_center := view.field_to_screen_position(tile_pos)
+		truthy(ghost.position.y >= tile_center.y + 66.0, "ghost도 필드 앞쪽 footline에 선다")
+		truthy(view._formation_member_nodes(ghost).size() >= 8, "ghost는 단일 아이콘이 아니라 분대 실루엣")
+
+	view._on_tile_area_unhovered("0:0")
+	eq(view._deploy_preview_ghost_count(), 0, "hover 해제 시 ghost 제거")
+	view.free()
+
+func test_formation_members_have_individual_local_motion() -> void:
+	RunManager.reset_run()
+	RunManager.ensure_started(&"lord_liubei")
+	var view := BattleView.new()
+	view._bind_scene_nodes()
+	view._build_field()
+	var tile_pos := BattleSim.position_for_tile(1, 1)
+	var unit := BattleUnit.make(BattleUnit.Team.PLAYER, 1, tile_pos.x, "검증 분대", 100, 10, 1.0, "melee", 40.0, &"troop_infantry", &"", "infantry", 1, tile_pos.y)
+	unit.squad_count = 12
+
+	view._sim.add_unit(unit)
+	view._spawn_visual(unit)
+
+	var body := view._vis[unit].get("body", null) as Node
+	var members := view._formation_member_nodes(body)
+	truthy(members.size() >= 12, "분대 구성원 노드가 개별로 생성됨")
+	var homes: Array[Vector2] = []
+	for member in members:
+		truthy(bool(member.get_meta(&"formation_member", false)), "구성원 motion meta 존재")
+		homes.append(member.get_meta(&"formation_home", member.position))
+	view._vis[unit]["is_moving"] = true
+	view._visual_time = 0.42
+	unit.cooldown = unit.attack_interval
+	view._sync_formation_member_motion(unit)
+
+	var moved := 0
+	for i in members.size():
+		if (members[i].position - homes[i]).length() > 0.05:
+			moved += 1
+	truthy(moved >= 8, "구성원 대부분이 서로 다른 local motion을 갖는다")
+	view.free()
+
 func _player_unit(troop_type: String) -> BattleUnit:
 	return BattleUnit.make(BattleUnit.Team.PLAYER, 0, 300.0, "검증", 100, 1, 1.0, "melee", 0.0, &"", &"", troop_type, -1, 300.0)
 
@@ -289,3 +357,11 @@ func _max_tile_canvas_z(view: Node) -> int:
 			if item != null:
 				max_z = maxi(max_z, item.z_index)
 	return max_z
+
+func _first_deploy_ghost(view: Node) -> Node2D:
+	if view._deploy_preview_layer == null:
+		return null
+	for child in view._deploy_preview_layer.get_children():
+		if bool(child.get_meta(&"deploy_preview_ghost", false)):
+			return child as Node2D
+	return null
