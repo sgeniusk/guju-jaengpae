@@ -36,6 +36,7 @@ const FIELD_GROUND_SHADOW_Z := -46
 const FIELD_GROUND_PLATE_Z := -44
 const FIELD_TILE_SHADOW_Z := -36
 const FIELD_TILE_Z := -34
+const FIELD_TILE_SEAM_Z := -31
 const FIELD_TILE_OUTLINE_Z := -27
 const FIELD_LABEL_Z := -20
 const BUILDING_LAYER_Z := 420
@@ -565,6 +566,9 @@ func _build_iso_base() -> void:
 				fallback_poly.color = Color(0.20, 0.24, 0.16, 0.0)
 				fallback_poly.z_index = FIELD_TILE_Z
 				_iso_base_layer.add_child(fallback_poly)
+			var tile_seams := _make_tile_floor_seams(center)
+			for seam in tile_seams:
+				_iso_base_layer.add_child(seam)
 			var tile_outline := _make_tile_ground_outline(center)
 			_iso_base_layer.add_child(tile_outline)
 			var label := Label.new()
@@ -587,7 +591,7 @@ func _build_iso_base() -> void:
 			shape.polygon = _diamond_points()
 			area.add_child(shape)
 			_iso_base_layer.add_child(area)
-			_tile_buttons[block_key] = { "area": area, "shadow": tile_shadow, "sprite": tile_sprite, "poly": fallback_poly, "outline": tile_outline, "label": label, "state_label": "", "tooltip": "" }
+			_tile_buttons[block_key] = { "area": area, "shadow": tile_shadow, "sprite": tile_sprite, "poly": fallback_poly, "seams": tile_seams, "outline": tile_outline, "label": label, "state_label": "", "tooltip": "" }
 
 func _board_tile_centers() -> Array:
 	var centers: Array = []
@@ -758,6 +762,29 @@ func _make_tile_ground_outline(center: Vector2) -> Line2D:
 	outline.z_index = FIELD_TILE_OUTLINE_Z
 	outline.antialiased = true
 	return outline
+
+func _make_tile_floor_seams(center: Vector2) -> Array[Line2D]:
+	var trench := Line2D.new()
+	trench.name = "TileFloorSeamTrench"
+	trench.set_meta(&"battlefield_tile_floor_seam", true)
+	trench.points = _diamond_points()
+	trench.closed = true
+	trench.width = 2.2
+	trench.default_color = Color(0.035, 0.022, 0.014, 0.155)
+	trench.position = center + Vector2(0.0, 4.0)
+	trench.z_index = FIELD_TILE_SEAM_Z
+	trench.antialiased = true
+	var lip := Line2D.new()
+	lip.name = "TileFloorSeamLip"
+	lip.set_meta(&"battlefield_tile_floor_seam", true)
+	lip.points = _diamond_points()
+	lip.closed = true
+	lip.width = 1.05
+	lip.default_color = Color(0.94, 0.80, 0.52, 0.112)
+	lip.position = center + Vector2(0.0, 1.5)
+	lip.z_index = FIELD_TILE_SEAM_Z + 1
+	lip.antialiased = true
+	return [trench, lip]
 
 func _diamond_points() -> PackedVector2Array:
 	return PackedVector2Array([Vector2(0.0, -ISO_HALF_H), Vector2(ISO_HALF_W, 0.0), Vector2(0.0, ISO_HALF_H), Vector2(-ISO_HALF_W, 0.0)])

@@ -2,6 +2,12 @@
 
 구조 변경(새 씬·새 시스템·개념 개명·정본 결정)을 기록한다. 일상 진행은 `progress.md`.
 
+## 2026-06-07 — feat-087 읽히는 바닥 칸 seam
+사용자가 지적한 “바닥 칸이 안 보이는” 문제를, 공중판처럼 보이지 않는 접지감 계약을 유지하면서 보정했다.
+- **바닥 seam 추가** — `battle.gd`가 각 배치 타일에 어두운 홈과 얇은 밝은 lip으로 된 `TileFloorSeam` 2개를 추가한다. 칸 경계가 바닥에 새겨진 선처럼 읽히게 했다.
+- **fill/outline 상한 유지** — tile fill과 기존 `battlefield_tile_outline` alpha는 계속 낮게 유지해 9칸이 밝은 UI판처럼 떠 보이는 회귀를 막았다.
+- **검증** — `test_unit_walk_visuals.gd`와 `tools/ui_feedback_smoke.gd`가 seam 개수와 alpha 범위(0.11 이상, 0.18 이하)를 검증한다. `./init.sh` 카드 22개, 단위 테스트 3150/3150 green.
+
 ## 2026-06-07 — feat-086 배치 ghost와 분대 개별 동세
 배치 중 유닛이 보이지 않고 전투 중 분대가 한 덩어리처럼 움직여 긴장감이 약한 문제를 시각 레이어에서 먼저 보강했다.
 - **배치 hover ghost** — `battle.gd`에 `DeployPreviewLayer`를 추가했다. 손패에서 유닛 카드를 선택하고 빈 타일에 hover하면 실제 배치와 같은 formation body가 반투명으로 표시된다.

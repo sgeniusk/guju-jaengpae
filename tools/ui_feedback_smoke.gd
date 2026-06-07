@@ -735,12 +735,20 @@ func _assert_battlefield_ground_plane(battle: Node) -> int:
 	var outline_count := _count_bool_meta(battle._iso_base_layer, &"battlefield_tile_outline")
 	if outline_count < battle._tile_buttons.size():
 		errors += _fail("전장 타일 지면 outline 부족: %d/%d" % [outline_count, battle._tile_buttons.size()])
+	var seam_count := _count_bool_meta(battle._iso_base_layer, &"battlefield_tile_floor_seam")
+	if seam_count < battle._tile_buttons.size() * 2:
+		errors += _fail("전장 타일 바닥 seam 부족: %d/%d" % [seam_count, battle._tile_buttons.size() * 2])
 	var max_tile_fill_alpha := _max_tile_fill_alpha(battle)
 	if max_tile_fill_alpha > 0.08:
 		errors += _fail("전장 타일 fill이 너무 진해 공중 판처럼 보임: alpha=%.2f" % max_tile_fill_alpha)
 	var max_tile_outline_alpha := _max_tile_outline_alpha(battle)
 	if max_tile_outline_alpha > 0.10:
 		errors += _fail("전장 타일 outline이 너무 밝아 공중 격자처럼 보임: alpha=%.2f" % max_tile_outline_alpha)
+	var max_seam_alpha := _max_line_meta_alpha(battle._iso_base_layer, &"battlefield_tile_floor_seam")
+	if max_seam_alpha < 0.11:
+		errors += _fail("전장 타일 바닥 seam이 너무 약해 칸이 안 보임: alpha=%.2f" % max_seam_alpha)
+	if max_seam_alpha > 0.18:
+		errors += _fail("전장 타일 바닥 seam이 너무 강해 공중 격자처럼 보임: alpha=%.2f" % max_seam_alpha)
 	var floor_band_count := _count_bool_meta(battle._background_layer, &"battlefield_floor_band")
 	if floor_band_count < 1:
 		errors += _fail("전장 배경 지면 밴드 누락")
@@ -848,6 +856,16 @@ func _max_tile_outline_alpha(battle: Node) -> float:
 		var outline := (value as Dictionary).get("outline", null) as Line2D
 		if outline != null:
 			max_alpha = maxf(max_alpha, outline.default_color.a)
+	return max_alpha
+
+func _max_line_meta_alpha(node: Node, key: StringName) -> float:
+	if node == null:
+		return 0.0
+	var max_alpha := 0.0
+	if bool(node.get_meta(key, false)) and node is Line2D:
+		max_alpha = maxf(max_alpha, (node as Line2D).default_color.a)
+	for child in node.get_children():
+		max_alpha = maxf(max_alpha, _max_line_meta_alpha(child, key))
 	return max_alpha
 
 func _assert_hit_impact_vfx(battle: Node) -> int:

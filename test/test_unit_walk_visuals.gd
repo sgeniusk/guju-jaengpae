@@ -174,8 +174,11 @@ func test_battlefield_floor_context_draws_persistent_band_and_lanes() -> void:
 	eq(_count_bool_meta(view._background_layer, &"battlefield_depth_lane"), BattleSim.COL_COUNT, "배경 레이어에 3레인 진군 바닥선")
 	truthy(_count_bool_meta(view._iso_base_layer, &"battlefield_tile_contact") >= BattleSim.COL_COUNT * RunManager.get_board_rows(), "보드 타일마다 접지 shadow")
 	eq(_count_bool_meta(view._iso_base_layer, &"battlefield_tile_outline"), BattleSim.COL_COUNT * RunManager.get_board_rows(), "보드 타일은 지면 outline으로 표시")
+	eq(_count_bool_meta(view._iso_base_layer, &"battlefield_tile_floor_seam"), BattleSim.COL_COUNT * RunManager.get_board_rows() * 2, "보드 타일마다 읽히는 바닥 seam")
 	truthy(_max_tile_sprite_alpha(view) <= 0.08, "타일 fill은 공중 plate처럼 보이지 않도록 낮은 alpha")
 	truthy(_max_tile_outline_alpha(view) <= 0.08, "기본 타일 outline은 공중 격자처럼 보이지 않도록 낮은 alpha")
+	truthy(_max_line_meta_alpha(view._iso_base_layer, &"battlefield_tile_floor_seam") >= 0.11, "바닥 seam은 배치 칸이 읽힐 만큼 보임")
+	truthy(_max_line_meta_alpha(view._iso_base_layer, &"battlefield_tile_floor_seam") <= 0.18, "바닥 seam은 공중 격자처럼 과하지 않음")
 	view.free()
 
 func test_deploy_unit_feet_share_ground_grid_and_draw_above_it() -> void:
@@ -344,6 +347,16 @@ func _max_tile_outline_alpha(view: Node) -> float:
 		var outline := (value as Dictionary).get("outline", null) as Line2D
 		if outline != null:
 			max_alpha = maxf(max_alpha, outline.default_color.a)
+	return max_alpha
+
+func _max_line_meta_alpha(node: Node, key: StringName) -> float:
+	if node == null:
+		return 0.0
+	var max_alpha := 0.0
+	if bool(node.get_meta(key, false)) and node is Line2D:
+		max_alpha = maxf(max_alpha, (node as Line2D).default_color.a)
+	for child in node.get_children():
+		max_alpha = maxf(max_alpha, _max_line_meta_alpha(child, key))
 	return max_alpha
 
 func _max_tile_canvas_z(view: Node) -> int:
